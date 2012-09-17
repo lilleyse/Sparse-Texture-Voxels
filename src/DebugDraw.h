@@ -119,7 +119,8 @@ public:
 				{
 					for(int l = 0; l < mipMapSideLength; l++)
 					{
-						glm::vec3 position(j*scale,k*scale,l*scale);
+						// apply an offset to the position because the origin of the cube model is in its center rather than a corner
+						glm::vec3 position = glm::vec3(j*scale,k*scale,l*scale) + glm::vec3(scale/2);
 						unsigned int textureIndex = mipMapSideLength*mipMapSideLength*j + mipMapSideLength*k + l;
 						
 						glm::u8vec4 color = imageData[textureIndex];
@@ -149,6 +150,10 @@ public:
 
 	void display(int mipMapLevel)
 	{
+		if(mipMapLevel > 0)
+		{
+			int debug = 0;
+		}
 		unsigned int baseInstance = mipMapInfoArray[mipMapLevel].offset;
 		unsigned int primCount = mipMapInfoArray[mipMapLevel].numVoxels;
 

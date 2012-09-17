@@ -23,6 +23,7 @@ namespace
 
 	unsigned int sideLength = 64;
 	unsigned int numMipMapLevels;
+	unsigned int debugMipMapLevel;
 
 }
 
@@ -70,11 +71,11 @@ void initGL()
 			{
 				unsigned int textureIndex = sideLength*sideLength*i + sideLength*j + k;
 				
-				float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
-				if(glm::abs(distanceFromCenter - radius) < 1.0f)
+				//float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
+				//if(glm::abs(distanceFromCenter - radius) < 1.0f)
 					textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-				else
-					textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
+				//else
+					//textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
 							
 			}
 		}
@@ -84,7 +85,7 @@ void initGL()
 	glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData[0]);
 	
 	// Generate mipmaps automatically
-	//glGenerateMipmap(GL_TEXTURE_3D);
+	glGenerateMipmap(GL_TEXTURE_3D);
 
 
 	// Create buffer objects and vao for a full screen quad
@@ -171,28 +172,44 @@ void mouseEvent()
 
 void keyboardEvent(unsigned char keyCode)
 {
-	switch(keyCode)
+	if(keyCode == 'w')
 	{
-		case 'w':
-			camera.zoom(10);
-			break;
-		case 's':
-			camera.zoom(-10);
-			break;
-		case 'a':
-			camera.pan(-10, 0);
-			break;
-		case 'd':
-			camera.pan(10, 0);
-		default:
-			break;
+		camera.zoom(10);
 	}
+	else if(keyCode == 's')
+	{
+		camera.zoom(-10);
+	}
+	else if(keyCode == 'a')
+	{
+		camera.pan(-10, 0);
+	}
+	else if(keyCode == 'd')
+	{
+		camera.pan(10, 0);
+	}
+	else if(keyCode == 44)
+	{
+		if(debugMipMapLevel > 0)
+		{
+			debugMipMapLevel--;
+		}
+	}
+	else if(keyCode == 46)
+	{
+		if(debugMipMapLevel < numMipMapLevels - 1)
+		{
+			debugMipMapLevel++;
+		}
+	}
+
 }
 
 bool begin()
 {
 	
 	initGL();
+	debugMipMapLevel = 0;
 	debugDraw.init();
 	debugDraw.createCubesFromVoxels(voxelTexture, sideLength, numMipMapLevels);
 	camera.zoom(-200);
@@ -225,7 +242,7 @@ void display()
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	debugDraw.display(0);
+	debugDraw.display(debugMipMapLevel);
 
 	
 	//glUseProgram(fullScreenProgram);
