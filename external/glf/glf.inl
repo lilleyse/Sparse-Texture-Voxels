@@ -9,117 +9,8 @@ bool begin();
 bool end();
 void display();
 
-#if (defined(WIN32))
-
-// OpenGL 4.3
-#define GL_VERTEX_ATTRIB_ARRAY_LONG                         0x874E
-
-// GL_ARB_texture_storage_multisample
-typedef void (GLAPIENTRY * PFNGLTEXSTORAGE2DMULTISAMPLEPROC) (
-	GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-typedef void (GLAPIENTRY * PFNGLTEXSTORAGE3DMULTISAMPLEPROC) (
-	GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
-typedef void (GLAPIENTRY * PFNGLTEXTURESTORAGE2DMULTISAMPLEEXTPROC) (
-	GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLboolean fixedsamplelocations);
-typedef void (GLAPIENTRY * PFNGLTEXTURESTORAGE3DMULTISAMPLEEXTPROC) (
-	GLuint texture, GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height, GLsizei depth, GLboolean fixedsamplelocations);
-
-//PFNGLTEXSTORAGE2DMULTISAMPLEPROC glTexStorage2DMultisample(0);
-//PFNGLTEXSTORAGE3DMULTISAMPLEPROC glTexStorage3DMultisample(0);
-//PFNGLTEXTURESTORAGE2DMULTISAMPLEEXTPROC glTextureStorage2DMultisampleEXT(0);
-//PFNGLTEXTURESTORAGE3DMULTISAMPLEEXTPROC glTextureStorage3DMultisampleEXT(0);
-
-// GL_ARB_clear_buffer_object
-typedef void (GLAPIENTRY * PFNGLCLEARBUFFERDATAPROC) (
-	GLenum target, GLenum internalformat, GLenum format, GLenum type, const GLvoid * data);
-typedef void (GLAPIENTRY * PFNGLCLEARBUFFERSUBDATAPROC) (
-	GLenum target, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const GLvoid * data);
-typedef void (GLAPIENTRY * PFNGLCLEARNAMEDBUFFERDATAEXTPROC) (
-	GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const GLvoid * data);
-typedef void (GLAPIENTRY * PFNGLCLEARNAMEDBUFFERSUBDATAEXTPROC) (
-	GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const GLvoid * data);
-
-//PFNGLCLEARBUFFERDATAPROC glClearBufferData(0);
-//PFNGLCLEARBUFFERSUBDATAPROC glClearBufferSubData(0);
-//PFNGLCLEARNAMEDBUFFERDATAEXTPROC glClearNamedBufferDataEXT(0);
-//PFNGLCLEARNAMEDBUFFERSUBDATAEXTPROC glClearNamedBufferSubDataEXT(0);
-
-// GL_ARB_multi_draw_indirect
-typedef void (GLAPIENTRY * PFNGLMULTIDRAWARRAYSINDIRECTPROC) (GLenum mode, const void* indirect, GLsizei primcount, GLsizei stride);
-typedef void (GLAPIENTRY * PFNGLMULTIDRAWELEMENTSINDIRECTPROC) (GLenum mode, GLenum type, const void* indirect, GLsizei primcount, GLsizei stride);
-
-//PFNGLMULTIDRAWARRAYSINDIRECTPROC glMultiDrawArraysIndirect(0);
-//PFNGLMULTIDRAWELEMENTSINDIRECTPROC glMultiDrawElementsIndirect(0);
-
-// GL_ARB_invalidate_subdata
-
-typedef void (GLAPIENTRY * PFNGLINVALIDATETEXSUBIMAGEPROC) (
-	GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth);
-typedef void (GLAPIENTRY * PFNGLINVALIDATETEXIMAGEPROC) (
-	GLuint texture, GLint level);
-
-//PFNGLINVALIDATETEXSUBIMAGEPROC glInvalidateTexSubImage(0);
-//PFNGLINVALIDATETEXIMAGEPROC glInvalidateTexImage(0);
-
-/*
-    void InvalidateBufferSubData(uint buffer, intptr offset, sizeiptr length);
-    void InvalidateBufferData(uint buffer);
-
-    void InvalidateFramebuffer(enum target, 
-                               sizei numAttachments, 
-                               const enum *attachments);
-    void InvalidateSubFramebuffer(enum target, 
-                                  sizei numAttachments, 
-                                  const enum *attachments,
-                                  int x, int y, sizei width, sizei height);
-*/
-
-// GL_ARB_texture_view
-#define GL_TEXTURE_VIEW_MIN_LEVEL                          0x82DB
-#define GL_TEXTURE_VIEW_NUM_LEVELS                         0x82DC
-#define GL_TEXTURE_VIEW_MIN_LAYER                          0x82DD
-#define GL_TEXTURE_VIEW_NUM_LAYERS                         0x82DE
-#define GL_TEXTURE_IMMUTABLE_LEVELS                        0x82DF
-
-typedef void (GLAPIENTRY * PFNGLTEXTUREVIEWPROC) (
-	GLuint texture, GLenum target, GLuint origtexture, GLenum internalformat, GLuint minlevel, GLuint numlevels, GLuint minlayer, GLuint numlayers);
-
-//PFNGLTEXTUREVIEWPROC glTextureView(0);
-
-// GL_ARB_shader_storage_buffer_object
-#define GL_SHADER_STORAGE_BUFFER                           0x90D2
-#define GL_SHADER_STORAGE_BUFFER_BINDING                   0x90D3
-#define GL_SHADER_STORAGE_BUFFER_START                     0x90D4
-#define GL_SHADER_STORAGE_BUFFER_SIZE                      0x90D5
-#define GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS                0x90D6
-#define GL_MAX_GEOMETRY_SHADER_STORAGE_BLOCKS              0x90D7
-#define GL_MAX_TESS_CONTROL_SHADER_STORAGE_BLOCKS          0x90D8
-#define GL_MAX_TESS_EVALUATION_SHADER_STORAGE_BLOCKS       0x90D9
-#define GL_MAX_FRAGMENT_SHADER_STORAGE_BLOCKS              0x90DA
-#define GL_MAX_COMPUTE_SHADER_STORAGE_BLOCKS               0x90DB
-#define GL_MAX_COMBINED_SHADER_STORAGE_BLOCKS              0x90DC
-#define GL_MAX_SHADER_STORAGE_BUFFER_BINDINGS              0x90DD
-#define GL_MAX_SHADER_STORAGE_BLOCK_SIZE                   0x90DE
-#define GL_SHADER_STORAGE_BUFFER_OFFSET_ALIGNMENT          0x90DF
-#define GL_SHADER_STORAGE_BARRIER_BIT                      0x2000        
-#define GL_MAX_COMBINED_SHADER_OUTPUT_RESOURCES            0x8F39
-
-// GL_ARB_vertex_attrib_binding
-typedef void (GLAPIENTRY * PFNGLVERTEXARRAYBINDVERTEXBUFFEREXTPROC) (GLuint vaobj, GLuint bindingindex, GLuint buffer, GLintptr offset, GLsizei stride);
-typedef void (GLAPIENTRY * PFNGLVERTEXARRAYBINDVERTEXATTRIBFORMATEXTPROC) (GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLboolean normalized, GLuint relativeoffset);
-typedef void (GLAPIENTRY * PFNGLVERTEXARRAYBINDVERTEXATTRIBIFORMATEXTPROC) (GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-typedef void (GLAPIENTRY * PFNGLVERTEXARRAYBINDVERTEXATTRIBLFORMATEXTPROC) (GLuint vaobj, GLuint attribindex, GLint size, GLenum type, GLuint relativeoffset);
-typedef void (GLAPIENTRY * PFNGLVERTEXARRAYBINDVERTEXATTRIBBINDINGEXTPROC) (GLuint vaobj, GLuint attribindex, GLuint bindingindex);
-typedef void (GLAPIENTRY * PFNGLVERTEXARRAYBINDVERTEXBINDINGDIVISOREXTPROC) (GLuint vaobj, GLuint bindingindex, GLuint divisor);
-
-PFNGLVERTEXARRAYBINDVERTEXBUFFEREXTPROC glVertexArrayBindVertexBufferEXT(0);
-PFNGLVERTEXARRAYBINDVERTEXATTRIBFORMATEXTPROC glVertexArrayVertexAttribFormatEXT(0);
-PFNGLVERTEXARRAYBINDVERTEXATTRIBIFORMATEXTPROC glVertexArrayVertexAttribIFormatEXT(0);
-PFNGLVERTEXARRAYBINDVERTEXATTRIBLFORMATEXTPROC glVertexArrayVertexAttribLFormatEXT(0);
-PFNGLVERTEXARRAYBINDVERTEXATTRIBBINDINGEXTPROC glVertexArrayVertexAttribBindingEXT(0);
-PFNGLVERTEXARRAYBINDVERTEXBINDINGDIVISOREXTPROC glVertexArrayVertexBindingDivisorEXT(0);
-
-#endif // WIN32
+void keyboardEvent(unsigned char keyCode);
+void mouseEvent();
 
 namespace glf
 {
@@ -159,6 +50,7 @@ namespace glf
 	inline void init()
 	{
 #if (defined(WIN32))
+		glewExperimental = GL_TRUE;
 		glewInit();
 		glGetError();
 		
@@ -166,27 +58,6 @@ namespace glf
 		glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLARBPROC)glutGetProcAddress("glDebugMessageControlARB");
 		glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKARBPROC)glutGetProcAddress("glDebugMessageCallbackARB");
 		glDebugMessageInsertARB = (PFNGLDEBUGMESSAGEINSERTARBPROC)glutGetProcAddress("glDebugMessageInsertARB");
-
-		// Loading OpenGL 4.3
-		glTexStorage2DMultisample = (PFNGLTEXSTORAGE2DMULTISAMPLEPROC)glutGetProcAddress("glTexStorage2DMultisample");
-		glTexStorage3DMultisample = (PFNGLTEXSTORAGE3DMULTISAMPLEPROC)glutGetProcAddress("glTexStorage3DMultisample");
-		glTextureStorage2DMultisampleEXT = (PFNGLTEXTURESTORAGE2DMULTISAMPLEEXTPROC)glutGetProcAddress("glTextureStorage2DMultisampleEXT");
-		glTextureStorage3DMultisampleEXT = (PFNGLTEXTURESTORAGE3DMULTISAMPLEEXTPROC)glutGetProcAddress("glTextureStorage3DMultisampleEXT");
-		glClearBufferData = (PFNGLCLEARBUFFERDATAPROC)glutGetProcAddress("glClearBufferData");
-		glClearBufferSubData = (PFNGLCLEARBUFFERSUBDATAPROC)glutGetProcAddress("glClearBufferSubData");
-		glClearNamedBufferDataEXT = (PFNGLCLEARNAMEDBUFFERDATAEXTPROC)glutGetProcAddress("glClearNamedBufferDataEXT");
-		glClearNamedBufferSubDataEXT = (PFNGLCLEARNAMEDBUFFERSUBDATAEXTPROC)glutGetProcAddress("glClearNamedBufferSubDataEXT");
-		glMultiDrawArraysIndirect = (PFNGLMULTIDRAWARRAYSINDIRECTPROC)glutGetProcAddress("glMultiDrawArraysIndirect");
-		glMultiDrawElementsIndirect = (PFNGLMULTIDRAWELEMENTSINDIRECTPROC)glutGetProcAddress("glMultiDrawElementsIndirect");
-		glInvalidateTexSubImage = (PFNGLINVALIDATETEXSUBIMAGEPROC)glutGetProcAddress("glInvalidateTexSubImage");
-		glInvalidateTexImage = (PFNGLINVALIDATETEXIMAGEPROC)glutGetProcAddress("glInvalidateTexImage");
-		glTextureView = (PFNGLTEXTUREVIEWPROC)glutGetProcAddress("glTextureView");
-		glVertexArrayBindVertexBufferEXT = (PFNGLVERTEXARRAYBINDVERTEXBUFFEREXTPROC)glutGetProcAddress("glVertexArrayBindVertexBufferEXT");
-		glVertexArrayVertexAttribFormatEXT = (PFNGLVERTEXARRAYBINDVERTEXATTRIBFORMATEXTPROC)glutGetProcAddress("glVertexArrayVertexAttribFormatEXT");
-		glVertexArrayVertexAttribIFormatEXT = (PFNGLVERTEXARRAYBINDVERTEXATTRIBIFORMATEXTPROC)glutGetProcAddress("glVertexArrayVertexAttribIFormatEXT");
-		glVertexArrayVertexAttribLFormatEXT = (PFNGLVERTEXARRAYBINDVERTEXATTRIBLFORMATEXTPROC)glutGetProcAddress("glVertexArrayVertexAttribLFormatEXT");
-		glVertexArrayVertexAttribBindingEXT = (PFNGLVERTEXARRAYBINDVERTEXATTRIBBINDINGEXTPROC)glutGetProcAddress("glVertexArrayVertexAttribBindingEXT");
-		glVertexArrayVertexBindingDivisorEXT = (PFNGLVERTEXARRAYBINDVERTEXBINDINGDIVISOREXTPROC)glutGetProcAddress("glVertexArrayVertexBindingDivisorEXT");
 
 		//assert(glTextureStorage2DEXT);
 #endif
@@ -426,8 +297,6 @@ namespace glf
 		//if(f)
 		{
 			char debSource[32], debType[32], debSev[32];
-			bool Error(false);
-
 			if(source == GL_DEBUG_SOURCE_API_ARB)
 				strcpy(debSource, "OpenGL");
 			else if(source == GL_DEBUG_SOURCE_WINDOW_SYSTEM_ARB)
@@ -455,17 +324,13 @@ namespace glf
 				strcpy(debType, "message");
  
 			if(severity == GL_DEBUG_SEVERITY_HIGH_ARB)
-			{
 				strcpy(debSev, "high");
-				Error = true;
-			}
 			else if(severity == GL_DEBUG_SEVERITY_MEDIUM_ARB)
 				strcpy(debSev, "medium");
 			else if(severity == GL_DEBUG_SEVERITY_LOW_ARB)
 				strcpy(debSev, "low");
 
 			 fprintf(stderr,"%s: %s(%s) %d: %s\n", debSource, debType, debSev, id, message);
-			 assert(!Error);
 			 //fclose(f);
 		}
 	}
@@ -502,8 +367,11 @@ namespace glf
 	}
 */
 #endif
+
 	static void keyboard(unsigned char key, int x, int y)
 	{
+		keyboardEvent(key);
+		
 		switch(key) 
 		{
 		case 27:
@@ -517,17 +385,19 @@ namespace glf
 
 	static void mouse(int Button, int State, int x, int y)
 	{
+
+		Window.MouseCurrent = glm::vec2(x,y);
+
 		switch(State)
 		{
 			case GLUT_DOWN:
 			{
-				Window.MouseOrigin = Window.MouseCurrent = glm::ivec2(x, y);
 				switch(Button)
 				{
 					case GLUT_LEFT_BUTTON:
 					{
+						Window.RotationCurrent = glm::vec2(0.0f);
 						Window.MouseButtonFlags |= glf::MOUSE_BUTTON_LEFT;
-						Window.TranlationOrigin = Window.TranlationCurrent;
 					}
 					break;
 					case GLUT_MIDDLE_BUTTON:
@@ -537,8 +407,8 @@ namespace glf
 					break;
 					case GLUT_RIGHT_BUTTON:
 					{
+						Window.TranlationCurrent = glm::vec2(0.0f);
 						Window.MouseButtonFlags |= glf::MOUSE_BUTTON_RIGHT;
-						Window.RotationOrigin = Window.RotationCurrent;
 					}
 					break;
 				}
@@ -550,7 +420,7 @@ namespace glf
 				{
 					case GLUT_LEFT_BUTTON:
 					{
-						Window.TranlationOrigin += (Window.MouseCurrent - Window.MouseOrigin) / 10.f;
+						Window.RotationCurrent = glm::vec2(0.0f);
 						Window.MouseButtonFlags &= ~glf::MOUSE_BUTTON_LEFT;
 					}
 					break;
@@ -561,7 +431,7 @@ namespace glf
 					break;
 					case GLUT_RIGHT_BUTTON:
 					{
-						Window.RotationOrigin += Window.MouseCurrent - Window.MouseOrigin;
+						Window.TranlationCurrent = glm::vec2(0.0f);
 						Window.MouseButtonFlags &= ~glf::MOUSE_BUTTON_RIGHT;
 					}
 					break;
@@ -590,10 +460,15 @@ namespace glf
 
 	static void motion(int x, int y)
 	{
+		Window.MouseOrigin = Window.MouseCurrent;
 		Window.MouseCurrent = glm::ivec2(x, y);
-		Window.TranlationCurrent = Window.MouseButtonFlags & glf::MOUSE_BUTTON_LEFT ? Window.TranlationOrigin + (Window.MouseCurrent - Window.MouseOrigin) / 10.f : Window.TranlationOrigin;
-		Window.RotationCurrent = Window.MouseButtonFlags & glf::MOUSE_BUTTON_RIGHT ? Window.RotationOrigin + (Window.MouseCurrent - Window.MouseOrigin) : Window.RotationOrigin;
+		glm::vec2 MouseDelta = Window.MouseCurrent - Window.MouseOrigin;
+
+		Window.TranlationCurrent = Window.MouseButtonFlags & glf::MOUSE_BUTTON_RIGHT ? MouseDelta : glm::vec2(0.0f);
+		Window.RotationCurrent = Window.MouseButtonFlags & glf::MOUSE_BUTTON_LEFT ? -MouseDelta/40.0f : glm::vec2(0.0f);
+		mouseEvent();
 	}
+
 
 	static void displayProxy()
 	{
@@ -627,9 +502,9 @@ namespace glf
 
 #if !defined(__APPLE__)
 		glutInitContextVersion(Major, Minor);
-		/*if(Profile == WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
-			//glutInitContextProfile(GLUT_ES_PROFILE);
-		else*/ if(glf::version(Major, Minor) >= 320)
+		if(Profile == WGL_CONTEXT_ES2_PROFILE_BIT_EXT)
+			glutInitContextProfile(WGL_CONTEXT_ES2_PROFILE_BIT_EXT);
+		else if(glf::version(Major, Minor) >= 320)
 		{
 			glutInitContextProfile(Profile); // GLUT_COMPATIBILITY_PROFILE GLUT_CORE_PROFILE
 			glutInitContextFlags(GLUT_FORWARD_COMPATIBLE | GLUT_DEBUG);
@@ -657,35 +532,6 @@ namespace glf
 		}
 
 		return 1;
-	}
-
-	bool validateVAO(GLuint VertexArrayName, std::vector<glf::vertexattrib> const & Expected)
-	{
-		bool Success = true;
-
-		GLint MaxVertexAttrib(0);
-		glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &MaxVertexAttrib);
-
-		glBindVertexArray(VertexArrayName);
-		for(GLuint AttribLocation = 0; AttribLocation < glm::min(GLuint(MaxVertexAttrib), GLuint(Expected.size())); ++AttribLocation)
-		{
-			glf::vertexattrib VertexAttrib;
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_ENABLED, &VertexAttrib.Enabled);
-			//glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_BUFFER_BINDING, &VertexAttrib.Binding);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_SIZE, &VertexAttrib.Size);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_STRIDE, &VertexAttrib.Stride);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_TYPE, &VertexAttrib.Type);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_NORMALIZED, &VertexAttrib.Normalized);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_INTEGER, &VertexAttrib.Integer);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_LONG, &VertexAttrib.Long);
-			glGetVertexAttribiv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_DIVISOR, &VertexAttrib.Divisor);
-			glGetVertexAttribPointerv(AttribLocation, GL_VERTEX_ATTRIB_ARRAY_POINTER, &VertexAttrib.Pointer);
-			Success = Success && (VertexAttrib == Expected[AttribLocation]);
-			assert(Success);
-		}
-		glBindVertexArray(0);
-
-		return Success;
 	}
 
 }//namespace glf

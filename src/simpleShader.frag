@@ -1,5 +1,4 @@
 #version 420 core
-#define POSITION 0
 #define SCREEN_DIMENSIONS vec2(1024,768)
 
 layout (location = 0, index = 0) out vec4 fragColor;

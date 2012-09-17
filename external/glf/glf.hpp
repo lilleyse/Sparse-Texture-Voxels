@@ -9,10 +9,6 @@
 #	include <windows.h>
 #	include <GL/glew.h>
 #	include <GL/wglew.h>
-#	include <cl/cl.h>
-#	include <cl/cl_ext.h>
-#	include <cl/cl_gl.h>
-#	include <cl/cl_gl_ext.h>
 //#	include <GL/glext.h>
 #elif defined(linux) || defined(__linux)
 #	include <GL/glew.h>
@@ -32,8 +28,6 @@
 #include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
-#include <glm/gtc/noise.hpp>
-#include <glm/gtx/euler_angles.hpp>
 
 #include <gli/gli.hpp>
 #include <gli/gtx/loader.hpp>
@@ -48,9 +42,9 @@
 namespace glf
 {
 #ifdef WIN32
-	static std::string const DATA_DIRECTORY("../data/");
+	static std::string const DATA_DIRECTORY("data/");
 #else
-        static std::string const DATA_DIRECTORY("../../data/");
+        static std::string const DATA_DIRECTORY("../data/");
 #endif
 
 	enum mouse_button
@@ -67,14 +61,12 @@ namespace glf
 			Size(Size),
 			MouseOrigin(Size >> 1),
 			MouseCurrent(Size >> 1),
-			TranlationOrigin(0, 4),
-			TranlationCurrent(0, 4),
+			TranlationOrigin(0, 0),
+			TranlationCurrent(0, 0),
 			RotationOrigin(0), 
 			RotationCurrent(0),
 			MouseButtonFlags(0)
-		{
-			memset(KeyPressed, 0, sizeof(KeyPressed));	
-		}
+		{}
 
 		glm::ivec2 Size;
 		glm::vec2 MouseOrigin;
@@ -84,7 +76,6 @@ namespace glf
 		glm::vec2 RotationOrigin;
 		glm::vec2 RotationCurrent;
 		int MouseButtonFlags;
-		std::size_t KeyPressed[256];
 	};
 
 	std::string loadFile(std::string const & Filename);
@@ -112,8 +103,7 @@ namespace glf
 		{
 			enum type
 			{
-				DIFFUSE = 0,
-				PICKING = 1
+				DIFFUSE = 0
 			};
 		}//namesapce image
 
@@ -176,36 +166,6 @@ namespace glf
 		glm::vec2 Texcoord;
 	};
 
-	struct vertex_v3fv2f
-	{
-		vertex_v3fv2f
-		(
-			glm::vec3 const & Position,
-			glm::vec2 const & Texcoord
-		) :
-			Position(Position),
-			Texcoord(Texcoord)
-		{}
-
-		glm::vec3 Position;
-		glm::vec2 Texcoord;
-	};
-
-	struct vertex_v3fv3f
-	{
-		vertex_v3fv3f
-		(
-			glm::vec3 const & Position,
-			glm::vec3 const & Texcoord
-		) :
-			Position(Position),
-			Texcoord(Texcoord)
-		{}
-
-		glm::vec3 Position;
-		glm::vec3 Texcoord;
-	};
-
 	struct vertex_v4fv2f
 	{
 		vertex_v4fv2f
@@ -234,21 +194,6 @@ namespace glf
 
 		glm::vec2 Position;
 		glm::vec4 Color;
-	};
-
-	struct vertex_v2fc4d
-	{
-		vertex_v2fc4d
-		(
-			glm::vec2 const & Position,
-			glm::dvec4 const & Color
-		) :
-			Position(Position),
-			Color(Color)
-		{}
-
-		glm::vec2 Position;
-		glm::dvec4 Color;
 	};
 
 	struct vertex_v4fc4f
@@ -299,74 +244,6 @@ namespace glf
 		glm::u8vec4 Color;
 	};
 
-	struct vertexattrib
-	{
-		vertexattrib() :
-			Enabled(GL_FALSE),
-			//Binding(0),
-			Size(4),
-			Stride(0),
-			Type(GL_FLOAT),
-			Normalized(GL_FALSE),
-			Integer(GL_FALSE),
-			Long(GL_FALSE),
-			Divisor(0),
-			Pointer(NULL)
-		{}
-
-		vertexattrib
-		(
-			GLint Enabled,
-			//GLint Binding,
-			GLint Size,
-			GLint Stride,
-			GLint Type,
-			GLint Normalized,
-			GLint Integer,
-			GLint Long,
-			GLint Divisor,
-			GLvoid* Pointer
-		) :
-			Enabled(Enabled),
-			//Binding(Binding),
-			Size(Size),
-			Stride(Stride),
-			Type(Type),
-			Normalized(Normalized),
-			Integer(Integer),
-			Long(Long),
-			Divisor(Divisor),
-			Pointer(Pointer)
-		{}
-
-		GLint Enabled;
-		//GLint Binding;
-		GLint Size;
-		GLint Stride;
-		GLint Type;
-		GLint Normalized;
-		GLint Integer;
-		GLint Long;
-		GLint Divisor;
-		GLvoid* Pointer;
-	};
-
-	bool operator== (vertexattrib const & A, vertexattrib const & B)
-	{
-		return A.Enabled == B.Enabled && 
-			A.Size == B.Size && 
-			A.Stride == B.Stride && 
-			A.Type == B.Type && 
-			A.Normalized == B.Normalized && 
-			A.Integer == B.Integer && 
-			A.Long == B.Long;
-	}
-
-	bool operator!= (vertexattrib const & A, vertexattrib const & B)
-	{
-		return !(A == B);
-	}
-
 }//namespace glf
 
 namespace 
@@ -377,30 +254,6 @@ namespace
 #define GLF_BUFFER_OFFSET(i) ((char *)NULL + (i))
 #ifndef GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD
 #define GL_EXTERNAL_VIRTUAL_MEMORY_BUFFER_AMD 0x9160
-#endif
-
-#ifndef WGL_CONTEXT_CORE_PROFILE_BIT_ARB
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
-#endif
-
-#ifndef WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
-#define WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#endif
-
-#ifndef WGL_CONTEXT_ES2_PROFILE_BIT_EXT
-#define WGL_CONTEXT_ES2_PROFILE_BIT_EXT 0x00000004
-#endif
-
-#ifndef GLX_CONTEXT_CORE_PROFILE_BIT_ARB
-#define GLX_CONTEXT_CORE_PROFILE_BIT_ARB 0x00000001
-#endif
-
-#ifndef GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB
-#define GLX_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB 0x00000002
-#endif
-
-#ifndef WGLX_CONTEXT_ES2_PROFILE_BIT_EXT
-#define WGLX_CONTEXT_ES2_PROFILE_BIT_EXT 0x00000004
 #endif
 
 #include "glf.inl"

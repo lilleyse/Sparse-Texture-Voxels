@@ -1,7 +1,7 @@
 #version 420 core
-#define POSITION 0
+#define POSITION_ATTRIBUTE 0
 
-layout(location = POSITION) in vec2 position;
+layout(location = POSITION_ATTRIBUTE) in vec2 position;
 
 out gl_PerVertex
 {
