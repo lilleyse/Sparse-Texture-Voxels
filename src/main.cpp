@@ -6,8 +6,8 @@
 namespace
 {
     std::string const SAMPLE_NAME("Sparse Texture Voxels");
-    int const SAMPLE_SIZE_WIDTH(1024);
-    int const SAMPLE_SIZE_HEIGHT(768);
+    int const SAMPLE_SIZE_WIDTH(800);
+    int const SAMPLE_SIZE_HEIGHT(600);
     int const SAMPLE_MAJOR_VERSION(3);
     int const SAMPLE_MINOR_VERSION(3);
 
@@ -241,7 +241,7 @@ void display()
     perFrame.uCamLookAt = camera.lookAt;
     perFrame.uCamPosition = camera.cameraPos;
     perFrame.uCamUp = camera.upDir;
-    perFrame.uScreenDim = glm::uvec2(Window.Size.x, Window.Size.y);
+    perFrame.uResolution = glm::uvec2(Window.Size.x, Window.Size.y);
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);

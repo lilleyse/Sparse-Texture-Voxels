@@ -14,18 +14,18 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPosition;
     vec3 uCamUp;
-    uvec2 uScreenDim;
+    uvec2 uResolution;
 };
 
 void main()
 {
-    vec2 uv = gl_FragCoord.xy/uScreenDim;
+    vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
     
     /* CAMERA RAY */
     vec3 C = normalize(uCamLookAt-uCamPosition);
     vec3 A = normalize(cross(C,uCamUp));
-    vec3 B = -(float(uScreenDim.y)/float(uScreenDim.x))*normalize(cross(A,C));
+    vec3 B = -(float(uResolution.y)/float(uResolution.x))*normalize(cross(A,C));
     
     // scale A and B by root3/3 : fov = 30 degrees
     vec3 ro = uCamPosition+C + (2.0*uv.x-1.0)*0.57735027*A + (2.0*uv.y-1.0)*0.57735027*B;
