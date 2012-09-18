@@ -75,7 +75,7 @@ void initGL()
                 //if(glm::abs(distanceFromCenter - radius) < 1.0f)
                 textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
                 //else
-                //	textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
+                //textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
 
             }
         }

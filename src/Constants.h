@@ -12,7 +12,7 @@ struct PerFrameUBO
     float padding1;
     glm::vec3 uCamPosition;
     float padding2;
-    glm::vec3 uCamUp;	
+    glm::vec3 uCamUp;
     float padding3;
     glm::uvec2 uScreenDim;
 };
