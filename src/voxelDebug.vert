@@ -10,28 +10,32 @@ layout(location = DEBUG_COLOR_ATTR) in vec4 color;
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
-	mat4 viewProjection;
+    mat4 viewProjection;
+    vec3 uCamLookAt;
+    vec3 uCamPosition;
+    vec3 uCamUp;	
+    uvec2 uScreenDim;
 };
 
 out block
 {
-	flat vec4 color;
+    flat vec4 color;
 } vertexData;
 
 out gl_PerVertex
 {
-	vec4 gl_Position;
+    vec4 gl_Position;
 };
 
 void main()
 {
-	// Create the model matrix
-	float scale = transformation.w;
-	mat4 modelMatrix = mat4(scale);
-	modelMatrix[3] = vec4(transformation.xyz, 1.0);
+    // Create the model matrix
+    float scale = transformation.w;
+    mat4 modelMatrix = mat4(scale);
+    modelMatrix[3] = vec4(transformation.xyz, 1.0);
 
-	// Caluclate the clip space position
-	gl_Position = viewProjection * modelMatrix * vec4(position, 1.0);
-	
-	vertexData.color = color;
+    // Caluclate the clip space position
+    gl_Position = viewProjection * modelMatrix * vec4(position, 1.0);
+    
+    vertexData.color = color;
 }
