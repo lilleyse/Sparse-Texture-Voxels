@@ -24,7 +24,7 @@ namespace
     unsigned int sideLength = 64;
     unsigned int numMipMapLevels;
     unsigned int debugMipMapLevel;
-
+    float frameTime = 0.0f;
 }
 
 unsigned int getNumMipMapLevels(unsigned int size)
@@ -71,11 +71,11 @@ void initGL()
             {
                 unsigned int textureIndex = sideLength*sideLength*i + sideLength*j + k;
 
-                //float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
-                //if(glm::abs(distanceFromCenter - radius) < 1.0f)
-                textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-                //else
-                //textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
+                float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
+                if(glm::abs(distanceFromCenter - radius) < 1.0f)
+                    textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
+                else
+                    textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
 
             }
         }
@@ -242,6 +242,7 @@ void display()
     perFrame.uCamPosition = camera.cameraPos;
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::uvec2(Window.Size.x, Window.Size.y);
+    perFrame.uTime = frameTime;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -253,6 +254,8 @@ void display()
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
     glf::swapBuffers();
+
+    frameTime += 0.01;
 }
 
 int main(int argc, char* argv[])
