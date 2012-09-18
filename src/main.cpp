@@ -255,7 +255,7 @@ void display()
 
     glf::swapBuffers();
 
-    frameTime += 0.01;
+    frameTime += 0.005;
 }
 
 int main(int argc, char* argv[])
