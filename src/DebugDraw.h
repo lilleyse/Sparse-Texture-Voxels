@@ -1,7 +1,7 @@
 #pragma once
 
 #include <glf.hpp>
-#include "Constants.h"
+#include "ShaderConstants.h"
 
 class DebugDraw
 {
@@ -150,10 +150,6 @@ public:
 
     void display(int mipMapLevel)
     {
-        if(mipMapLevel > 0)
-        {
-            int debug = 0;
-        }
         unsigned int baseInstance = mipMapInfoArray[mipMapLevel].offset;
         unsigned int primCount = mipMapInfoArray[mipMapLevel].numVoxels;
 

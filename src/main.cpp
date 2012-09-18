@@ -1,5 +1,5 @@
 #include <glf.hpp>
-#include "Constants.h"
+#include "ShaderConstants.h"
 #include "Camera.h"
 #include "DebugDraw.h"
 
@@ -29,7 +29,7 @@ namespace
 
 unsigned int getNumMipMapLevels(unsigned int size)
 {
-    return (unsigned int)(glm::log2(float(sideLength)) + 1.5);
+    return (unsigned int)(glm::log2(float(size)) + 1.5);
 }
 
 void initGL()
@@ -48,10 +48,9 @@ void initGL()
     }
 
     // Create a dense 3D texture
-
     numMipMapLevels = getNumMipMapLevels(sideLength);
     glGenTextures(1, &voxelTexture);
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0 + VOXEL_TEXTURE_3D_BINDING);
     glBindTexture(GL_TEXTURE_3D, voxelTexture);
     glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, sideLength, sideLength, sideLength);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -75,8 +74,7 @@ void initGL()
                 if(glm::abs(distanceFromCenter - radius) < 1.0f)
                     textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
                 else
-                    textureData[textureIndex] = glm::u8vec4(0,0,0,0);//(glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-
+                    textureData[textureIndex] = glm::u8vec4(0,0,0,0);
             }
         }
     }
@@ -213,6 +211,7 @@ bool begin()
     debugDraw.init();
     debugDraw.createCubesFromVoxels(voxelTexture, sideLength, numMipMapLevels);
     camera.zoom(-200);
+
     return true;
 }
 
@@ -235,7 +234,7 @@ void display()
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 
 
-    // Update the per frame UBO (right now just the camera viewProjection matrix)
+    // Update the per frame UBO
     PerFrameUBO perFrame;
     perFrame.viewProjection = camera.createProjectionMatrix() * camera.createViewMatrix();
     perFrame.uCamLookAt = camera.lookAt;
@@ -255,7 +254,7 @@ void display()
 
     glf::swapBuffers();
 
-    frameTime += 0.005;
+    frameTime += 0.005f;
 }
 
 int main(int argc, char* argv[])
