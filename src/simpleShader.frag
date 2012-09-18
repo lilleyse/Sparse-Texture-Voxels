@@ -14,26 +14,29 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPosition;
     vec3 uCamUp;
+    float uTime;
     uvec2 uResolution;
 };
 
 void main()
 {
+    float aspect = float(uResolution.x)/float(uResolution.y);
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
     
-    /* CAMERA RAY */
-    vec3 C = normalize(uCamLookAt-uCamPosition);
-    vec3 A = normalize(cross(C,uCamUp));
-    vec3 B = -(float(uResolution.y)/float(uResolution.x))*normalize(cross(A,C));
-    
-    // scale A and B by root3/3 : fov = 30 degrees
-    vec3 ro = uCamPosition+C + (2.0*uv.x-1.0)*0.57735027*A + (2.0*uv.y-1.0)*0.57735027*B;
-    vec3 rd = normalize(ro-uCamPosition);
+    ///* CAMERA RAY */
+    //vec3 C = normalize(uCamLookAt-uCamPosition);
+    //vec3 A = normalize(cross(C,uCamUp));
+    //vec3 B = -1.0/(aspect)*normalize(cross(A,C));
+    //
+    //// scale A and B by root3/3 : fov = 30 degrees
+    //vec3 ro = uCamPosition+C + (2.0*uv.x-1.0)*0.57735027*A + (2.0*uv.y-1.0)*0.57735027*B;
+    //vec3 rd = normalize(ro-uCamPosition);
+    //
+    //fragColor = vec4(rd, 1.0);
     
     // Based on the screen coordinates, sample the front-facing layer of the 3D texture
-    // vec3 textureIndex = vec3(uv, 0.0);
-    // fragColor = texture(testTexture, textureIndex);
-    
-    fragColor = vec4(rd, 1.0);
+    uv.x *= aspect;  // correct to square
+    vec3 textureIndex = vec3(uv, fract(uTime));
+    fragColor = texture(testTexture, textureIndex);
 }
