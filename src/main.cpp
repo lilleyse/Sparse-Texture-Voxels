@@ -142,7 +142,7 @@ void initGL()
 
     // Create shader program
     GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/simpleShader.vert");
-    GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/simpleShader.frag");
+    GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/raycast.frag");
 
     fullScreenProgram = glCreateProgram();
     glAttachShader(fullScreenProgram, vertexShaderObject);
