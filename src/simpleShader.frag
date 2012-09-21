@@ -118,14 +118,14 @@ void main()
     float aspect = float(uResolution.x)/float(uResolution.y);
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
-    
-    //vec3 CAMLOOK = uCamLookAt;
-    //vec3 CAMPOS = uCamPosition;
-    //vec3 CAMUP = uCamUp;
         
-    vec3 CAMLOOK = uCamLookAt;//vec3(0.5);
-    vec3 CAMPOS = uCamPosition;//vec3(2.0, 2.0, 4.0);
-    vec3 CAMUP = uCamUp;//vec3(0.0, 1.0, 0.0);
+    //vec3 CAMLOOK = vec3(0.5);
+    //vec3 CAMPOS = vec3(2.0, 2.0, 4.0);
+    //vec3 CAMUP = vec3(0.0, 1.0, 0.0);
+
+    vec3 CAMLOOK = uCamLookAt;
+    vec3 CAMPOS = uCamPosition;
+    vec3 CAMUP = uCamUp;
 
     /* CAMERA RAY */
     vec3 C = normalize(CAMLOOK-CAMPOS);

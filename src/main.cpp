@@ -35,7 +35,6 @@ unsigned int getNumMipMapLevels(unsigned int size)
 
 void initGL()
 {
-
     // Debug output
     if(glf::checkExtension("GL_ARB_debug_output"))
     {
@@ -220,7 +219,6 @@ bool begin()
     debugDraw.createCubesFromVoxels(voxelTexture, sideLength, numMipMapLevels);
     
     camera.setFarNearPlanes(.01f, 100.0f);
-    camera.zoom(-2.0f);
     camera.lookAt = glm::vec3(0.5f);
 
     return true;
