@@ -171,7 +171,7 @@ void initGL()
 void mouseEvent()
 {
     camera.rotate(Window.RotationCurrent.x, Window.RotationCurrent.y);
-    camera.zoom(-Window.TranlationCurrent.y*0.20);
+    camera.zoom(-Window.TranlationCurrent.y*0.20f);
 }
 
 void keyboardEvent(unsigned char keyCode)

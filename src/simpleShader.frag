@@ -13,7 +13,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
     vec3 uCamLookAt;
-    vec3 uCamPosition;
+    vec3 uCamPos;
     vec3 uCamUp;
     uvec2 uResolution;
     float uTime;
