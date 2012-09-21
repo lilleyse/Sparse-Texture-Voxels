@@ -93,6 +93,25 @@ bool cubeVolumeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
+// special case, for optimization
+bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {    
+    vec3 tMin = -ro / rd;
+    vec3 tMax = (1.0-ro) / rd;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+    
+    if (tNear<tFar && tFar>0.0) {
+        // difference here
+        // if inside, instead of returning far plane, return ray origin
+	    t = tNear>0.0 ? tNear : 0.0;
+	    return true;
+    }
+    
+    return false;
+}
+
 // simple alpha blending
 vec4 raymarchSimple(vec3 ro, vec3 rd) {
   vec3 step = rd*gStepSize;
@@ -144,12 +163,32 @@ float getTransmittance(vec3 ro, vec3 rd) {
   return tm;
 }
 
+// raymarch transmittance from r0 to r1
+float getTransmittanceToDst(vec3 r0, vec3 r1) {
+  vec3 dir = normalize(r1-r0);
+  vec3 step = dir*gStepSize;
+  vec3 pos = r0;
+  
+  float tm = 1.0;
+  
+  for (int i=0; i<MAX_STEPS; ++i) {
+    tm *= exp( -TRANSMIT_K*gStepSize*texture(testTexture, pos).a );
+
+    pos += step;
+
+    // check if pos passed r1
+    if ( dot((r1-pos),dir) < 0.0 )
+        break;
+  }
+  
+  return tm;
+}
+
 // raymarch with light transmittance
 vec4 raymarchLight(vec3 ro, vec3 rd) {
   vec3 step = rd*gStepSize;
   vec3 pos = ro;
-  
-  
+    
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
   
@@ -162,8 +201,11 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
     
     // get contribution per light
     for (int k=0; k<1; ++k) {
-      vec3 ld = normalize( gLightPos[k]-pos );
-      float ltm = getTransmittance(pos,ld);
+      vec3 lo = gLightPos[k];
+      vec3 ld = normalize(pos-lo);
+      float t;
+      textureVolumeIntersect(lo, ld, t);
+      float ltm = getTransmittanceToDst(lo+ld*(t+EPS),pos);
       
       col += (1.0-dtm) * texel.rgb*gLightCol[k] * tm * ltm;
     }
@@ -208,7 +250,7 @@ void main()
 
     // calc entry point
     float t;
-    if (cubeVolumeIntersect(vec3(0.0), vec3(1.0), ro, rd, t)) {
+    if (textureVolumeIntersect(ro, rd, t)) {
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
