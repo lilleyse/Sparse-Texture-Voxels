@@ -68,22 +68,24 @@ void initGL()
     glm::vec3 center = glm::vec3(sideLength/2, sideLength/2, sideLength/2);
     float radius = sideLength/4.0f;
 
+    unsigned int half = sideLength/2;
+    unsigned int textureIndex = 0;
     for(unsigned int i = 0; i < sideLength; i++)
-    {
-        for(unsigned int j = 0; j < sideLength; j++)
-        {
-            for(unsigned int k = 0; k < sideLength; k++)
-            {
-                unsigned int textureIndex = sideLength*sideLength*i + sideLength*j + k;
+    for(unsigned int j = 0; j < sideLength; j++)
+    for(unsigned int k = 0; k < sideLength; k++) {
 
-                float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
-                //if(glm::abs(distanceFromCenter - radius) < 1.0f)
-                    //textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-                    textureData[textureIndex] = glm::u8vec4(255,0,0,127);
-                //else
-                //    textureData[textureIndex] = glm::u8vec4(0,0,0,0);
-            }
-        }
+        if (i<half && j<half && k<half)
+            textureData[textureIndex] = glm::u8vec4(255,0,0,127);
+        else if (i>half && j<half && k<half)
+            textureData[textureIndex] = glm::u8vec4(0,255,0,127);
+        else if (i<half && j>half && k<half)
+            textureData[textureIndex] = glm::u8vec4(0,0,255,127);
+        else if (i>half && j>half && k<half)
+            textureData[textureIndex] = glm::u8vec4(255,255,255,127);
+        else
+            textureData[textureIndex] = glm::u8vec4(127,127,127,127);
+
+        textureIndex++;
     }
 
     // Fill entire texture (first mipmap level)
