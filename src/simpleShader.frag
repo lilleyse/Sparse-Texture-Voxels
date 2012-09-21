@@ -48,6 +48,7 @@ float gStepSize;
 // PROGRAM
 //---------------------------------------------------------
 
+// cube intersect
 bool cubeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {    
     vec3 tMin = (bMin-ro) / rd;
     vec3 tMax = (bMax-ro) / rd;
@@ -58,6 +59,25 @@ bool cubeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {
     
     if (tNear<tFar && tFar>0.0) {
 	    t = tNear>0.0 ? tNear : tFar;
+	    return true;
+    }
+    
+    return false;
+}
+
+// cube intersect, but t returns intersect of volume, not just sides
+bool cubeVolumeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {    
+    vec3 tMin = (bMin-ro) / rd;
+    vec3 tMax = (bMax-ro) / rd;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+    
+    if (tNear<tFar && tFar>0.0) {
+        // difference here
+        // if inside, instead of returning far plane, return ray origin
+	    t = tNear>0.0 ? tNear : 0.0;
 	    return true;
     }
     
@@ -122,7 +142,7 @@ void main()
     // calc entry point
     {
         float t;
-        if (cubeIntersect(vec3(0.0), vec3(1.0), ro, rd, t)) {
+        if (cubeVolumeIntersect(vec3(0.0), vec3(1.0), ro, rd, t)) {
             // step_size = root_three / max_steps ; to get through diagonal
             gStepSize = ROOTTHREE / float(MAX_STEPS);
 
