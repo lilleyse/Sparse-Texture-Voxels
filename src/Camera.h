@@ -24,7 +24,7 @@ struct Camera
         currYRads = 0.0f;
         nearPlane = 1.0f;
         farPlane = 1000.0f;
-        fieldOfView = 45.0f;
+        fieldOfView = 30.0f;
         aspectRatio = 1.0f;
         cameraPos = glm::vec3(0,0,0);
         lookDir = glm::vec3(0,0,1);

@@ -13,7 +13,7 @@ struct PerFrameUBO
     glm::mat4 viewProjection;
     glm::vec3 uCamLookAt;
     float padding1;
-    glm::vec3 uCamPosition;
+    glm::vec3 uCamPos;
     float padding2;
     glm::vec3 uCamUp;
     float padding3;
