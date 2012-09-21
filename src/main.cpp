@@ -6,10 +6,10 @@
 namespace
 {
     std::string const SAMPLE_NAME("Sparse Texture Voxels");
-    int const SAMPLE_SIZE_WIDTH(800);
-    int const SAMPLE_SIZE_HEIGHT(600);
-    int const SAMPLE_MAJOR_VERSION(3);
-    int const SAMPLE_MINOR_VERSION(3);
+    const int SAMPLE_SIZE_WIDTH(320);
+    const int SAMPLE_SIZE_HEIGHT(240);
+    const int SAMPLE_MAJOR_VERSION(3);
+    const int SAMPLE_MINOR_VERSION(3);
 
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
 
@@ -25,6 +25,7 @@ namespace
     unsigned int numMipMapLevels;
     unsigned int debugMipMapLevel;
     float frameTime = 0.0f;
+    const float FRAME_TIME_DELTA = 0.01f;
 }
 
 unsigned int getNumMipMapLevels(unsigned int size)
@@ -55,6 +56,11 @@ void initGL()
     glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, sideLength, sideLength, sideLength);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
 
     // Create a thinly voxelized sphere shape
     std::vector<glm::u8vec4> textureData(sideLength*sideLength*sideLength);
@@ -71,10 +77,11 @@ void initGL()
                 unsigned int textureIndex = sideLength*sideLength*i + sideLength*j + k;
 
                 float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
-                if(glm::abs(distanceFromCenter - radius) < 1.0f)
-                    textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-                else
-                    textureData[textureIndex] = glm::u8vec4(0,0,0,0);
+                //if(glm::abs(distanceFromCenter - radius) < 1.0f)
+                    //textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
+                    textureData[textureIndex] = glm::u8vec4(255,0,0,127);
+                //else
+                //    textureData[textureIndex] = glm::u8vec4(0,0,0,0);
             }
         }
     }
@@ -146,8 +153,6 @@ void initGL()
     glf::checkProgram(fullScreenProgram);
 
 
-
-
     // Backface culling
 
     glEnable(GL_CULL_FACE);
@@ -165,7 +170,7 @@ void initGL()
 void mouseEvent()
 {
     camera.rotate(Window.RotationCurrent.x, Window.RotationCurrent.y);
-    camera.zoom(-Window.TranlationCurrent.y*4);
+    camera.zoom(-Window.TranlationCurrent.y*0.25);
 }
 
 void keyboardEvent(unsigned char keyCode)
@@ -210,7 +215,6 @@ bool begin()
     debugMipMapLevel = 0;
     debugDraw.init();
     debugDraw.createCubesFromVoxels(voxelTexture, sideLength, numMipMapLevels);
-    camera.zoom(-200);
 
     return true;
 }
@@ -254,7 +258,7 @@ void display()
 
     glf::swapBuffers();
 
-    frameTime += 0.005f;
+    frameTime += FRAME_TIME_DELTA;
 }
 
 int main(int argc, char* argv[])
