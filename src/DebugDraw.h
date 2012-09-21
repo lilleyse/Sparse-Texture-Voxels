@@ -103,13 +103,14 @@ public:
         glBindTexture(GL_TEXTURE_3D, voxelTexture);
 
         int mipMapSideLength = textureSideLength;
-        int voxelScale = 1;
+        float voxelScale = 1.0f/textureSideLength;
+        float cubeOffset = -textureSideLength*voxelScale/2.0f;
+
         for(int i = 0; i < numMipMaps; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = voxelArray.size();
 
-            float scale = (float)(voxelScale);
             std::vector<glm::u8vec4> imageData(mipMapSideLength*mipMapSideLength*mipMapSideLength);
             glGetTexImage(GL_TEXTURE_3D, i, GL_RGBA, GL_UNSIGNED_BYTE, &imageData[0]);
 
@@ -120,7 +121,7 @@ public:
                     for(int l = 0; l < mipMapSideLength; l++)
                     {
                         // apply an offset to the position because the origin of the cube model is in its center rather than a corner
-                        glm::vec3 position = glm::vec3(j*scale,k*scale,l*scale) + glm::vec3(scale/2);
+                        glm::vec3 position = cubeOffset +  glm::vec3(j*voxelScale,k*voxelScale,l*voxelScale) + glm::vec3(voxelScale/2);
                         unsigned int textureIndex = mipMapSideLength*mipMapSideLength*j + mipMapSideLength*k + l;
 
                         glm::u8vec4 color = imageData[textureIndex];
@@ -128,7 +129,7 @@ public:
                         {
                             Voxel voxel;
                             voxel.color = glm::vec4(color)/255.0f;
-                            voxel.transformation = glm::vec4(position, scale);
+                            voxel.transformation = glm::vec4(position, voxelScale);
                             voxelArray.push_back(voxel);
                         }
                     }

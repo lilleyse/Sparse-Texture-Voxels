@@ -21,7 +21,7 @@ namespace
     ThirdPersonCamera camera;
     DebugDraw debugDraw;
 
-    unsigned int sideLength = 64;
+    unsigned int sideLength = 8;
     unsigned int numMipMapLevels;
     unsigned int debugMipMapLevel;
     float frameTime = 0.0f;
@@ -76,11 +76,11 @@ void initGL()
 
         if (i<half && j<half && k<half)
             textureData[textureIndex] = glm::u8vec4(255,0,0,127);
-        else if (i>half && j<half && k<half)
+        else if (i>=half && j<half && k<half)
             textureData[textureIndex] = glm::u8vec4(0,255,0,127);
-        else if (i<half && j>half && k<half)
+        else if (i<half && j>=half && k<half)
             textureData[textureIndex] = glm::u8vec4(0,0,255,127);
-        else if (i>half && j>half && k<half)
+        else if (i>=half && j>=half && k<half)
             textureData[textureIndex] = glm::u8vec4(255,255,255,127);
         else
             textureData[textureIndex] = glm::u8vec4(127,127,127,127);
@@ -172,26 +172,28 @@ void initGL()
 void mouseEvent()
 {
     camera.rotate(Window.RotationCurrent.x, Window.RotationCurrent.y);
-    camera.zoom(-Window.TranlationCurrent.y*0.25);
+    camera.zoom(-Window.TranlationCurrent.y*0.20);
 }
 
 void keyboardEvent(unsigned char keyCode)
 {
+    float scale = .2f;
+
     if(keyCode == 'w')
     {
-        camera.zoom(10);
+        camera.zoom(scale);
     }
     else if(keyCode == 's')
     {
-        camera.zoom(-10);
+        camera.zoom(-scale);
     }
     else if(keyCode == 'a')
     {
-        camera.pan(-10, 0);
+        camera.pan(-scale, 0);
     }
     else if(keyCode == 'd')
     {
-        camera.pan(10, 0);
+        camera.pan(scale, 0);
     }
     else if(keyCode == 44)
     {
@@ -212,11 +214,14 @@ void keyboardEvent(unsigned char keyCode)
 
 bool begin()
 {
-
     initGL();
     debugMipMapLevel = 0;
     debugDraw.init();
     debugDraw.createCubesFromVoxels(voxelTexture, sideLength, numMipMapLevels);
+    
+    camera.setFarNearPlanes(.01f, 100.0f);
+    camera.zoom(-2.0f);
+    camera.lookAt = glm::vec3(0.5f);
 
     return true;
 }
@@ -229,7 +234,6 @@ bool end()
 
 void display()
 {
-
     // Basic GL stuff
     camera.setAspectRatio(Window.Size.x, Window.Size.y);
     glViewport(0, 0, Window.Size.x, Window.Size.y);

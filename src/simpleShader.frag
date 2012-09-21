@@ -103,7 +103,7 @@ void main()
     //vec3 CAMPOS = uCamPosition;
     //vec3 CAMUP = uCamUp;
         
-    vec3 CAMLOOK = vec3(0.5);
+    vec3 CAMLOOK = uCamLookAt;//vec3(0.5);
     vec3 CAMPOS = uCamPosition;//vec3(2.0, 2.0, 4.0);
     vec3 CAMUP = uCamUp;//vec3(0.0, 1.0, 0.0);
 

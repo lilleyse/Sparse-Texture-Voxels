@@ -7,6 +7,7 @@ struct Camera
     float currYRads;
     glm::vec3 upDir;
     glm::vec3 lookDir;
+    glm::vec3 lookAt;
     glm::vec3 cameraPos;
 
     float nearPlane;
@@ -25,6 +26,7 @@ struct Camera
         farPlane = 1000.0f;
         fieldOfView = 30.0f;
         aspectRatio = 1.0f;
+        cameraPos = glm::vec3(0,0,0);
         lookDir = glm::vec3(0,0,1);
     }
 
@@ -56,12 +58,11 @@ struct Camera
 struct ThirdPersonCamera : public Camera
 {
     float radius;
-    glm::vec3 lookAt;
 
     ThirdPersonCamera() : Camera()
     {
-        radius = 10.0f;
-        lookAt = glm::vec3(0.0f, 0.0f, 0.0f);
+        radius = 5.0f;
+        createViewMatrix();
     }
     ~ThirdPersonCamera(){}
 
@@ -109,7 +110,10 @@ struct ThirdPersonCamera : public Camera
 
 struct FirstPersonCamera : public Camera
 {
-    FirstPersonCamera() : Camera(){}
+    FirstPersonCamera() : Camera()
+    {
+        createViewMatrix();
+    }
     ~FirstPersonCamera(){}
 
     void pan(float x, float y)
@@ -124,8 +128,8 @@ struct FirstPersonCamera : public Camera
 
     void rotate(float x, float y)
     {
-        this->currXZRads += x/3.0f;
-        this->currYRads -= y/3.0f;
+        this->currXZRads += x;
+        this->currYRads -= y;
     }
 
     void zoom(float distance)
@@ -149,6 +153,7 @@ struct FirstPersonCamera : public Camera
 
         this->lookDir = glm::normalize(currPos);
         this->upDir = glm::normalize(glm::cross(currPos, UpRotAxis));
+        this->lookAt = cameraPos + lookDir;
 
         viewMatrix = glm::lookAt(cameraPos, cameraPos + lookDir, upDir);
         return viewMatrix;
