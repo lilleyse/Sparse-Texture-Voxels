@@ -140,17 +140,15 @@ void main()
     vec4 cout;
 
     // calc entry point
-    {
-        float t;
-        if (cubeVolumeIntersect(vec3(0.0), vec3(1.0), ro, rd, t)) {
-            // step_size = root_three / max_steps ; to get through diagonal
-            gStepSize = ROOTTHREE / float(MAX_STEPS);
+    float t;
+    if (cubeVolumeIntersect(vec3(0.0), vec3(1.0), ro, rd, t)) {
+        // step_size = root_three / max_steps ; to get through diagonal
+        gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-            cout = raymarchSimple(ro+rd*(t+EPS), rd);
-        }
-        else {
-            cout = vec4(0.0);
-        }
+        cout = raymarchSimple(ro+rd*(t+EPS), rd);
+    }
+    else {
+        cout = vec4(0.0);
     }
 
     // test, sample the 3D texture

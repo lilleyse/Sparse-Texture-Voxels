@@ -6,8 +6,8 @@
 namespace
 {
     std::string const SAMPLE_NAME("Sparse Texture Voxels");
-    const int SAMPLE_SIZE_WIDTH(800);
-    const int SAMPLE_SIZE_HEIGHT(600);
+    const int SAMPLE_SIZE_WIDTH(600);
+    const int SAMPLE_SIZE_HEIGHT(400);
     const int SAMPLE_MAJOR_VERSION(3);
     const int SAMPLE_MINOR_VERSION(3);
 
