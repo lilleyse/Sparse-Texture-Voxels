@@ -200,7 +200,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
     tm *= dtm;
     
     // get contribution per light
-    for (int k=0; k<1; ++k) {
+    for (int k=0; k<LIGHT_NUM; ++k) {
       vec3 lo = gLightPos[k];
       vec3 ld = normalize(pos-lo);
       float t;
