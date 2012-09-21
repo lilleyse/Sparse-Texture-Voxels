@@ -6,10 +6,10 @@
 namespace
 {
     std::string const SAMPLE_NAME("Sparse Texture Voxels");
-    int const SAMPLE_SIZE_WIDTH(800);
-    int const SAMPLE_SIZE_HEIGHT(600);
-    int const SAMPLE_MAJOR_VERSION(3);
-    int const SAMPLE_MINOR_VERSION(3);
+    const int SAMPLE_SIZE_WIDTH(800);
+    const int SAMPLE_SIZE_HEIGHT(600);
+    const int SAMPLE_MAJOR_VERSION(3);
+    const int SAMPLE_MINOR_VERSION(3);
 
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
 
@@ -25,6 +25,7 @@ namespace
     unsigned int numMipMapLevels;
     unsigned int debugMipMapLevel;
     float frameTime = 0.0f;
+    const float FRAME_TIME_DELTA = 0.01f;
 }
 
 unsigned int getNumMipMapLevels(unsigned int size)
@@ -34,7 +35,6 @@ unsigned int getNumMipMapLevels(unsigned int size)
 
 void initGL()
 {
-
     // Debug output
     if(glf::checkExtension("GL_ARB_debug_output"))
     {
@@ -55,6 +55,11 @@ void initGL()
     glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, sideLength, sideLength, sideLength);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+    float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
 
     // Create a thinly voxelized sphere shape
     std::vector<glm::u8vec4> textureData(sideLength*sideLength*sideLength);
@@ -62,32 +67,24 @@ void initGL()
     glm::vec3 center = glm::vec3(sideLength/2, sideLength/2, sideLength/2);
     float radius = sideLength/4.0f;
 
+    unsigned int half = sideLength/2;
+    unsigned int textureIndex = 0;
     for(unsigned int i = 0; i < sideLength; i++)
-    {
-        for(unsigned int j = 0; j < sideLength; j++)
-        {
-            for(unsigned int k = 0; k < sideLength; k++)
-            {
-                unsigned int textureIndex = sideLength*sideLength*i + sideLength*j + k;
+    for(unsigned int j = 0; j < sideLength; j++)
+    for(unsigned int k = 0; k < sideLength; k++) {
 
-                if(i == sideLength/2 && j == sideLength/2 && k == sideLength/2)
-                {
-                    //textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-                }
-                else
-                {
-                    //textureData[textureIndex] = glm::u8vec4(0,0,0,0);
-                }
-                
-               
-                
-                //float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
-                //if(glm::abs(distanceFromCenter - radius) < 1.0f)
-                    textureData[textureIndex] = (glm::u8vec4)(glm::linearRand(glm::vec4(0,0,0,255), glm::vec4(255, 255, 255, 255)));
-                //else
-                //   textureData[textureIndex] = glm::u8vec4(0,0,0,0);
-            }
-        }
+        if (i<half && j<half && k<half)
+            textureData[textureIndex] = glm::u8vec4(255,0,0,127);
+        else if (i>=half && j<half && k<half)
+            textureData[textureIndex] = glm::u8vec4(0,255,0,127);
+        else if (i<half && j>=half && k<half)
+            textureData[textureIndex] = glm::u8vec4(0,0,255,127);
+        else if (i>=half && j>=half && k<half)
+            textureData[textureIndex] = glm::u8vec4(255,255,255,127);
+        else
+            textureData[textureIndex] = glm::u8vec4(127,127,127,127);
+
+        textureIndex++;
     }
 
     // Fill entire texture (first mipmap level)
@@ -145,7 +142,7 @@ void initGL()
 
     // Create shader program
     GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/simpleShader.vert");
-    GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/simpleShader.frag");
+    GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/raycast.frag");
 
     fullScreenProgram = glCreateProgram();
     glAttachShader(fullScreenProgram, vertexShaderObject);
@@ -155,8 +152,6 @@ void initGL()
 
     glLinkProgram(fullScreenProgram);
     glf::checkProgram(fullScreenProgram);
-
-
 
 
     // Backface culling
@@ -176,7 +171,7 @@ void initGL()
 void mouseEvent()
 {
     camera.rotate(Window.RotationCurrent.x, Window.RotationCurrent.y);
-    camera.zoom(-Window.TranlationCurrent.y/10);
+    camera.zoom(-Window.TranlationCurrent.y*0.20f);
 }
 
 void keyboardEvent(unsigned char keyCode)
@@ -218,13 +213,13 @@ void keyboardEvent(unsigned char keyCode)
 
 bool begin()
 {
-
     initGL();
     debugMipMapLevel = 0;
     debugDraw.init();
     debugDraw.createCubesFromVoxels(voxelTexture, sideLength, numMipMapLevels);
-    camera.zoom(-2.0f);
+    
     camera.setFarNearPlanes(.01f, 100.0f);
+    camera.lookAt = glm::vec3(0.5f);
 
     return true;
 }
@@ -237,7 +232,6 @@ bool end()
 
 void display()
 {
-
     // Basic GL stuff
     camera.setAspectRatio(Window.Size.x, Window.Size.y);
     glViewport(0, 0, Window.Size.x, Window.Size.y);
@@ -252,7 +246,7 @@ void display()
     PerFrameUBO perFrame;
     perFrame.viewProjection = camera.createProjectionMatrix() * camera.createViewMatrix();
     perFrame.uCamLookAt = camera.lookAt;
-    perFrame.uCamPosition = camera.cameraPos;
+    perFrame.uCamPos = camera.cameraPos;
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::uvec2(Window.Size.x, Window.Size.y);
     perFrame.uTime = frameTime;
@@ -260,15 +254,15 @@ void display()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    debugDraw.display(debugMipMapLevel);
+    //debugDraw.display(debugMipMapLevel);
 
-    //glUseProgram(fullScreenProgram);
-    //glBindVertexArray(fullScreenVertexArray);
-    //glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    glUseProgram(fullScreenProgram);
+    glBindVertexArray(fullScreenVertexArray);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
     glf::swapBuffers();
 
-    frameTime += 0.005f;
+    frameTime += FRAME_TIME_DELTA;
 }
 
 int main(int argc, char* argv[])
