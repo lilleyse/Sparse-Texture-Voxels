@@ -13,7 +13,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
     vec3 uCamLookAt;
-    vec3 uCamPosition;
+    vec3 uCamPos;
     vec3 uCamUp;
     uvec2 uResolution;
     float uTime;
@@ -124,7 +124,7 @@ void main()
     //vec3 CAMUP = vec3(0.0, 1.0, 0.0);
 
     vec3 CAMLOOK = uCamLookAt;
-    vec3 CAMPOS = uCamPosition;
+    vec3 CAMPOS = uCamPos;
     vec3 CAMUP = uCamUp;
 
     /* CAMERA RAY */

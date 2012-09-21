@@ -246,7 +246,7 @@ void display()
     PerFrameUBO perFrame;
     perFrame.viewProjection = camera.createProjectionMatrix() * camera.createViewMatrix();
     perFrame.uCamLookAt = camera.lookAt;
-    perFrame.uCamPosition = camera.cameraPos;
+    perFrame.uCamPos = camera.cameraPos;
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::uvec2(Window.Size.x, Window.Size.y);
     perFrame.uTime = frameTime;
