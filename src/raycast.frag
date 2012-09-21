@@ -40,9 +40,18 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 layout (location = 0, index = 0) out vec4 fragColor;
 layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
 
-const uint MAX_STEPS = 128;
+const uint MAX_STEPS = 64;
 const float ALPHA_THRESHOLD = 0.95;
+const float TRANSMIT_MIN = 0.05;
+const float TRANSMIT_K = 8.0;
+
 float gStepSize;
+
+// DEBUGTEST: change to uniform later
+const uint LIGHT_NUM = 1;
+vec3 gLightPos[LIGHT_NUM];
+vec3 gLightCol[LIGHT_NUM];
+
 
 //---------------------------------------------------------
 // PROGRAM
@@ -113,28 +122,86 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   return color;
 }
 
+// raymarch to get transmittance
+float getTransmittance(vec3 ro, vec3 rd) {
+  vec3 step = rd*gStepSize;
+  vec3 pos = ro;
+  
+  float tm = 1.0;
+  
+  for (int i=0; i<MAX_STEPS; ++i) {
+    tm *= exp( -TRANSMIT_K*gStepSize*texture(testTexture, pos).a );
+
+    pos += step;
+    
+    if (tm < TRANSMIT_MIN ||
+      pos.x > 1.0 || pos.x < 0.0 ||
+      pos.y > 1.0 || pos.y < 0.0 ||
+      pos.z > 1.0 || pos.z < 0.0)
+      break;
+  }
+  
+  return tm;
+}
+
+// raymarch with light transmittance
+vec4 raymarchLight(vec3 ro, vec3 rd) {
+  vec3 step = rd*gStepSize;
+  vec3 pos = ro;
+  
+  
+  vec3 col = vec3(0.0);   // accumulated color
+  float tm = 1.0;         // accumulated transmittance
+  
+  for (int i=0; i<MAX_STEPS; ++i) {
+    vec4 texel = texture(testTexture, pos);
+
+    // delta transmittance
+    float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );
+    tm *= dtm;
+    
+    // get contribution per light
+    for (int k=0; k<1; ++k) {
+      vec3 ld = normalize( gLightPos[k]-pos );
+      float ltm = getTransmittance(pos,ld);
+      
+      col += (1.0-dtm) * texel.rgb*gLightCol[k] * tm * ltm;
+    }
+    
+    pos += step;
+    
+    if (tm < TRANSMIT_MIN ||
+      pos.x > 1.0 || pos.x < 0.0 ||
+      pos.y > 1.0 || pos.y < 0.0 ||
+      pos.z > 1.0 || pos.z < 0.0)
+      break;
+  }
+  
+  float alpha = 1.0-tm;
+  return vec4(col/alpha, alpha);
+}
+
 void main()
 {
     float aspect = float(uResolution.x)/float(uResolution.y);
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
-        
-    //vec3 CAMLOOK = vec3(0.5);
-    //vec3 CAMPOS = vec3(2.0, 2.0, 4.0);
-    //vec3 CAMUP = vec3(0.0, 1.0, 0.0);
 
-    vec3 CAMLOOK = uCamLookAt;
-    vec3 CAMPOS = uCamPos;
-    vec3 CAMUP = uCamUp;
+    // DEBUGTEST: manually init lights
+    gLightCol[0] = vec3(1.0, 0.9, 0.8);
+    gLightPos[0] = vec3(0.0, 2.0, 0.0);
+    gLightPos[0].x = 2.0*sin(uTime);
+    gLightPos[0].z = 2.0*cos(uTime);
+
 
     /* CAMERA RAY */
-    vec3 C = normalize(CAMLOOK-CAMPOS);
-    vec3 A = normalize(cross(C,CAMUP));
+    vec3 C = normalize(uCamLookAt-uCamPos);
+    vec3 A = normalize(cross(C,uCamUp));
     vec3 B = -1.0/(aspect)*normalize(cross(A,C));
     
     // scale A and B by root3/3 : fov = 30 degrees
-    vec3 ro = CAMPOS+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
-    vec3 rd = normalize(ro-CAMPOS);
+    vec3 ro = uCamPos+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
+    vec3 rd = normalize(ro-uCamPos);
 
     // output color
     vec4 cout;
@@ -145,7 +212,7 @@ void main()
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchSimple(ro+rd*(t+EPS), rd);
+        cout = raymarchLight(ro+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);
