@@ -111,14 +111,16 @@ public:
 
             std::vector<glm::u8vec4> imageData(mipMapVoxelGridLength*mipMapVoxelGridLength*mipMapVoxelGridLength);
             glGetTexImage(GL_TEXTURE_3D, i, GL_RGBA, GL_UNSIGNED_BYTE, &imageData[0]);
-            
+
+            // apply an offset to the position because the origin of the cube model is in its center rather than a corner
+            glm::vec3 offset = glm::vec3(-mipMapVoxelGridLength * voxelScale / 2.0f) + glm::vec3(voxelScale/2);
+
             unsigned int textureIndex = 0;
             for(int j = 0; j < mipMapVoxelGridLength; j++)
             for(int k = 0; k < mipMapVoxelGridLength; k++)
             for(int l = 0; l < mipMapVoxelGridLength; l++)
             {
-                // apply an offset to the position because the origin of the cube model is in its center rather than a corner
-                glm::vec3 position = glm::vec3(j*voxelScale,k*voxelScale,l*voxelScale) + glm::vec3(voxelScale/2);
+                glm::vec3 position = glm::vec3(j*voxelScale,k*voxelScale,l*voxelScale) + offset;
                 glm::u8vec4 color = imageData[textureIndex];
                 if(color.a != 0)
                 {
@@ -171,7 +173,6 @@ public:
     bool setMipMapLevel(int level)
     {
         this->currentMipMapLevel = std::min(std::max(0, level), this->maxMipMapLevel - 1);
-        std::cout << this->currentMipMapLevel << std::endl;
         return (this->currentMipMapLevel != level);
     }
 };
