@@ -62,6 +62,7 @@ void createVoxelTexture()
     float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
     glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
 
+
     // Create the voxel data
     std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
 

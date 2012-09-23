@@ -160,6 +160,7 @@ public:
             this->setMipMapLevel(this->getMipMapLevel() - 1);
         }
         else if(keyCode == 46)
+
         {
             this->setMipMapLevel(this->getMipMapLevel() + 1);
         }
