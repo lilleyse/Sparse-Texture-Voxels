@@ -13,7 +13,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
     vec3 uCamLookAt;
-    vec3 uCamPos;
+    vec3 uCamPosition;
     vec3 uCamUp;
     uvec2 uResolution;
     float uTime;
@@ -237,13 +237,13 @@ void main()
 
 
     /* CAMERA RAY */
-    vec3 C = normalize(uCamLookAt-uCamPos);
+    vec3 C = normalize(uCamLookAt-uCamPosition);
     vec3 A = normalize(cross(C,uCamUp));
     vec3 B = -1.0/(aspect)*normalize(cross(A,C));
     
     // scale A and B by root3/3 : fov = 30 degrees
-    vec3 ro = uCamPos+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
-    vec3 rd = normalize(ro-uCamPos);
+    vec3 ro = uCamPosition+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
+    vec3 rd = normalize(ro-uCamPosition);
 
     // output color
     vec4 cout;
