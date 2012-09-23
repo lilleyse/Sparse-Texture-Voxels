@@ -155,11 +155,11 @@ public:
     virtual void keyboardEvent(unsigned char keyCode)
     {
 
-        if(keyCode == 45)
+        if(keyCode == 44)
         {
             this->setMipMapLevel(this->getMipMapLevel() - 1);
         }
-        else if(keyCode == 43)
+        else if(keyCode == 46)
         {
             this->setMipMapLevel(this->getMipMapLevel() + 1);
         }
