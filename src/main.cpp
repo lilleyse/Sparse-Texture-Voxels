@@ -4,6 +4,7 @@
 #include "DebugDraw.h"
 #include "VoxelRaycaster.h"
 #include "Utils.h"
+#include "MipMapGenerator.h"
 
 enum DemoType {DEBUGDRAW, VOXELRAYCASTER, NONE};
 
@@ -23,6 +24,8 @@ namespace
     GLuint perFrameUBO;
 
     ThirdPersonCamera camera;
+
+    MipMapGenerator mipMapGenerator;
 
     //Demo Types
     DebugDraw debugDraw;
@@ -89,7 +92,7 @@ void createVoxelTexture()
     glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData[0]);
 
     // Generate mipmaps automatically
-    glGenerateMipmap(GL_TEXTURE_3D);
+    mipMapGenerator.generateMipMapCPU(voxelTexture, voxelGridLength, numMipMapLevels);
 }
 void initGL()
 {
