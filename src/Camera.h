@@ -8,7 +8,7 @@ struct Camera
     glm::vec3 upDir;
     glm::vec3 lookDir;
     glm::vec3 lookAt;
-    glm::vec3 cameraPos;
+    glm::vec3 position;
 
     float nearPlane;
     float farPlane;
@@ -26,11 +26,11 @@ struct Camera
         farPlane = 1000.0f;
         fieldOfView = 30.0f;
         aspectRatio = 1.0f;
-        cameraPos = glm::vec3(0,0,0);
+        position = glm::vec3(0,0,0);
         lookDir = glm::vec3(0,0,1);
     }
 
-    virtual ~Camera(){};
+    virtual ~Camera(){}
 
     void setFarNearPlanes(float nearPlane, float farPlane)
     {
@@ -98,12 +98,12 @@ struct ThirdPersonCamera : public Camera
         currPos = glm::vec3(xRotation * glm::vec4(currPos, 0.0));
 
         glm::vec3 tempVec = currPos * float(radius);
-        this->cameraPos = tempVec + lookAt;
+        this->position = tempVec + lookAt;
 
         this->upDir = glm::normalize(glm::cross(currPos, UpRotAxis));
-        this->lookDir = glm::normalize(this->lookAt - this->cameraPos);
+        this->lookDir = glm::normalize(this->lookAt - this->position);
 
-        viewMatrix = glm::lookAt(cameraPos, cameraPos + lookDir, upDir);
+        viewMatrix = glm::lookAt(position, position + lookDir, upDir);
         return viewMatrix;
     }
 };
@@ -122,8 +122,8 @@ struct FirstPersonCamera : public Camera
         glm::vec3 up = this->upDir;
         glm::vec3 moveX = x*right;
         glm::vec3 moveY = y*up;
-        this->cameraPos += moveX;
-        this->cameraPos += moveY;
+        this->position += moveX;
+        this->position += moveY;
     }
 
     void rotate(float x, float y)
@@ -134,7 +134,7 @@ struct FirstPersonCamera : public Camera
 
     void zoom(float distance)
     {
-        this->cameraPos += distance*this->lookDir;
+        this->position += distance*this->lookDir;
     }
 
     glm::mat4 createViewMatrix(void)
@@ -153,9 +153,9 @@ struct FirstPersonCamera : public Camera
 
         this->lookDir = glm::normalize(currPos);
         this->upDir = glm::normalize(glm::cross(currPos, UpRotAxis));
-        this->lookAt = cameraPos + lookDir;
+        this->lookAt = position + lookDir;
 
-        viewMatrix = glm::lookAt(cameraPos, cameraPos + lookDir, upDir);
+        viewMatrix = glm::lookAt(position, position + lookDir, upDir);
         return viewMatrix;
     }
 };
