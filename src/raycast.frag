@@ -48,7 +48,7 @@ const float TRANSMIT_K = 8.0;
 float gStepSize;
 
 // DEBUGTEST: change to uniform later
-const uint LIGHT_NUM = 1;
+const int LIGHT_NUM = 1;
 vec3 gLightPos[LIGHT_NUM];
 vec3 gLightCol[LIGHT_NUM];
 
