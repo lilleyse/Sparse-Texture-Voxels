@@ -14,7 +14,7 @@ public:
     VoxelRaycaster(){}
     virtual ~VoxelRaycaster(){}
 
-    virtual void begin()
+    void begin()
     {
         // Create buffer objects and vao for a full screen quad
         const unsigned int numVertices = 4;
@@ -65,12 +65,10 @@ public:
         glf::checkProgram(fullScreenProgram);
     }
 
-    virtual void display()
+    void display()
     {
         glUseProgram(fullScreenProgram);
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
-
-    virtual void keyboardEvent(unsigned char keyCode){}
 };

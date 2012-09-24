@@ -36,8 +36,8 @@ public:
 
     void begin(GLuint voxelTexture, int voxelGridLength)
     {
-        this->voxelGridLength = voxelGridLength;
         this->voxelTexture = voxelTexture;
+        this->voxelGridLength = voxelGridLength;
         this->maxMipMapLevel = Utils::getNumMipMapLevels(voxelGridLength);
 
         // Create buffer objects and vao
@@ -93,8 +93,6 @@ public:
 
         glLinkProgram(voxelDebugProgram);
         glf::checkProgram(voxelDebugProgram);
-
-        createCubesFromVoxels();
     }
     void createCubesFromVoxels()
     {
@@ -142,7 +140,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    virtual void display()
+    void display()
     {
         unsigned int baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
         unsigned int primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
@@ -150,19 +148,6 @@ public:
         glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
-    }
-
-    virtual void keyboardEvent(unsigned char keyCode)
-    {
-
-        if(keyCode == 44)
-        {
-            this->setMipMapLevel(this->getMipMapLevel() - 1);
-        }
-        else if(keyCode == 46)
-        {
-            this->setMipMapLevel(this->getMipMapLevel() + 1);
-        }
     }
     
     unsigned int getMipMapLevel()
