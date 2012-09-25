@@ -17,14 +17,14 @@ public:
     virtual void begin()
     {
         // Create buffer objects and vao for a full screen quad
-        const unsigned int numVertices = 4;
+        const uint numVertices = 4;
         glm::vec2 vertices[numVertices];
         vertices[0] = glm::vec2(-1.0, -1.0);
         vertices[1] = glm::vec2(1.0, -1.0);
         vertices[2] = glm::vec2(1.0, 1.0);
         vertices[3] = glm::vec2(-1.0, 1.0);
 
-        const unsigned int numElements = 6;
+        const uint numElements = 6;
         unsigned short elements[numElements] = {0, 1, 2, 2, 3, 0};
 
         GLuint vertexBuffer;
@@ -72,5 +72,5 @@ public:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
 
-    virtual void keyboardEvent(unsigned char keyCode){}
+    virtual void keyboardEvent(uchar keyCode){}
 };
