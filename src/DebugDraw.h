@@ -6,7 +6,7 @@ class DebugDraw
 {
 private:
     int currentMipMapLevel;
-    int maxMipMapLevel;
+    int numMipMapLevels;
     int voxelGridLength;
     GLuint voxelTexture;
     GLuint vertexArray;
@@ -34,11 +34,12 @@ public:
     DebugDraw(){}
     virtual ~DebugDraw(){}
 
-    void begin(GLuint voxelTexture, int voxelGridLength)
+    void begin(GLuint voxelTexture, unsigned int voxelGridLength, unsigned int numMipMapLevels)
     {
         this->voxelTexture = voxelTexture;
         this->voxelGridLength = voxelGridLength;
-        this->maxMipMapLevel = Utils::getNumMipMapLevels(voxelGridLength);
+        this->numMipMapLevels = numMipMapLevels;
+        this->currentMipMapLevel = 0;
 
         // Create buffer objects and vao
         glm::vec3 vertices[numVerticesCube] = {glm::vec3(-.5, -.5, -.5), glm::vec3(-.5, -.5, .5), glm::vec3(-.5, .5, .5), glm::vec3(-.5, .5, -.5), glm::vec3(.5, .5, -.5), glm::vec3(.5, -.5, -.5), glm::vec3(.5, .5, .5), glm::vec3(.5, -.5, .5)};
@@ -93,6 +94,8 @@ public:
 
         glLinkProgram(voxelDebugProgram);
         glf::checkProgram(voxelDebugProgram);
+
+        createCubesFromVoxels();
     }
     void createCubesFromVoxels()
     {
@@ -102,7 +105,7 @@ public:
         
         int mipMapVoxelGridLength = this->voxelGridLength;
         float voxelScale = 1.0f / mipMapVoxelGridLength;
-        for(int i = 0; i < this->maxMipMapLevel; i++)
+        for(int i = 0; i < this->numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = voxelArray.size();
@@ -149,15 +152,9 @@ public:
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
     }
-    
-    unsigned int getMipMapLevel()
-    {
-        return this->currentMipMapLevel;
-    }
 
-    bool setMipMapLevel(int level)
+    void setMipMapLevel(unsigned int mipMapLevel)
     {
-        this->currentMipMapLevel = std::min(std::max(0, level), this->maxMipMapLevel - 1);
-        return (this->currentMipMapLevel != level);
+        this->currentMipMapLevel = mipMapLevel;
     }
 };

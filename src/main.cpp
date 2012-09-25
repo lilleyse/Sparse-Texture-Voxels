@@ -16,25 +16,44 @@ namespace
     const int SAMPLE_MAJOR_VERSION(3);
     const int SAMPLE_MINOR_VERSION(3);
     
+    // Window and updating
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
     GLuint perFrameUBO;
     ThirdPersonCamera camera;
     bool showDebugOutput = false;
+    float frameTime = 0.0f;
+    const float FRAME_TIME_DELTA = 0.01f;
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
-    VoxelTextureGenerator::TextureType initialTextureType = VoxelTextureGenerator::SPHERE;
+    std::string initialTexture = voxelTextureGenerator.SPHERE_PRESET;
+    bool loadMultipleTextures = true;
     unsigned int voxelGridLength = 64;
-    bool loadAllTextures = true;
+    unsigned int numMipMapLevels = (unsigned int)(glm::log2(float(voxelGridLength)) + 1.5);
+    unsigned int currentMipMapLevel = 0;
 
     // Demo settings
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
     DemoType currentDemoType = DEBUGDRAW;
     bool loadAllDemos = true;
-    
-    float frameTime = 0.0f;
-    const float FRAME_TIME_DELTA = 0.01f;
+}
+
+bool setMipMapLevel(int level)
+{
+    if (level < 0) level = 0;
+    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
+    if (level == currentMipMapLevel) return false;
+    currentMipMapLevel = level;
+    return true;
+}
+bool setNextMipMapLevel()
+{
+    return setMipMapLevel((int)currentMipMapLevel + 1);
+}
+bool setPreviousMipMapLevel()
+{
+    return setMipMapLevel((int)currentMipMapLevel - 1);
 }
 
 void initGL()
@@ -91,33 +110,33 @@ void keyboardEvent(unsigned char keyCode)
     }
 
     // Changing mip map level
-    if (currentDemoType == DEBUGDRAW) 
+    bool setsNextMipMapLevel = keyCode == 46 && setNextMipMapLevel();
+    bool setsPreviousMipMapLevel = keyCode == 44 && setPreviousMipMapLevel();
+    if (setsNextMipMapLevel || setsPreviousMipMapLevel)
     {
-        if(keyCode == 44) // ,
+        if (loadAllDemos || currentDemoType == DEBUGDRAW)
         {
-            debugDraw.setMipMapLevel(debugDraw.getMipMapLevel() - 1);
+            debugDraw.setMipMapLevel(currentMipMapLevel);
         }
-        else if(keyCode == 46) // .
+        if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         {
-            debugDraw.setMipMapLevel(debugDraw.getMipMapLevel() + 1);
+            voxelRaycaster.setMipMapLevel(currentMipMapLevel);
         }
     }
 
     // Changing textures
-    VoxelTextureGenerator::TextureType oldTextureType = voxelTextureGenerator.getCurrentTextureType();
-    if (loadAllTextures && keyCode == 39) // ;
+    bool setsNextTexture = keyCode == 59 && voxelTextureGenerator.setNextTexture();
+    bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
+    if (setsNextTexture || setsPreviousTexture)
     {
-        voxelTextureGenerator.selectTextureType((VoxelTextureGenerator::TextureType)(voxelTextureGenerator.getCurrentTextureType() - 1));
-    }
-    else if (loadAllTextures && keyCode == 59) // '
-    {
-        voxelTextureGenerator.selectTextureType((VoxelTextureGenerator::TextureType)(voxelTextureGenerator.getCurrentTextureType() + 1));
-    }
-    if (currentDemoType == DEBUGDRAW && oldTextureType != voxelTextureGenerator.getCurrentTextureType()) 
-    {
-        debugDraw.createCubesFromVoxels();
+        if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        {
+            debugDraw.createCubesFromVoxels();
+        }
     }
 }
+
+
 
 bool begin()
 {
@@ -127,17 +146,18 @@ bool begin()
     camera.lookAt = glm::vec3(0.5f);
     camera.zoom(-2);
 
-    voxelTextureGenerator.begin(voxelGridLength);
-    voxelTextureGenerator.selectTextureType(initialTextureType);
+    voxelTextureGenerator.begin(voxelGridLength, numMipMapLevels, loadMultipleTextures);
+    voxelTextureGenerator.setTexture(initialTexture);
 
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
     {
-        debugDraw.begin(voxelTextureGenerator.getVoxelTexture(), voxelGridLength);
-        debugDraw.createCubesFromVoxels();
+        debugDraw.begin(voxelTextureGenerator.getVoxelTexture(), voxelGridLength, numMipMapLevels);
+        debugDraw.setMipMapLevel(currentMipMapLevel);
     }
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
     {
         voxelRaycaster.begin();
+        voxelRaycaster.setMipMapLevel(currentMipMapLevel);
     }
 
     return true;
@@ -172,14 +192,13 @@ void display()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Display demo
-    switch (currentDemoType) 
+    if (currentDemoType == DEBUGDRAW)
     {
-        case DEBUGDRAW:
-            debugDraw.display(); 
-            break;
-        case VOXELRAYCASTER:
-            voxelRaycaster.display(); 
-            break;
+        debugDraw.display();
+    }
+    else if (currentDemoType == VOXELRAYCASTER)
+    {
+        voxelRaycaster.display();
     }  
 
     glf::swapBuffers();

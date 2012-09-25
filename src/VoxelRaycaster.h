@@ -71,4 +71,9 @@ public:
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
+
+    void setMipMapLevel(unsigned int mipMapLevel)
+    {
+        //set uniform
+    }
 };
