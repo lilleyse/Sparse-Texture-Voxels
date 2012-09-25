@@ -3,6 +3,8 @@
 #include <glf.hpp>
 #include <map>
 #include <utility>
+#include <iostream>
+#include <fstream>
 
 #include "Utils.h"
 #include "MipMapGenerator.h"
@@ -41,7 +43,7 @@ private:
             if (name == CUBE_PRESET)
             {
                 uint voxelGridLength = voxelTexture->voxelGridLength;
-                std::vector<glm::u8vec4> textureData = std::vector<glm::u8vec4>(voxelGridLength*voxelGridLength*voxelGridLength);
+                std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
                 uint textureIndex = 0;
                 uint half = voxelGridLength / 2;
                 for(uint i = 0; i < voxelGridLength; i++)
@@ -67,9 +69,9 @@ private:
             {
                 uint voxelGridLength = voxelTexture->voxelGridLength;
                 glm::vec3 center = glm::vec3(voxelGridLength/2);
-                float radius = voxelGridLength/2;
+                float radius = voxelGridLength/2.0f;
 
-                std::vector<glm::u8vec4> textureData = std::vector<glm::u8vec4>(voxelGridLength*voxelGridLength*voxelGridLength);
+                std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
                 uint textureIndex = 0;
                 for(uint i = 0; i < voxelGridLength; i++)
                 for(uint j = 0; j < voxelGridLength; j++)
@@ -87,7 +89,23 @@ private:
             }
             else 
             {
-                //handle file loading
+                // Try to load a raw voxel texture
+                uint voxelGridLength = voxelTexture->voxelGridLength;
+                uint textureDataSize = voxelGridLength*voxelGridLength*voxelGridLength;
+                std::vector<glm::u8vec4> textureData(textureDataSize);
+
+                // open file
+                uchar* buffer = new uchar[textureDataSize];
+                std::ifstream file(name, std::ios::in|std::ios::binary);
+                if (!file) return;
+                file.read((char*)buffer, textureDataSize);
+
+                // store one channel buffer into four channel texture data
+                for (uint i = 0; i < textureDataSize; i++)
+                    textureData[i] = glm::u8vec4(255, 255, 255, buffer[i]);
+
+                textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
+                textures.push_back(textureData);
             }
         }
     }

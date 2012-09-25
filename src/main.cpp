@@ -18,7 +18,6 @@ namespace
     
     // Window and updating
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
-
     GLuint perFrameUBO;
     ThirdPersonCamera camera;
     bool showDebugOutput = false;
@@ -142,13 +141,13 @@ void keyboardEvent(uchar keyCode)
 bool begin()
 {
     initGL();
-    
     camera.setFarNearPlanes(.01f, 100.0f);
     camera.lookAt = glm::vec3(0.5f);
     camera.zoom(-2);
 
     voxelTextureGenerator.begin(voxelGridLength, numMipMapLevels, loadMultipleTextures);
     voxelTextureGenerator.setTexture(initialTexture);
+    voxelTextureGenerator.setTexture("data/Bucky.raw");
 
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
     {
