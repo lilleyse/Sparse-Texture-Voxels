@@ -2,10 +2,13 @@
 
 #include <glf.hpp>
 
+typedef unsigned char uchar;
+typedef unsigned int uint;
+
 namespace Utils
 {
-    unsigned int getNumMipMapLevels(unsigned int size)
+    uint getNumMipMapLevels(uint size)
     {
-        return (unsigned int)(glm::log2(float(size)) + 1.5);
+        return (uint)(glm::log2(float(size)) + 1.5);
     }
 }
