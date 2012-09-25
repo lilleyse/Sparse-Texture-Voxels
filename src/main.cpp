@@ -19,7 +19,7 @@ namespace
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
     bool showDebugOutput = false;
 
-    unsigned int voxelGridLength = 64;
+    uint voxelGridLength = 64;
     GLuint voxelTexture;
     GLuint perFrameUBO;
 
@@ -68,11 +68,11 @@ void createVoxelTexture()
     // Create the voxel data
     std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
 
-    unsigned int half = voxelGridLength / 2;
-    unsigned int textureIndex = 0;
-    for(unsigned int i = 0; i < voxelGridLength; i++)
-    for(unsigned int j = 0; j < voxelGridLength; j++)
-    for(unsigned int k = 0; k < voxelGridLength; k++) 
+    uint half = voxelGridLength / 2;
+    uint textureIndex = 0;
+    for(uint i = 0; i < voxelGridLength; i++)
+    for(uint j = 0; j < voxelGridLength; j++)
+    for(uint k = 0; k < voxelGridLength; k++) 
     {
         if (i<half && j<half && k<half)
             textureData[textureIndex] = glm::u8vec4(255,0,0,127);
@@ -141,11 +141,11 @@ void mouseEvent()
     camera.pan(-Window.MiddleMouseDelta.x * panAmount, Window.MiddleMouseDelta.y * panAmount);
 }
 
-void keyboardEvent(unsigned char keyCode)
+void keyboardEvent(uchar keyCode)
 {
     if (loadAllDemos && keyCode >= 49 && keyCode < 49 + NONE) 
     {
-        currentDemo = (DemoType)((unsigned int)keyCode - 49);
+        currentDemo = (DemoType)((uint)keyCode - 49);
     }
     switch (currentDemo) 
     {
