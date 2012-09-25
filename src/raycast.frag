@@ -40,7 +40,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 layout (location = 0, index = 0) out vec4 fragColor;
 layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
 
-const uint MAX_STEPS = 64;
+const uint MAX_STEPS = 128;
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 8.0;
@@ -120,8 +120,9 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 src = texture(testTexture, pos);
-    src.a *= gStepSize;  // factor by how steps per voxel diag
+    vec4 src = vec4(vec3(1.0),texture(testTexture, pos).r);
+    //src.a *= gStepSize;  // factor by how steps per voxel diag
+    src.a *= gStepSize*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
 
     // alpha blending
     vec4 dst = color;
@@ -254,7 +255,7 @@ void main()
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchLight(ro+rd*(t+EPS), rd);
+        cout = raymarchSimple(ro+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);

@@ -5,6 +5,7 @@
 #include "VoxelRaycaster.h"
 #include "Utils.h"
 #include "MipMapGenerator.h"
+#include "LoadTextureFile.h"
 
 enum DemoType {DEBUGDRAW, VOXELRAYCASTER, NONE};
 
@@ -17,7 +18,7 @@ namespace
     const int SAMPLE_MINOR_VERSION(3);
 
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
-    bool showDebugOutput = false;
+    bool showDebugOutput = true;
 
     uint voxelGridLength = 64;
     GLuint voxelTexture;
@@ -30,27 +31,41 @@ namespace
     //Demo Types
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
-    DemoType currentDemo = DEBUGDRAW;
-    bool loadAllDemos = true;
+    DemoType currentDemo = VOXELRAYCASTER;
+    bool loadAllDemos = false;
     
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
 }
 
+void createVoxelTextureFromRaw(uchar* buffer, uint width, uint height, uint depth)
+{
+    // Create a dense 3D texture
+    int numMipMapLevels = Utils::getNumMipMapLevels(width); // assuming cube
+
+    glGenTextures(1, &voxelTexture);
+    glActiveTexture(GL_TEXTURE0 + VOXEL_TEXTURE_3D_BINDING);
+    glBindTexture(GL_TEXTURE_3D, voxelTexture);
+    glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_R8, width, height, depth);
+
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+
+    float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
+
+    // Fill entire texture (first mipmap level)
+    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, GL_RED, GL_UNSIGNED_BYTE, buffer);
+
+    // Generate mipmaps automatically
+    //mipMapGenerator.generateMipMapCPU(voxelTexture, voxelGridLength, numMipMapLevels);
+    glGenerateMipmap(GL_TEXTURE_3D);
+}
 void createVoxelTexture()
 {
-    // Debug output
-    if(showDebugOutput && glf::checkExtension("GL_ARB_debug_output"))
-    {
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-        glDebugMessageCallbackARB(&glf::debugOutput, NULL);
-    }
-    else
-    {
-        printf("debug output extension not found");
-    }
-
     // Create a dense 3D texture
     int numMipMapLevels = Utils::getNumMipMapLevels(voxelGridLength);
     glGenTextures(1, &voxelTexture);
@@ -161,7 +176,20 @@ void keyboardEvent(uchar keyCode)
 bool begin()
 {
     initGL();
-    createVoxelTexture();
+    //createVoxelTexture();
+    
+    {
+        // hardcoded
+        uint width, height, depth;
+        width = height = depth = 32;
+        uint channels = 1;
+
+        uchar* buffer = new uchar[width*height*depth*channels];
+
+        LoadTextureFile::LoadRaw("data/Bucky.raw", width, height, depth, channels, buffer);
+
+        createVoxelTextureFromRaw(buffer, width, height, depth);
+    }
     
     camera.setFarNearPlanes(.01f, 100.0f);
     camera.lookAt = glm::vec3(0.5f);
