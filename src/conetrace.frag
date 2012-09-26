@@ -40,7 +40,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 layout (location = 0, index = 0) out vec4 fragColor;
 layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
 
-const int MAX_STEPS = 128;
+const int MAX_STEPS = 512;
 const float ALPHA_THRESHOLD = 0.95;
 
 // needs to be uniforms
@@ -49,7 +49,6 @@ const float uVoxelRes = 256.0f;
 
 float gVoxelSize;
 float gMaxMipLevel;
-float gMaxMipDist;
 float gPixSizeAtDist;
 
 // DEBUGTEST: change to uniform later
@@ -124,15 +123,21 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = min( distance(pos, uCamPosition), gMaxMipDist );
-    float mipLevel = gMaxMipLevel * dist/gMaxMipDist;
+    float dist = distance(pos, uCamPosition);
+    float pixSize = gPixSizeAtDist * dist;
 
-    //float mipSize = 1.0 / pow(2,(gMaxMipLevel-mipLevel));  //TODO
-    float stepSize = 0.01;//mipSize/3.0;
+    // find right mip size
+    float mipLevel = 0.0;
+    float mipSize = gVoxelSize;
+    while (mipSize < pixSize) {
+        mipSize *= 2.0;
+        mipLevel++;
+    }
+
+    float stepSize = pixSize; // should be 1/3
 
     vec4 src = vec4( vec3(1.0), textureLod(testTexture, pos, mipLevel).r );
-    //src.a *= gStepSize;  // factor by how steps per voxel diag
-    //src.a *= stepSize*2.0;  // factor by how steps per voxel sidelength (maybe?)
+    //src.a *= stepSize;
 
     // alpha blending
     vec4 dst = color;
@@ -196,9 +201,6 @@ void main()
     
     // size of pixel at dist d=1.0
     gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
-
-    // distance corresponding to highest mip level
-    gMaxMipDist = 1.0 / gPixSizeAtDist;
     
     // find max mipmap level, starting at 0.0
     gMaxMipLevel = 0.0;
