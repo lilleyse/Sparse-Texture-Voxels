@@ -4,9 +4,9 @@
 #include "DebugDraw.h"
 #include "VoxelRaycaster.h"
 #include "Utils.h"
-#include "MipMapGenerator.h"
+#include "VoxelTextureGenerator.h"
 
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, NONE};
+enum DemoType {DEBUGDRAW, VOXELRAYCASTER, MAX_DEMO_TYPES};
 
 namespace
 {
@@ -15,85 +15,48 @@ namespace
     const int SAMPLE_SIZE_HEIGHT(400);
     const int SAMPLE_MAJOR_VERSION(3);
     const int SAMPLE_MINOR_VERSION(3);
-
-    glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
-    bool showDebugOutput = false;
-
-    uint voxelGridLength = 64;
-    GLuint voxelTexture;
-    GLuint perFrameUBO;
-
-    ThirdPersonCamera camera;
-
-    MipMapGenerator mipMapGenerator;
-
-    //Demo Types
-    DebugDraw debugDraw;
-    VoxelRaycaster voxelRaycaster;
-    DemoType currentDemo = DEBUGDRAW;
-    bool loadAllDemos = true;
     
+    // Window and updating
+    glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
+
+    GLuint perFrameUBO;
+    ThirdPersonCamera camera;
+    bool showDebugOutput = false;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
+    
+    // Texture settings
+    VoxelTextureGenerator voxelTextureGenerator;
+    std::string initialTexture = voxelTextureGenerator.SPHERE_PRESET;
+    bool loadMultipleTextures = true;
+    uint voxelGridLength = 64;
+    uint numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
+    uint currentMipMapLevel = 0;
+
+    // Demo settings
+    DebugDraw debugDraw;
+    VoxelRaycaster voxelRaycaster;
+    DemoType currentDemoType = DEBUGDRAW;
+    bool loadAllDemos = true;
 }
 
-void createVoxelTexture()
+bool setMipMapLevel(int level)
 {
-    // Debug output
-    if(showDebugOutput && glf::checkExtension("GL_ARB_debug_output"))
-    {
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-        glDebugMessageCallbackARB(&glf::debugOutput, NULL);
-    }
-    else
-    {
-        printf("debug output extension not found");
-    }
-
-    // Create a dense 3D texture
-    int numMipMapLevels = Utils::getNumMipMapLevels(voxelGridLength);
-    glGenTextures(1, &voxelTexture);
-    glActiveTexture(GL_TEXTURE0 + VOXEL_TEXTURE_3D_BINDING);
-    glBindTexture(GL_TEXTURE_3D, voxelTexture);
-    glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-    float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
-
-    // Create the voxel data
-    std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
-
-    uint half = voxelGridLength / 2;
-    uint textureIndex = 0;
-    for(uint i = 0; i < voxelGridLength; i++)
-    for(uint j = 0; j < voxelGridLength; j++)
-    for(uint k = 0; k < voxelGridLength; k++) 
-    {
-        if (i<half && j<half && k<half)
-            textureData[textureIndex] = glm::u8vec4(255,0,0,127);
-        else if (i>=half && j<half && k<half)
-            textureData[textureIndex] = glm::u8vec4(0,255,0,127);
-        else if (i<half && j>=half && k<half)
-            textureData[textureIndex] = glm::u8vec4(0,0,255,127);
-        else if (i>=half && j>=half && k<half)
-            textureData[textureIndex] = glm::u8vec4(255,255,255,127);
-        else
-            textureData[textureIndex] = glm::u8vec4(127,127,127,127);
-
-        textureIndex++;
-    }
-
-    // Fill entire texture (first mipmap level)
-    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData[0]);
-
-    // Generate mipmaps automatically
-    mipMapGenerator.generateMipMapCPU(voxelTexture, voxelGridLength, numMipMapLevels);
+    if (level < 0) level = 0;
+    if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
+    if (level == currentMipMapLevel) return false;
+    currentMipMapLevel = level;
+    return true;
 }
+bool setNextMipMapLevel()
+{
+    return setMipMapLevel((int)currentMipMapLevel + 1);
+}
+bool setPreviousMipMapLevel()
+{
+    return setMipMapLevel((int)currentMipMapLevel - 1);
+}
+
 void initGL()
 {
     // Debug output
@@ -130,50 +93,72 @@ void initGL()
 void mouseEvent()
 {
     float cameraDistanceFromCenter = glm::length(camera.position);
-
     float rotateAmount = cameraDistanceFromCenter / 200.0f;
-    camera.rotate(-Window.LeftMouseDelta.x * rotateAmount, -Window.LeftMouseDelta.y * rotateAmount);
-    
-    float zoomAmount = cameraDistanceFromCenter / 100.0f;
-    camera.zoom(Window.RightMouseDelta.y * zoomAmount);
-
+    float zoomAmount = cameraDistanceFromCenter / 200.0f;
     float panAmount = cameraDistanceFromCenter / 500.0f;
+
+    camera.rotate(-Window.LeftMouseDelta.x * rotateAmount, -Window.LeftMouseDelta.y * rotateAmount);
+    camera.zoom(Window.RightMouseDelta.y * zoomAmount);
     camera.pan(-Window.MiddleMouseDelta.x * panAmount, Window.MiddleMouseDelta.y * panAmount);
 }
 
 void keyboardEvent(uchar keyCode)
 {
-    if (loadAllDemos && keyCode >= 49 && keyCode < 49 + NONE) 
+    // Changing demo
+    if (loadAllDemos && keyCode >= 49 && keyCode < 49 + MAX_DEMO_TYPES) 
     {
-        currentDemo = (DemoType)((uint)keyCode - 49);
+        currentDemoType = (DemoType)((uint)keyCode - 49);
     }
-    switch (currentDemo) 
+
+    // Changing mip map level
+    bool setsNextMipMapLevel = keyCode == 46 && setNextMipMapLevel();
+    bool setsPreviousMipMapLevel = keyCode == 44 && setPreviousMipMapLevel();
+    if (setsNextMipMapLevel || setsPreviousMipMapLevel)
     {
-        case DEBUGDRAW:
-            debugDraw.keyboardEvent(keyCode);
-            break;
-        case VOXELRAYCASTER:
-            voxelRaycaster.keyboardEvent(keyCode);
-            break;
-    }   
+        if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        {
+            debugDraw.setMipMapLevel(currentMipMapLevel);
+        }
+        if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
+        {
+            voxelRaycaster.setMipMapLevel(currentMipMapLevel);
+        }
+    }
+
+    // Changing textures
+    bool setsNextTexture = keyCode == 59 && voxelTextureGenerator.setNextTexture();
+    bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
+    if (setsNextTexture || setsPreviousTexture)
+    {
+        if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        {
+            debugDraw.createCubesFromVoxels();
+        }
+    }
 }
+
+
 
 bool begin()
 {
     initGL();
-    createVoxelTexture();
     
     camera.setFarNearPlanes(.01f, 100.0f);
     camera.lookAt = glm::vec3(0.5f);
     camera.zoom(-2);
 
-    if (loadAllDemos || currentDemo == DEBUGDRAW) 
+    voxelTextureGenerator.begin(voxelGridLength, numMipMapLevels, loadMultipleTextures);
+    voxelTextureGenerator.setTexture(initialTexture);
+
+    if (loadAllDemos || currentDemoType == DEBUGDRAW) 
     {
-        debugDraw.begin(voxelTexture, voxelGridLength);
+        debugDraw.begin(voxelTextureGenerator.getVoxelTexture(), voxelGridLength, numMipMapLevels);
+        debugDraw.setMipMapLevel(currentMipMapLevel);
     }
-    if (loadAllDemos || currentDemo == VOXELRAYCASTER)
+    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
     {
         voxelRaycaster.begin();
+        voxelRaycaster.setMipMapLevel(currentMipMapLevel);
     }
 
     return true;
@@ -208,14 +193,13 @@ void display()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Display demo
-    switch (currentDemo) 
+    if (currentDemoType == DEBUGDRAW)
     {
-        case DEBUGDRAW:
-            debugDraw.display(); 
-            break;
-        case VOXELRAYCASTER:
-            voxelRaycaster.display(); 
-            break;
+        debugDraw.display();
+    }
+    else if (currentDemoType == VOXELRAYCASTER)
+    {
+        voxelRaycaster.display();
     }  
 
     glf::swapBuffers();

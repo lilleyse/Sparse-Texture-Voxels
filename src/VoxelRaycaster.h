@@ -1,7 +1,9 @@
 #pragma once
 
 #include <glf.hpp>
+
 #include "ShaderConstants.h"
+#include "Utils.h"
 
 class VoxelRaycaster
 {
@@ -14,7 +16,7 @@ public:
     VoxelRaycaster(){}
     virtual ~VoxelRaycaster(){}
 
-    virtual void begin()
+    void begin()
     {
         // Create buffer objects and vao for a full screen quad
         const uint numVertices = 4;
@@ -65,12 +67,17 @@ public:
         glf::checkProgram(fullScreenProgram);
     }
 
-    virtual void display()
+    void display()
     {
         glUseProgram(fullScreenProgram);
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
 
-    virtual void keyboardEvent(uchar keyCode){}
+    void setMipMapLevel(uint mipMapLevel)
+    {
+        glUseProgram(fullScreenProgram);
+        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "mipMapLevel");
+        glUniform1f(mipMapLevelUniform, (float)mipMapLevel);
+    }
 };
