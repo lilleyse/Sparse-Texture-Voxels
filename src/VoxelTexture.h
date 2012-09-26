@@ -42,13 +42,11 @@ public:
 
         // Create a dense 3D color texture
         glGenTextures(1, &colorTexture);
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, colorTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
         
         // Create a dense 3D normals texture
         glGenTextures(1, &normalTexture);
-        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGB32F, voxelGridLength, voxelGridLength, voxelGridLength);
 
@@ -62,5 +60,14 @@ public:
    
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGB, GL_FLOAT, &textureData.normalData[0]);
+    }
+
+    void display()
+    {
+        // Rebind to the binding points in case binding points were messed up (like in MipMapGenerator)
+        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
+        glBindTexture(GL_TEXTURE_3D, colorTexture);
+        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
+        glBindTexture(GL_TEXTURE_3D, normalTexture);
     }
 };

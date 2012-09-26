@@ -194,6 +194,8 @@ void display()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+    voxelTextureGenerator.getVoxelTexture()->display();
+
     // Display demo
     if (currentDemoType == DEBUGDRAW)
     {

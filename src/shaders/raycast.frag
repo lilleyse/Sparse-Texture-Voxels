@@ -124,7 +124,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 src = textureLod(colorTexture, pos, mipMapLevel);
+    vec4 src = textureLod(normalTexture, pos, mipMapLevel);
     src.a *= gStepSize;  // factor by how steps per voxel diag
 
     // alpha blending
@@ -153,7 +153,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(colorTexture, pos, mipMapLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(normalTexture, pos, mipMapLevel).a );
 
     pos += step;
     
@@ -176,7 +176,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(colorTexture, pos, mipMapLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(normalTexture, pos, mipMapLevel).a );
 
     pos += step;
 
@@ -197,7 +197,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = textureLod(colorTexture, pos, mipMapLevel);
+    vec4 texel = textureLod(normalTexture, pos, mipMapLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );
