@@ -99,6 +99,7 @@ public:
     }
     void createCubesFromVoxels()
     {
+        mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
         glBindTexture(GL_TEXTURE_3D, voxelTexture);

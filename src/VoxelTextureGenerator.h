@@ -88,13 +88,20 @@ public:
             }
             else if (name == SPHERE_PRESET)
             {
+                glm::vec3 center = glm::vec3(voxelGridLength/2);
+                float radius = voxelGridLength/2;
+
                 std::vector<glm::u8vec4> textureData = std::vector<glm::u8vec4>(voxelGridLength*voxelGridLength*voxelGridLength);
                 uint textureIndex = 0;
                 for(uint i = 0; i < voxelGridLength; i++)
                 for(uint j = 0; j < voxelGridLength; j++)
                 for(uint k = 0; k < voxelGridLength; k++) 
                 {
-                    textureData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
+                    float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
+				    if(distanceFromCenter < radius)
+                        textureData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
+                    else
+                        textureData[textureIndex] = glm::u8vec4(0,0,0,0);
                     textureIndex++;
                 }
                 textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
