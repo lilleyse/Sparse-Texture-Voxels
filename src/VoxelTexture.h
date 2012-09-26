@@ -53,13 +53,13 @@ public:
     }
 
     // Data is assumed to be in RGBA format
-    void setData(TextureData& textureData)
+    void setData(TextureData& textureData, uint sideLength, uint mipMapLevel)
     {
         glBindTexture(GL_TEXTURE_3D, colorTexture);
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.colorData[0]);
+        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.colorData[0]);
    
         glBindTexture(GL_TEXTURE_3D, normalTexture);
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGB, GL_FLOAT, &textureData.normalData[0]);
+        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGB, GL_FLOAT, &textureData.normalData[0]);
     }
 
     void display()

@@ -29,7 +29,7 @@ private:
         currentTexture = textureIndex;
             
         // Fill entire texture (first mipmap level) then create mipmaps
-        voxelTexture->setData(textures.at(currentTexture));
+        voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
         mipMapGenerator.generateMipMapCPU(voxelTexture);
         return true;
     }
