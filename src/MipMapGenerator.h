@@ -1,8 +1,10 @@
 #pragma once
 #include <glf.hpp>
 #include <CL/opencl.h>
-#include "ShaderConstants.h"
 #include <sstream>
+
+#include "ShaderConstants.h"
+#include "Utils.h"
 
 class MipMapGenerator
 {
@@ -58,5 +60,4 @@ public:
             glTexSubImage3D(GL_TEXTURE_3D, i, 0, 0, 0, mipMapSideLength, mipMapSideLength, mipMapSideLength, GL_RGBA, GL_UNSIGNED_BYTE, &currMipData[0]);
         }
     }
-
 };

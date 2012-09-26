@@ -6,7 +6,7 @@ class DebugDraw
 {
 private:
     int currentMipMapLevel;
-    int maxMipMapLevel;
+    int numMipMapLevels;
     int voxelGridLength;
     GLuint voxelTexture;
     GLuint vertexArray;
@@ -34,11 +34,12 @@ public:
     DebugDraw(){}
     virtual ~DebugDraw(){}
 
-    void begin(GLuint voxelTexture, int voxelGridLength)
+    void begin(GLuint voxelTexture, uint voxelGridLength, uint numMipMapLevels)
     {
-        this->voxelGridLength = voxelGridLength;
         this->voxelTexture = voxelTexture;
-        this->maxMipMapLevel = Utils::getNumMipMapLevels(voxelGridLength);
+        this->voxelGridLength = voxelGridLength;
+        this->numMipMapLevels = numMipMapLevels;
+        this->currentMipMapLevel = 0;
 
         // Create buffer objects and vao
         glm::vec3 vertices[numVerticesCube] = {glm::vec3(-.5, -.5, -.5), glm::vec3(-.5, -.5, .5), glm::vec3(-.5, .5, .5), glm::vec3(-.5, .5, -.5), glm::vec3(.5, .5, -.5), glm::vec3(.5, -.5, -.5), glm::vec3(.5, .5, .5), glm::vec3(.5, -.5, .5)};
@@ -104,7 +105,7 @@ public:
         
         int mipMapVoxelGridLength = this->voxelGridLength;
         float voxelScale = 1.0f / mipMapVoxelGridLength;
-        for(int i = 0; i < this->maxMipMapLevel; i++)
+        for(int i = 0; i < this->numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = voxelArray.size();
@@ -142,7 +143,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    virtual void display()
+    void display()
     {
         uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
         uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
@@ -152,27 +153,8 @@ public:
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
     }
 
-    virtual void keyboardEvent(uchar keyCode)
+    void setMipMapLevel(uint mipMapLevel)
     {
-
-        if(keyCode == 44)
-        {
-            this->setMipMapLevel(this->getMipMapLevel() - 1);
-        }
-        else if(keyCode == 46)
-        {
-            this->setMipMapLevel(this->getMipMapLevel() + 1);
-        }
-    }
-    
-    uint getMipMapLevel()
-    {
-        return this->currentMipMapLevel;
-    }
-
-    bool setMipMapLevel(int level)
-    {
-        this->currentMipMapLevel = std::min(std::max(0, level), this->maxMipMapLevel - 1);
-        return (this->currentMipMapLevel != level);
+        this->currentMipMapLevel = mipMapLevel;
     }
 };
