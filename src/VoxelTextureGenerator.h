@@ -23,6 +23,7 @@ private:
     uint currentTexture;
 
 public:
+
     std::string CUBE_PRESET;
     std::string SPHERE_PRESET;
     VoxelTextureGenerator()

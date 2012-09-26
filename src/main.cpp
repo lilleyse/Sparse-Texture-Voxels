@@ -1,12 +1,14 @@
 #include <glf.hpp>
+#include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
 #include "Utils.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
+#include "demos/VoxelConetracer.h"
 #include "VoxelTextureGenerator.h"
 
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, MAX_DEMO_TYPES};
+enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, MAX_DEMO_TYPES};
 
 namespace
 {
@@ -37,20 +39,9 @@ namespace
     // Demo settings
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
+    VoxelConetracer voxelConetracer;
     DemoType currentDemoType = DEBUGDRAW;
     bool loadAllDemos = true;
-}
-
-void setMipMapLevel(int level)
-{
-    if (level < 0) level = 0;
-    if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
-    if (level == currentMipMapLevel) return;
-    currentMipMapLevel = level;
-    if (loadAllDemos || currentDemoType == DEBUGDRAW)
-        debugDraw.setMipMapLevel(currentMipMapLevel);
-    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster.setMipMapLevel(currentMipMapLevel);
 }
 
 void initGL()
@@ -62,10 +53,7 @@ void initGL()
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
         glDebugMessageCallbackARB(&glf::debugOutput, NULL);
     }
-    else
-    {
-        printf("debug output extension not found");
-    }
+    else printf("debug output extension not found");
     
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
@@ -84,6 +72,18 @@ void initGL()
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LEQUAL);
     glDepthRange(0.0f, 1.0f);
+}
+
+void setMipMapLevel(int level)
+{
+    if (level < 0) level = 0;
+    if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
+    if (level == currentMipMapLevel) return;
+    currentMipMapLevel = level;
+    if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        debugDraw.setMipMapLevel(currentMipMapLevel);
+    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
+        voxelRaycaster.setMipMapLevel(currentMipMapLevel);
 }
 
 void mouseEvent()
@@ -116,8 +116,6 @@ void keyboardEvent(uchar keyCode)
             debugDraw.createCubesFromVoxels(voxelTextureGenerator.getVoxelTexture());
 }
 
-
-
 bool begin()
 {
     initGL();
@@ -139,6 +137,8 @@ bool begin()
         debugDraw.begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.begin();
+    if (loadAllDemos || currentDemoType == VOXELCONETRACER)
+        voxelConetracer.begin();
     
     // initial mip-map setting
     numMipMapLevels = voxelTexture->numMipMapLevels;
@@ -176,7 +176,7 @@ void display()
 
     perFrame.uCamPosition = camera.position;
     perFrame.uCamUp = camera.upDir;
-    perFrame.uResolution = glm::uvec2(Window.Size.x, Window.Size.y);
+    perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
     perFrame.uTime = frameTime;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
@@ -187,13 +187,13 @@ void display()
         debugDraw.display();
     else if (currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.display(); 
+    else if (currentDemoType == VOXELCONETRACER)
+        voxelConetracer.display();
 
+    // Update
     glf::swapBuffers();
-
     frameTime += FRAME_TIME_DELTA;
-   
-    if(showFPS)
-        fpsHandler.display();
+    if(showFPS) fpsHandler.display();
 }
 
 int main(int argc, char* argv[])
