@@ -97,11 +97,11 @@ public:
         mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
         
         int mipMapVoxelGridLength = voxelTexture->voxelGridLength;
         float voxelScale = 1.0f / mipMapVoxelGridLength;
-        for(int i = 0; i < voxelTexture->numMipMapLevels; i++)
+        for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = voxelArray.size();

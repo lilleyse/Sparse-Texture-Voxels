@@ -21,10 +21,10 @@ public:
     // This code is not super efficient since it is a short term solution that will be replaced by GPU-based mipmap generation
     void generateMipMapCPU(VoxelTexture* voxelTexture)
     {
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
 
         int mipMapSideLength = voxelTexture->voxelGridLength;
-        for(int i = 1; i < voxelTexture->numMipMapLevels; i++)
+        for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
             int prevMipMapSideLength = mipMapSideLength;
             mipMapSideLength /=2;
