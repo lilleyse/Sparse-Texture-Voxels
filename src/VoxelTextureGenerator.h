@@ -14,11 +14,11 @@
 class VoxelTextureGenerator
 {
 private:
-    
+
     MipMapGenerator mipMapGenerator;
     VoxelTexture* voxelTexture;
     std::map<std::string, uint> textureNamesToIndexes;
-    std::vector<std::vector<glm::u8vec4>> textures;
+    std::vector<TextureData> textures;
     bool loadMultipleTextures;
     uint currentTexture;
 
@@ -47,15 +47,18 @@ public:
     }
     void createTexture(std::string name)
     {
-        std::vector<glm::u8vec4> textureData;
         uint voxelGridLength = voxelTexture->voxelGridLength;
         uint voxelTextureSize = voxelGridLength*voxelGridLength*voxelGridLength;
+
+        TextureData textureData;
+        textureData.colorData.resize(voxelTextureSize);
+        textureData.normalData.resize(voxelTextureSize);
+        
 
         if (textureNamesToIndexes.find(name) == textureNamesToIndexes.end() && (textures.size() == 0 || this->loadMultipleTextures))
         {
             if (name == CUBE_PRESET)
             {
-                textureData = std::vector<glm::u8vec4>(voxelTextureSize);
                 uint textureIndex = 0;
                 uint half = voxelGridLength / 2;
                 for(uint i = 0; i < voxelGridLength; i++)
@@ -63,21 +66,22 @@ public:
                 for(uint k = 0; k < voxelGridLength; k++) 
                 {
                     if (i<half && j<half && k<half)
-                        textureData[textureIndex] = glm::u8vec4(255,0,0,127);
+                        textureData.colorData[textureIndex] = glm::u8vec4(255,0,0,127);
                     else if (i>=half && j<half && k<half)
-                        textureData[textureIndex] = glm::u8vec4(0,255,0,127);
+                        textureData.colorData[textureIndex] = glm::u8vec4(0,255,0,127);
                     else if (i<half && j>=half && k<half)
-                        textureData[textureIndex] = glm::u8vec4(0,0,255,127);
+                        textureData.colorData[textureIndex] = glm::u8vec4(0,0,255,127);
                     else if (i>=half && j>=half && k<half)
-                        textureData[textureIndex] = glm::u8vec4(255,255,255,127);
+                        textureData.colorData[textureIndex] = glm::u8vec4(255,255,255,127);
                     else
-                        textureData[textureIndex] = glm::u8vec4(127,127,127,127);
+                        textureData.colorData[textureIndex] = glm::u8vec4(127,127,127,127);
+                    
+                    textureData.normalData[textureIndex] = glm::vec3(0,0,0);
                     textureIndex++;
                 }
             }
             else if (name == SPHERE_PRESET)
             {
-                textureData = std::vector<glm::u8vec4>(voxelTextureSize);
                 uint textureIndex = 0;
                 glm::vec3 center = glm::vec3(voxelGridLength/2);
                 float radius = voxelGridLength/2.0f;
@@ -87,9 +91,15 @@ public:
                 {
                     float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
 				    if(distanceFromCenter < radius)
-                        textureData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
+                    {
+                        textureData.colorData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
+                        textureData.normalData[textureIndex] = glm::normalize(glm::vec3(glm::vec3(i,j,k) - center));
+                    }
                     else
-                        textureData[textureIndex] = glm::u8vec4(0,0,0,0);
+                    {
+                        textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
+                        textureData.normalData[textureIndex] = glm::vec3(0,0,0);
+                    }
                     textureIndex++;
                 }
             }
@@ -102,14 +112,22 @@ public:
                 file.read((char*)buffer, voxelTextureSize);
 
                 // store one channel buffer into four channel texture data
-                textureData = std::vector<glm::u8vec4>(voxelTextureSize);
                 for (uint i = 0; i < voxelTextureSize; i++)
-                    textureData[i] = glm::u8vec4(255, 255, 255, buffer[i]);
+                    textureData.colorData[i] = glm::u8vec4(255, 255, 255, buffer[i]);
             }
 
             textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
             textures.push_back(textureData);
         }
+    }
+
+    
+    bool setTexture(std::string name)
+    { 
+        std::map<std::string, uint>::iterator iter = textureNamesToIndexes.find(name);
+        if (iter != textureNamesToIndexes.end())
+            return setTexture(iter->second);
+        return false;
     }
 
     bool setTexture(int textureIndex)
@@ -118,17 +136,13 @@ public:
         if (textureIndex >= (int)textures.size()) textureIndex = 0;
         if (textureIndex == currentTexture) return false;
         currentTexture = textureIndex;
-        voxelTexture->setData(&(textures.at(currentTexture)[0]));
+            
+        // Fill entire texture (first mipmap level) then create mipmaps
+        voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
         mipMapGenerator.generateMipMapCPU(voxelTexture);
         return true;
     }
-    bool setTexture(std::string name)
-    { 
-        std::map<std::string, uint>::iterator iter = textureNamesToIndexes.find(name);
-        if (iter != textureNamesToIndexes.end())
-            return setTexture(iter->second);
-        return false;
-    }
+
     bool setNextTexture()
     {
         return setTexture((int)currentTexture + 1);

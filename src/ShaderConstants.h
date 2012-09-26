@@ -7,7 +7,8 @@ const uint POSITION_ATTR = 0;
 const uint DEBUG_TRANSFORM_ATTR = 1;
 const uint DEBUG_COLOR_ATTR = 2;
 const uint PER_FRAME_UBO_BINDING = 0;
-const uint VOXEL_TEXTURE_3D_BINDING = 0;
+const uint COLOR_TEXTURE_3D_BINDING = 0;
+const uint NORMAL_TEXTURE_3D_BINDING = 1;
 
 struct PerFrameUBO
 {

@@ -97,7 +97,7 @@ public:
         mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
         
         int mipMapVoxelGridLength = voxelTexture->voxelGridLength;
         float voxelScale = 1.0f / mipMapVoxelGridLength;
@@ -119,7 +119,7 @@ public:
             {
                 glm::vec3 position = glm::vec3(j*voxelScale,k*voxelScale,l*voxelScale) + offset;
                 glm::u8vec4 color = imageData[textureIndex];
-                if(color.a > 50)
+                if(color.a > 0)
                 {
                     Voxel voxel;
                     voxel.color = glm::vec4(color)/255.0f;
