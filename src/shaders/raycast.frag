@@ -122,7 +122,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
     vec4 src = textureLod(testTexture, pos, mipMapLevel);
-    src.a *= gStepSize*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
+    src.a *= gStepSize; //*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
 
     // alpha blending
     vec4 dst = color;
@@ -255,7 +255,7 @@ void main()
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchSimple(ro+rd*(t+EPS), rd);
+        cout = raymarchLight(ro+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);
