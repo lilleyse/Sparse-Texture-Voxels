@@ -38,64 +38,23 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout (location = 0, index = 0) out vec4 fragColor;
-layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
+layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D inputTexture;
 
 const int MAX_STEPS = 512;
+const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 
 // needs to be uniforms
 const float uFOV = 30.0f;
-const float uVoxelRes = 256.0f;
+const float uTextureRes = 32.0f;
 
-float gVoxelSize;
-float gMaxMipLevel;
+float gTexelSize;
 float gPixSizeAtDist;
-
-// DEBUGTEST: change to uniform later
-const int LIGHT_NUM = 1;
-vec3 gLightPos[LIGHT_NUM];
-vec3 gLightCol[LIGHT_NUM];
 
 
 //---------------------------------------------------------
 // PROGRAM
 //---------------------------------------------------------
-
-// cube intersect
-bool cubeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {    
-    vec3 tMin = (bMin-ro) / rd;
-    vec3 tMax = (bMax-ro) / rd;
-    vec3 t1 = min(tMin, tMax);
-    vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-    
-    if (tNear<tFar && tFar>0.0) {
-        t = tNear>0.0 ? tNear : tFar;
-        return true;
-    }
-    
-    return false;
-}
-
-// cube intersect, but t returns intersect of volume, not just sides
-bool cubeVolumeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {    
-    vec3 tMin = (bMin-ro) / rd;
-    vec3 tMax = (bMax-ro) / rd;
-    vec3 t1 = min(tMin, tMax);
-    vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-    
-    if (tNear<tFar && tFar>0.0) {
-        // difference here
-        // if inside, instead of returning far plane, return ray origin
-        t = tNear>0.0 ? tNear : 0.0;
-        return true;
-    }
-    
-    return false;
-}
 
 // special case, optimized for 0.0 to 1.0
 bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {    
@@ -125,19 +84,11 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   for (int i=0; i<MAX_STEPS; ++i) {
     float dist = distance(pos, uCamPosition);
     float pixSize = gPixSizeAtDist * dist;
+    float mipLevel = log2(pixSize/gTexelSize);
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
-    // find right mip size
-    float mipLevel = 0.0;
-    float mipSize = gVoxelSize;
-    while (mipSize < pixSize) {
-        mipSize *= 2.0;
-        mipLevel++;
-    }
-
-    float stepSize = pixSize; // should be 1/3
-
-    vec4 src = vec4( vec3(1.0), textureLod(testTexture, pos, mipLevel).r );
-    src.a *= stepSize;
+    vec4 src = vec4( vec3(1.0), textureLod(inputTexture, pos, mipLevel).r );
+    src.a *= STEPSIZE_WRT_TEXEL;
 
     // alpha blending
     vec4 dst = color;
@@ -162,13 +113,6 @@ void main()
     float aspect = float(uResolution.x)/float(uResolution.y);
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
-
-    // DEBUGTEST: manually init lights
-    gLightCol[0] = vec3(1.0, 0.9, 0.8);
-    gLightPos[0] = vec3(0.0, 2.0, 0.0);
-    gLightPos[0].x = 2.0*sin(uTime);
-    gLightPos[0].z = 2.0*cos(uTime);
-
 
     //-----------------------------------------------------
     // CAMERA RAY
@@ -197,19 +141,11 @@ void main()
     //-----------------------------------------------------
 
     // size of one texel in normalized texture coords
-    gVoxelSize = 1.0/uVoxelRes;
+    gTexelSize = 1.0/uTextureRes;
     
     // size of pixel at dist d=1.0
     gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
-    
-    // find max mipmap level, starting at 0.0
-    gMaxMipLevel = 0.0;
-    int tempSize = int(uVoxelRes);
-    while (tempSize>1) {
-        gMaxMipLevel++;
-        tempSize >>= 1;
-    }
-    
+
     
     //-----------------------------------------------------
     // DO CONE TRACE

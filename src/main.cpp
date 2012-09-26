@@ -186,12 +186,12 @@ bool begin()
     {
         // hardcoded
         uint width, height, depth;
-        width = height = depth = 256;
+        width = height = depth = 32;
         uint channels = 1;
 
         uchar* buffer = new uchar[width*height*depth*channels];
 
-        LoadTextureFile::LoadRaw("data/Engine.raw", width, height, depth, channels, buffer);
+        LoadTextureFile::LoadRaw("data/Bucky.raw", width, height, depth, channels, buffer);
 
         createVoxelTextureFromRaw(buffer, width, height, depth);
     }
