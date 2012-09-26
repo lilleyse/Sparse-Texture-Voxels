@@ -186,19 +186,19 @@ bool begin()
     {
         // hardcoded
         uint width, height, depth;
-        width = height = depth = 32;
+        width = height = depth = 256;
         uint channels = 1;
 
         uchar* buffer = new uchar[width*height*depth*channels];
 
-        LoadTextureFile::LoadRaw("data/Bucky.raw", width, height, depth, channels, buffer);
+        LoadTextureFile::LoadRaw("data/Engine.raw", width, height, depth, channels, buffer);
 
         createVoxelTextureFromRaw(buffer, width, height, depth);
     }
     
     camera.setFarNearPlanes(.01f, 100.0f);
     camera.lookAt = glm::vec3(0.5f);
-    camera.zoom(-2);
+    //camera.zoom(-2);
 
     if (loadAllDemos || currentDemo == DEBUGDRAW) 
     {
@@ -238,7 +238,7 @@ void display()
     perFrame.uCamLookAt = camera.lookAt;
     perFrame.uCamPosition = camera.position;
     perFrame.uCamUp = camera.upDir;
-    perFrame.uResolution = glm::uvec2(Window.Size.x, Window.Size.y);
+    perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
     perFrame.uTime = frameTime;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);

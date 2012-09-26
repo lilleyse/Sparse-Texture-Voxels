@@ -15,7 +15,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPosition;
     vec3 uCamUp;
-    uvec2 uResolution;
+    vec2 uResolution;
     float uTime;
 };
 
@@ -226,7 +226,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
 
 void main()
 {
-    float aspect = float(uResolution.x)/float(uResolution.y);
+    float aspect = uResolution.x/uResolution.y;
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
 

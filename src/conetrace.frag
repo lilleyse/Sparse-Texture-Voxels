@@ -15,7 +15,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPosition;
     vec3 uCamUp;
-    uvec2 uResolution;
+    vec2 uResolution;
     float uTime;
 };
 
@@ -45,11 +45,12 @@ const float ALPHA_THRESHOLD = 0.95;
 
 // needs to be uniforms
 const float uFOV = 30.0f;
-const float uVoxelRes = 32.0f;
+const float uVoxelRes = 256.0f;
 
-float gStepSize;
 float gVoxelSize;
 float gMaxMipLevel;
+float gMaxMipDist;
+float gPixSizeAtDist;
 
 // DEBUGTEST: change to uniform later
 const int LIGHT_NUM = 1;
@@ -118,18 +119,20 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
 
 // simple alpha blending
 vec4 conetraceSimple(vec3 ro, vec3 rd) {
-  vec3 step = rd*gStepSize;
   vec3 pos = ro;
   
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, uCamPosition+rd*5.0);
-    dist /= 10.0;
+    float dist = min( distance(pos, uCamPosition), gMaxMipDist );
+    float mipLevel = gMaxMipLevel * dist/gMaxMipDist;
 
-    vec4 src = vec4(vec3(1.0),textureLod(testTexture, pos, dist*gMaxMipLevel).r);
+    //float mipSize = 1.0 / pow(2,(gMaxMipLevel-mipLevel));  //TODO
+    float stepSize = 0.01;//mipSize/3.0;
+
+    vec4 src = vec4( vec3(1.0), textureLod(testTexture, pos, mipLevel).r );
     //src.a *= gStepSize;  // factor by how steps per voxel diag
-    src.a *= gStepSize*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
+    //src.a *= stepSize*2.0;  // factor by how steps per voxel sidelength (maybe?)
 
     // alpha blending
     vec4 dst = color;
@@ -137,7 +140,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     color.rgb = EQUALSZERO(color.a) ? vec3(0.0) : 
         (src.rgb*src.a + dst.rgb*dst.a*(1.0-src.a)) / color.a;
 
-    pos += step;
+    pos += stepSize*rd;
     
     if (color.a > ALPHA_THRESHOLD ||
       pos.x > 1.0 || pos.x < 0.0 ||
@@ -149,24 +152,23 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   return color;
 }
 
-void setupVariables() {
-    // size of one texel in normalized texture coords
-    gVoxelSize = 1.0/uVoxelRes;
-    
-    // find max mipmap level, starting at 0.0
-    gMaxMipLevel = 0.0;
-    int tempSize = int(uVoxelRes);
-    while (tempSize>1) {
-        gMaxMipLevel++;
-        tempSize >>= 1;
-    }
-}
-
-void setupCamera(out vec3 ro, out vec3 rd) {
+void main()
+{    
     float aspect = float(uResolution.x)/float(uResolution.y);
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
 
+    // DEBUGTEST: manually init lights
+    gLightCol[0] = vec3(1.0, 0.9, 0.8);
+    gLightPos[0] = vec3(0.0, 2.0, 0.0);
+    gLightPos[0].x = 2.0*sin(uTime);
+    gLightPos[0].z = 2.0*cos(uTime);
+
+
+    //-----------------------------------------------------
+    // CAMERA RAY
+    //-----------------------------------------------------
+    
     // camera ray
     vec3 C = normalize(uCamLookAt-uCamPosition);
 
@@ -177,41 +179,49 @@ void setupCamera(out vec3 ro, out vec3 rd) {
     vec3 B = -1.0/(aspect)*normalize(cross(A,C));
 
     // scale by FOV
-    float fovFactor = tan(uFOV/180.0*PI);
+    float tanFOV = tan(uFOV/180.0*PI);
 
-    ro = uCamPosition+C 
-        + (2.0*uv.x-1.0)*fovFactor*A 
-        + (2.0*uv.y-1.0)*fovFactor*B;
-    rd = normalize(ro-uCamPosition);
-}
+    vec3 ro = uCamPosition+C 
+        + (2.0*uv.x-1.0)*tanFOV*A 
+        + (2.0*uv.y-1.0)*tanFOV*B;
+    vec3 rd = normalize(ro-uCamPosition);
 
-void main()
-{
-    setupVariables();
+    
+    //-----------------------------------------------------
+    // SETUP GLOBAL VARS
+    //-----------------------------------------------------
 
-    // DEBUGTEST: manually init lights
-    gLightCol[0] = vec3(1.0, 0.9, 0.8);
-    gLightPos[0] = vec3(0.0, 2.0, 0.0);
-    gLightPos[0].x = 2.0*sin(uTime);
-    gLightPos[0].z = 2.0*cos(uTime);
+    // size of one texel in normalized texture coords
+    gVoxelSize = 1.0/uVoxelRes;
+    
+    // size of pixel at dist d=1.0
+    gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
 
-    vec3 ro, rd;
-    setupCamera(ro, rd);
+    // distance corresponding to highest mip level
+    gMaxMipDist = 0.5 / gPixSizeAtDist;
+    
+    // find max mipmap level, starting at 0.0
+    gMaxMipLevel = 0.0;
+    int tempSize = int(uVoxelRes);
+    while (tempSize>1) {
+        gMaxMipLevel++;
+        tempSize >>= 1;
+    }
+    
+    
+    //-----------------------------------------------------
+    // DO CONE TRACE
+    //-----------------------------------------------------
 
     // output color
     vec4 cout;
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(ro, rd, t)) {
-        // step_size = root_three / max_steps ; to get through diagonal
-        gStepSize = ROOTTHREE / float(MAX_STEPS);
-
+    if (textureVolumeIntersect(ro, rd, t))
         cout = conetraceSimple(ro+rd*(t+EPS), rd);
-    }
-    else {
+    else
         cout = vec4(0.0);
-    }
 
     // pre-multiply alpha to show
     cout.rgb = cout.rgb*cout.a;
