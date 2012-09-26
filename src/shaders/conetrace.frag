@@ -177,7 +177,9 @@ void main()
     else
         cout = vec4(0.0);
 
-    // pre-multiply alpha to show
-    cout.rgb = cout.rgb*cout.a;
-    fragColor = cout;
+    // background color
+    vec4 bg = vec4(vec3(uv.y/2.0), 0.0);
+
+    // alpha blend cout over bg
+    fragColor = vec4( mix(bg.rgb, cout.rgb, cout.a), 1.0 );
 }
