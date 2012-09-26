@@ -1,13 +1,14 @@
 #include <glf.hpp>
+#include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
 #include "DebugDraw.h"
 #include "VoxelRaycaster.h"
-#include "Utils.h"
+#include "VoxelConetracer.h"
 #include "MipMapGenerator.h"
 #include "LoadTextureFile.h"
 
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, NONE};
+enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, NONE};
 
 namespace
 {
@@ -18,7 +19,7 @@ namespace
     const int SAMPLE_MINOR_VERSION(3);
 
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
-    bool showDebugOutput = true;
+    bool showDebugOutput = false;
 
     uint voxelGridLength = 64;
     GLuint voxelTexture;
@@ -31,7 +32,8 @@ namespace
     //Demo Types
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
-    DemoType currentDemo = VOXELRAYCASTER;
+    VoxelConetracer voxelConetracer;
+    DemoType currentDemo = VOXELCONETRACER;
     bool loadAllDemos = false;
     
     float frameTime = 0.0f;
@@ -170,6 +172,9 @@ void keyboardEvent(uchar keyCode)
         case VOXELRAYCASTER:
             voxelRaycaster.keyboardEvent(keyCode);
             break;
+        case VOXELCONETRACER:
+            voxelConetracer.keyboardEvent(keyCode);
+            break;
     }   
 }
 
@@ -202,6 +207,10 @@ bool begin()
     if (loadAllDemos || currentDemo == VOXELRAYCASTER)
     {
         voxelRaycaster.begin();
+    }
+    if (loadAllDemos || currentDemo == VOXELCONETRACER)
+    {
+        voxelConetracer.begin();
     }
 
     return true;
@@ -243,6 +252,9 @@ void display()
             break;
         case VOXELRAYCASTER:
             voxelRaycaster.display(); 
+            break;
+        case VOXELCONETRACER:
+            voxelConetracer.display(); 
             break;
     }  
 
