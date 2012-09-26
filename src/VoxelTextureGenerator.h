@@ -11,13 +11,13 @@ class VoxelTextureGenerator
 {
 private:
     GLuint voxelTexture;
-    unsigned int voxelGridLength;
-    unsigned int numMipMapLevels;
+    uint voxelGridLength;
+    uint numMipMapLevels;
     bool loadMulitpleTextures;
 
-    std::map<std::string, unsigned int> textureNamesToIndexes;
+    std::map<std::string, uint> textureNamesToIndexes;
     std::vector<std::vector<glm::u8vec4>> textures;
-    unsigned int currentTexture;
+    uint currentTexture;
 
     MipMapGenerator mipMapGenerator;
 
@@ -31,7 +31,7 @@ public:
         currentTexture = -1;
     }
 
-    void begin(unsigned int voxelGridLength, unsigned int numMipMapLevels, bool loadMultipleTextures) 
+    void begin(uint voxelGridLength, uint numMipMapLevels, bool loadMultipleTextures) 
     {   
         //Create a default empty vector for each texture data
         this->voxelGridLength = voxelGridLength;
@@ -65,11 +65,11 @@ public:
             if (name == CUBE_PRESET)
             {
                 std::vector<glm::u8vec4> textureData = std::vector<glm::u8vec4>(voxelGridLength*voxelGridLength*voxelGridLength);
-                unsigned int textureIndex = 0;
-                unsigned int half = voxelGridLength / 2;
-                for(unsigned int i = 0; i < voxelGridLength; i++)
-                for(unsigned int j = 0; j < voxelGridLength; j++)
-                for(unsigned int k = 0; k < voxelGridLength; k++) 
+                uint textureIndex = 0;
+                uint half = voxelGridLength / 2;
+                for(uint i = 0; i < voxelGridLength; i++)
+                for(uint j = 0; j < voxelGridLength; j++)
+                for(uint k = 0; k < voxelGridLength; k++) 
                 {
                     if (i<half && j<half && k<half)
                         textureData[textureIndex] = glm::u8vec4(255,0,0,127);
@@ -83,21 +83,21 @@ public:
                         textureData[textureIndex] = glm::u8vec4(127,127,127,127);
                     textureIndex++;
                 }
-                textureNamesToIndexes.insert(std::pair<std::string, unsigned int>(name, textures.size()));
+                textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
                 textures.push_back(textureData);
             }
             else if (name == SPHERE_PRESET)
             {
                 std::vector<glm::u8vec4> textureData = std::vector<glm::u8vec4>(voxelGridLength*voxelGridLength*voxelGridLength);
-                unsigned int textureIndex = 0;
-                for(unsigned int i = 0; i < voxelGridLength; i++)
-                for(unsigned int j = 0; j < voxelGridLength; j++)
-                for(unsigned int k = 0; k < voxelGridLength; k++) 
+                uint textureIndex = 0;
+                for(uint i = 0; i < voxelGridLength; i++)
+                for(uint j = 0; j < voxelGridLength; j++)
+                for(uint k = 0; k < voxelGridLength; k++) 
                 {
                     textureData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
                     textureIndex++;
                 }
-                textureNamesToIndexes.insert(std::pair<std::string, unsigned int>(name, textures.size()));
+                textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
                 textures.push_back(textureData);
             }
             else 
@@ -111,7 +111,7 @@ public:
     { 
         // Adds the texture's data to the gpu.
         createTexture(name); // If the texture data doesn't exist, this will create it
-        std::map<std::string, unsigned int>::iterator iter = textureNamesToIndexes.find(name);
+        std::map<std::string, uint>::iterator iter = textureNamesToIndexes.find(name);
         if (iter != textureNamesToIndexes.end())
         {
             return setTexture(iter->second);

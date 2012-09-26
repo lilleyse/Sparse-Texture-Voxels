@@ -1,8 +1,10 @@
 #pragma once
 #include <glf.hpp>
 #include <CL/opencl.h>
-#include "ShaderConstants.h"
 #include <sstream>
+
+#include "ShaderConstants.h"
+#include "Utils.h"
 
 class MipMapGenerator
 {

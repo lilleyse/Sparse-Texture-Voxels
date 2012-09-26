@@ -1,7 +1,9 @@
 #pragma once
 
 #include <glf.hpp>
+
 #include "ShaderConstants.h"
+#include "Utils.h"
 
 class VoxelRaycaster
 {
@@ -72,8 +74,9 @@ public:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
 
-    void setMipMapLevel(unsigned int mipMapLevel)
+    void setMipMapLevel(uint mipMapLevel)
     {
+        glUseProgram(fullScreenProgram);
         GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "mipMapLevel");
         glUniform1f(mipMapLevelUniform, (float)mipMapLevel);
     }

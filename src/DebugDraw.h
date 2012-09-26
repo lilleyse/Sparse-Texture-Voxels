@@ -34,7 +34,7 @@ public:
     DebugDraw(){}
     virtual ~DebugDraw(){}
 
-    void begin(GLuint voxelTexture, unsigned int voxelGridLength, unsigned int numMipMapLevels)
+    void begin(GLuint voxelTexture, uint voxelGridLength, uint numMipMapLevels)
     {
         this->voxelTexture = voxelTexture;
         this->voxelGridLength = voxelGridLength;
@@ -153,7 +153,7 @@ public:
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
     }
 
-    void setMipMapLevel(unsigned int mipMapLevel)
+    void setMipMapLevel(uint mipMapLevel)
     {
         this->currentMipMapLevel = mipMapLevel;
     }

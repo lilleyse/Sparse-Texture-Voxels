@@ -29,9 +29,9 @@ namespace
     VoxelTextureGenerator voxelTextureGenerator;
     std::string initialTexture = voxelTextureGenerator.SPHERE_PRESET;
     bool loadMultipleTextures = true;
-    unsigned int voxelGridLength = 64;
-    unsigned int numMipMapLevels = (unsigned int)(glm::log2(float(voxelGridLength)) + 1.5);
-    unsigned int currentMipMapLevel = 0;
+    uint voxelGridLength = 64;
+    uint numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
+    uint currentMipMapLevel = 0;
 
     // Demo settings
     DebugDraw debugDraw;
@@ -107,7 +107,7 @@ void keyboardEvent(uchar keyCode)
     // Changing demo
     if (loadAllDemos && keyCode >= 49 && keyCode < 49 + MAX_DEMO_TYPES) 
     {
-        currentDemoType = (DemoType)((unsigned int)keyCode - 49);
+        currentDemoType = (DemoType)((uint)keyCode - 49);
     }
 
     // Changing mip map level
