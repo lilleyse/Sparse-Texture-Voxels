@@ -137,7 +137,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     float stepSize = pixSize; // should be 1/3
 
     vec4 src = vec4( vec3(1.0), textureLod(testTexture, pos, mipLevel).r );
-    //src.a *= stepSize;
+    src.a *= stepSize;
 
     // alpha blending
     vec4 dst = color;
