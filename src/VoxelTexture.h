@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glf.hpp>
+
 #include "Utils.h"
 
 struct TextureData
@@ -16,29 +17,40 @@ public:
 
     GLuint colorTexture;
     GLuint normalTexture;
-    GLuint texture3DSampler;
+    GLuint textureNearestSampler;
+    GLuint textureLinearSampler;
 
     uint voxelGridLength;
     uint numMipMapLevels;
 
-    void begin(uint voxelGridLength, uint numMipMapLevels)
+    void begin(uint voxelGridLength)
     {
         //Create a default empty vector for each texture data
         this->voxelGridLength = voxelGridLength;
-        this->numMipMapLevels = numMipMapLevels;
+        this->numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
 
-        // Create a sampler to sample from any of the 3D textures
-        glGenSamplers(1, &texture3DSampler);
-        glBindSampler(COLOR_TEXTURE_3D_BINDING, texture3DSampler);
-        glBindSampler(NORMAL_TEXTURE_3D_BINDING, texture3DSampler);
+        // Create a nearest sampler to sample from any of the 3D textures
+        glGenSamplers(1, &textureNearestSampler);
+        glBindSampler(0, textureNearestSampler);
 
         float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
-        glSamplerParameterfv(texture3DSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
-        glSamplerParameteri(texture3DSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glSamplerParameteri(texture3DSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        glSamplerParameteri(texture3DSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glSamplerParameteri(texture3DSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glSamplerParameteri(texture3DSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+        glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+
+        // Create a linear sampler to sample from any of the 3
+        glGenSamplers(1, &textureLinearSampler);
+        glBindSampler(0, textureLinearSampler);
+
+        glSamplerParameterfv(textureLinearSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
+        glSamplerParameteri(textureLinearSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glSamplerParameteri(textureLinearSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 
         // Create a dense 3D color texture
         glGenTextures(1, &colorTexture);
@@ -62,8 +74,20 @@ public:
         glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGB, GL_FLOAT, &textureData.normalData[0]);
     }
 
-    void display()
+    void display(bool linearSampling)
     {
+        if(linearSampling)
+        {
+            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
+            glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
+        }
+        else
+        {
+            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
+            glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
+        }
+
+
         // Rebind to the binding points in case binding points were messed up (like in MipMapGenerator)
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, colorTexture);
