@@ -18,6 +18,7 @@ namespace
     
     // Window and updating
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
+
     GLuint perFrameUBO;
     ThirdPersonCamera camera;
     bool showDebugOutput = false;
@@ -101,7 +102,7 @@ void mouseEvent()
     camera.pan(-Window.MiddleMouseDelta.x * panAmount, Window.MiddleMouseDelta.y * panAmount);
 }
 
-void keyboardEvent(unsigned char keyCode)
+void keyboardEvent(uchar keyCode)
 {
     // Changing demo
     if (loadAllDemos && keyCode >= 49 && keyCode < 49 + MAX_DEMO_TYPES) 

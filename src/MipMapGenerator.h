@@ -8,7 +8,7 @@ class MipMapGenerator
 {
 private:
 
-    unsigned int indexConverter(unsigned int sideLength, glm::uvec3 index3d)
+    uint indexConverter(uint sideLength, glm::uvec3 index3d)
     {
         return index3d.x + index3d.y*sideLength + index3d.z*sideLength*sideLength;
     }
@@ -44,14 +44,15 @@ public:
                 for(int o = 0; o < 2; o++)
                 {
                     glm::uvec3 neighbor = index3d + glm::uvec3(m,n,o);
-                    unsigned int neighborIndex1d = indexConverter(prevMipMapSideLength, neighbor);
+                    uint neighborIndex1d = indexConverter(prevMipMapSideLength, neighbor);
                     glm::vec4 neighborColor(prevMipData[neighborIndex1d]);
-                    summedColor += glm::vec4(glm::vec3(neighborColor)*(neighborColor.a/255), neighborColor.a);
+                    summedColor += glm::vec4(glm::vec3(neighborColor)*(neighborColor.a/255.0f), neighborColor.a/255.0f);
                 }
 
-                glm::vec4 averageColor = summedColor/8.0;
-                unsigned int index1d = indexConverter(mipMapSideLength, glm::uvec3(j,k,l));
-                currMipData[index1d] = glm::u8vec4(averageColor);
+                glm::vec3 averageColor = glm::vec3(summedColor)/summedColor.a;
+                glm::vec4 finalColor(averageColor, summedColor.a/8*255);
+                uint index1d = indexConverter(mipMapSideLength, glm::uvec3(j,k,l));
+                currMipData[index1d] = glm::u8vec4(finalColor);
             }
 
             glTexSubImage3D(GL_TEXTURE_3D, i, 0, 0, 0, mipMapSideLength, mipMapSideLength, mipMapSideLength, GL_RGBA, GL_UNSIGNED_BYTE, &currMipData[0]);

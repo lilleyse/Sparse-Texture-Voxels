@@ -68,8 +68,8 @@ bool cubeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {
     float tFar = min(min(t2.x, t2.y), t2.z);
     
     if (tNear<tFar && tFar>0.0) {
-	    t = tNear>0.0 ? tNear : tFar;
-	    return true;
+        t = tNear>0.0 ? tNear : tFar;
+        return true;
     }
     
     return false;
@@ -87,8 +87,8 @@ bool cubeVolumeIntersect(vec3 bMin, vec3 bMax, vec3 ro, vec3 rd, out float t) {
     if (tNear<tFar && tFar>0.0) {
         // difference here
         // if inside, instead of returning far plane, return ray origin
-	    t = tNear>0.0 ? tNear : 0.0;
-	    return true;
+        t = tNear>0.0 ? tNear : 0.0;
+        return true;
     }
     
     return false;
@@ -106,8 +106,8 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     if (tNear<tFar && tFar>0.0) {
         // difference here
         // if inside, instead of returning far plane, return ray origin
-	    t = tNear>0.0 ? tNear : 0.0;
-	    return true;
+        t = tNear>0.0 ? tNear : 0.0;
+        return true;
     }
     
     return false;

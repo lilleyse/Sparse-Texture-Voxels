@@ -12,13 +12,13 @@ private:
     GLuint vertexArray;
     GLuint voxelBuffer;
     GLuint voxelDebugProgram;
-    static const unsigned int numVerticesCube = 8;
-    static const unsigned int numElementsCube = 36; 
+    static const uint numVerticesCube = 8;
+    static const uint numElementsCube = 36; 
 
     struct MipMapInfo
     {
-        unsigned int offset;
-        unsigned int numVoxels;
+        uint offset;
+        uint numVoxels;
     };
 
     std::vector<MipMapInfo> mipMapInfoArray;
@@ -116,7 +116,7 @@ public:
             // apply an offset to the position because the origin of the cube model is in its center rather than a corner
             glm::vec3 offset = glm::vec3(-mipMapVoxelGridLength * voxelScale / 2.0f) + glm::vec3(voxelScale/2);
 
-            unsigned int textureIndex = 0;
+            uint textureIndex = 0;
             for(int j = 0; j < mipMapVoxelGridLength; j++)
             for(int k = 0; k < mipMapVoxelGridLength; k++)
             for(int l = 0; l < mipMapVoxelGridLength; l++)
@@ -145,8 +145,8 @@ public:
 
     void display()
     {
-        unsigned int baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
-        unsigned int primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
+        uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
+        uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
 
         glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
