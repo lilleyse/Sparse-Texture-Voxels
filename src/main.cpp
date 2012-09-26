@@ -24,6 +24,8 @@ namespace
     bool showDebugOutput = false;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
+    bool showFPS = true;
+    Utils::Framerate fpsHandler;
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
@@ -203,7 +205,11 @@ void display()
     }  
 
     glf::swapBuffers();
+
     frameTime += FRAME_TIME_DELTA;
+   
+    if(showFPS)
+        fpsHandler.display();
 }
 
 int main(int argc, char* argv[])
