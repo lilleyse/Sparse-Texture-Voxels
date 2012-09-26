@@ -44,7 +44,7 @@ public:
         glBindTexture(GL_TEXTURE_3D, voxelTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
@@ -94,7 +94,7 @@ public:
                 for(unsigned int j = 0; j < voxelGridLength; j++)
                 for(unsigned int k = 0; k < voxelGridLength; k++) 
                 {
-                    textureData[textureIndex] = glm::u8vec4(i,j,k,255);
+                    textureData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
                     textureIndex++;
                 }
                 textureNamesToIndexes.insert(std::pair<std::string, unsigned int>(name, textures.size()));
@@ -121,7 +121,7 @@ public:
     bool setTexture(int textureIndex)
     {     
         if (textureIndex < 0) textureIndex = textures.size() - 1;
-        if (textureIndex >= textures.size()) textureIndex = 0;
+        if (textureIndex >= (int)textures.size()) textureIndex = 0;
         if (textureIndex == currentTexture) return false;
         currentTexture = textureIndex;
             

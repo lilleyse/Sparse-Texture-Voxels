@@ -42,7 +42,7 @@ namespace
 bool setMipMapLevel(int level)
 {
     if (level < 0) level = 0;
-    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
+    if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
     if (level == currentMipMapLevel) return false;
     currentMipMapLevel = level;
     return true;
