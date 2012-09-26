@@ -24,7 +24,7 @@ public:
         glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
 
         int mipMapSideLength = voxelTexture->voxelGridLength;
-        for(int i = 1; i < voxelTexture->numMipMapLevels; i++)
+        for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
             int prevMipMapSideLength = mipMapSideLength;
             mipMapSideLength /=2;
