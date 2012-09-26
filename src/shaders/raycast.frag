@@ -15,7 +15,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPosition;
     vec3 uCamUp;
-    uvec2 uResolution;
+    vec2 uResolution;
     float uTime;
 };
 
@@ -122,7 +122,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
     vec4 src = textureLod(testTexture, pos, mipMapLevel);
-    src.a *= gStepSize; //*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
+    src.a *= gStepSize; //*ROOTTHREE*2.0; //factor by how steps per voxel sidelength (maybe?)
 
     // alpha blending
     vec4 dst = color;
@@ -226,7 +226,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
 
 void main()
 {
-    float aspect = float(uResolution.x)/float(uResolution.y);
+    float aspect = uResolution.x/uResolution.y;
     vec2 uv = gl_FragCoord.xy/uResolution;
     uv.y = 1.0-uv.y;
 
@@ -255,7 +255,7 @@ void main()
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchLight(ro+rd*(t+EPS), rd);
+        cout = raymarchSimple(ro+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);

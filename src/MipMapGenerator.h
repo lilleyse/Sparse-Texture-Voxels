@@ -32,7 +32,6 @@ public:
             std::vector<glm::u8vec4> prevMipData(prevMipMapSideLength*prevMipMapSideLength*prevMipMapSideLength);
             glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_UNSIGNED_BYTE, &prevMipData[0]);
 
-           
             std::vector<glm::u8vec4> currMipData(mipMapSideLength*mipMapSideLength*mipMapSideLength);
 
             for(int j = 0; j < mipMapSideLength; j++)
