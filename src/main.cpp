@@ -28,7 +28,7 @@ namespace
     VoxelTextureGenerator voxelTextureGenerator;
     std::string initialTexture = voxelTextureGenerator.SPHERE_PRESET;
     bool loadMultipleTextures = true;
-    uint voxelGridLength = 64;
+    uint voxelGridLength = 32;
     uint numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
     uint currentMipMapLevel = 0;
 
