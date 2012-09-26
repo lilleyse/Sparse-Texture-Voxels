@@ -56,7 +56,7 @@ const int LIGHT_NUM = 1;
 vec3 gLightPos[LIGHT_NUM];
 vec3 gLightCol[LIGHT_NUM];
 
-#define TEXTURE_TYPE normalTexture
+#define TEXTURE_TYPE colorTexture
 
 
 //---------------------------------------------------------
@@ -262,7 +262,7 @@ void main()
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchSimple(ro+rd*(t+EPS), rd);
+        cout = raymarchLight(ro+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);
