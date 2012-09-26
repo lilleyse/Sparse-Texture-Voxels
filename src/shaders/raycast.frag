@@ -7,7 +7,8 @@
 #define DEBUG_TRANSFORM_ATTR 1
 #define DEBUG_COLOR_ATTR 2
 #define PER_FRAME_UBO_BINDING 0
-#define VOXEL_TEXTURE_3D_BINDING 0
+#define COLOR_TEXTURE_3D_BINDING 0
+#define NORMAL_TEXTURE_3D_BINDING 1
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -38,7 +39,9 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout (location = 0, index = 0) out vec4 fragColor;
-layout (binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
+layout (binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
+layout (binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
+
 uniform float mipMapLevel;
 
 const uint MAX_STEPS = 64;
@@ -121,7 +124,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 src = textureLod(testTexture, pos, mipMapLevel);
+    vec4 src = textureLod(colorTexture, pos, mipMapLevel);
     src.a *= gStepSize;  // factor by how steps per voxel diag
 
     // alpha blending
@@ -150,7 +153,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(testTexture, pos, mipMapLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(colorTexture, pos, mipMapLevel).a );
 
     pos += step;
     
@@ -173,7 +176,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(testTexture, pos, mipMapLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(colorTexture, pos, mipMapLevel).a );
 
     pos += step;
 
@@ -194,7 +197,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = textureLod(testTexture, pos, mipMapLevel);
+    vec4 texel = textureLod(colorTexture, pos, mipMapLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );
