@@ -182,13 +182,24 @@ void display()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+   
+
     // Display demo
     if (currentDemoType == DEBUGDRAW)
+    {
+        voxelTextureGenerator.getVoxelTexture()->display(false);
         debugDraw.display();
+    }
     else if (currentDemoType == VOXELRAYCASTER)
+    {
+        voxelTextureGenerator.getVoxelTexture()->display(false);
         voxelRaycaster.display(); 
+    }
     else if (currentDemoType == VOXELCONETRACER)
+    {
+        voxelTextureGenerator.getVoxelTexture()->display(true);
         voxelConetracer.display();
+    }
 
     // Update
     glf::swapBuffers();

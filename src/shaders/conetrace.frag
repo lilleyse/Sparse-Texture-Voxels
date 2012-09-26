@@ -7,7 +7,8 @@
 #define DEBUG_TRANSFORM_ATTR 1
 #define DEBUG_COLOR_ATTR 2
 #define PER_FRAME_UBO_BINDING 0
-#define VOXEL_TEXTURE_3D_BINDING 0
+#define COLOR_TEXTURE_3D_BINDING 0
+#define NORMAL_TEXTURE_3D_BINDING 1
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -38,7 +39,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout (location = 0, index = 0) out vec4 fragColor;
-layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D inputTexture;
+layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
+layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
 const int MAX_STEPS = 512;
 const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
@@ -95,7 +97,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // sample texture
-    vec4 src = textureLod(inputTexture, pos, mipLevel);
+    vec4 src = textureLod(colorTexture, pos, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 

@@ -7,7 +7,8 @@
 #define DEBUG_TRANSFORM_ATTR 1
 #define DEBUG_COLOR_ATTR 2
 #define PER_FRAME_UBO_BINDING 0
-#define VOXEL_TEXTURE_3D_BINDING 0
+#define COLOR_TEXTURE_3D_BINDING 0
+#define NORMAL_TEXTURE_3D_BINDING 1
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -38,7 +39,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout (location = 0, index = 0) out vec4 fragColor;
-layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
+layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
 
 
 //---------------------------------------------------------
@@ -54,7 +55,7 @@ void main()
     // test, sample the 3D texture
     uv.x *= aspect;  // correct to square
     vec3 textureIndex = vec3(uv, fract(uTime));
-    vec4 cout = texture(testTexture, textureIndex);
+    vec4 cout = texture(colorTexture, textureIndex);
 
     // pre-multiply alpha to show
     cout.rgb = cout.rgb*cout.a;
