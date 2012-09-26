@@ -83,11 +83,25 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
     float dist = distance(pos, uCamPosition);
+
+    // size of texel cube we want to be looking into
+    // correctly interpolated texel size, automatic
     float pixSize = gPixSizeAtDist * dist;
+    
+    // solve: pixSize = texelSize*2^mipLevel
     float mipLevel = log2(pixSize/gTexelSize);
+
+    // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
+    // sample texture
     vec4 src = vec4( vec3(1.0), textureLod(inputTexture, pos, mipLevel).r );
+    
+    // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
+    // no need weight by "stepSize" since "pixSize" is size of an imaginary 
+    // texel cube exactly the size of a mip cube we want, if it existed, 
+    // but it doesn't so we interpolate between two mips to approximate it
+    // but need to weight by stepsize within texel
     src.a *= STEPSIZE_WRT_TEXEL;
 
     // alpha blending
