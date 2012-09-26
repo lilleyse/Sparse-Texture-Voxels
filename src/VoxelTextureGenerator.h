@@ -6,13 +6,13 @@
 
 #include "Utils.h"
 #include "MipMapGenerator.h"
+#include "VoxelTexture.h"
 
 class VoxelTextureGenerator
 {
 private:
-    GLuint voxelTexture;
-    uint voxelGridLength;
-    uint numMipMapLevels;
+    
+    VoxelTexture* voxelTexture;
     bool loadMulitpleTextures;
 
     std::map<std::string, uint> textureNamesToIndexes;
@@ -21,41 +21,17 @@ private:
 
     MipMapGenerator mipMapGenerator;
 
-public:
-    std::string CUBE_PRESET;
-    std::string SPHERE_PRESET;
-    VoxelTextureGenerator()
-    {
-        CUBE_PRESET = "cube";
-        SPHERE_PRESET = "sphere";
-        currentTexture = -1;
-    }
-
-    void begin(uint voxelGridLength, uint numMipMapLevels, bool loadMultipleTextures) 
-    {   
-        //Create a default empty vector for each texture data
-        this->voxelGridLength = voxelGridLength;
-        this->numMipMapLevels = numMipMapLevels;
-        this->loadMulitpleTextures = loadMultipleTextures;
-
-        // Create a dense 3D texture
-        glGenTextures(1, &voxelTexture);
-        glActiveTexture(GL_TEXTURE0 + VOXEL_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, voxelTexture);
-        glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-        float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
-        glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
-
-        if (loadMultipleTextures) 
-        {
-            createTexture(CUBE_PRESET);
-            createTexture(SPHERE_PRESET);        
-        }
+    bool setTexture(int textureIndex)
+    {     
+        if (textureIndex < 0) textureIndex = textures.size() - 1;
+        if (textureIndex >= (int)textures.size()) textureIndex = 0;
+        if (textureIndex == currentTexture) return false;
+        currentTexture = textureIndex;
+            
+        // Fill entire texture (first mipmap level) then fill mipmaps
+        voxelTexture->setData(&(textures.at(currentTexture)[0]));
+        mipMapGenerator.generateMipMapCPU(voxelTexture);
+        return true;
     }
 
     void createTexture(std::string name)
@@ -64,6 +40,7 @@ public:
         {
             if (name == CUBE_PRESET)
             {
+                uint voxelGridLength = voxelTexture->voxelGridLength;
                 std::vector<glm::u8vec4> textureData = std::vector<glm::u8vec4>(voxelGridLength*voxelGridLength*voxelGridLength);
                 uint textureIndex = 0;
                 uint half = voxelGridLength / 2;
@@ -88,6 +65,7 @@ public:
             }
             else if (name == SPHERE_PRESET)
             {
+                uint voxelGridLength = voxelTexture->voxelGridLength;
                 glm::vec3 center = glm::vec3(voxelGridLength/2);
                 float radius = voxelGridLength/2;
 
@@ -114,6 +92,30 @@ public:
         }
     }
 
+public:
+    std::string CUBE_PRESET;
+    std::string SPHERE_PRESET;
+    VoxelTextureGenerator()
+    {
+        CUBE_PRESET = "cube";
+        SPHERE_PRESET = "sphere";
+        currentTexture = -1;
+    }
+
+    void begin(uint voxelGridLength, uint numMipMapLevels, bool loadMultipleTextures) 
+    {   
+        this->loadMulitpleTextures = loadMultipleTextures;
+
+        voxelTexture = new VoxelTexture();
+        voxelTexture->begin(voxelGridLength, numMipMapLevels);
+
+        if (loadMultipleTextures) 
+        {
+            createTexture(CUBE_PRESET);
+            createTexture(SPHERE_PRESET);        
+        }
+    }
+
     bool setTexture(std::string name)
     { 
         // Adds the texture's data to the gpu.
@@ -125,18 +127,7 @@ public:
         }
         return false;
     }
-    bool setTexture(int textureIndex)
-    {     
-        if (textureIndex < 0) textureIndex = textures.size() - 1;
-        if (textureIndex >= (int)textures.size()) textureIndex = 0;
-        if (textureIndex == currentTexture) return false;
-        currentTexture = textureIndex;
-            
-        // Fill entire texture (first mipmap level) then fill mipmaps
-        glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGBA, GL_UNSIGNED_BYTE, &(textures.at(currentTexture)[0]));
-        mipMapGenerator.generateMipMapCPU(voxelTexture, voxelGridLength, numMipMapLevels);
-        return true;
-    }
+
     bool setNextTexture()
     {
         return setTexture((int)currentTexture + 1);
@@ -145,7 +136,7 @@ public:
     {
         return setTexture((int)currentTexture - 1);
     }
-    GLuint getVoxelTexture()
+    VoxelTexture* getVoxelTexture()
     {
         return voxelTexture;
     }

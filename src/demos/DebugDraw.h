@@ -1,14 +1,12 @@
 #pragma once
 
 #include "Utils.h"
+#include "VoxelTexture.h"
 
 class DebugDraw
 {
 private:
     int currentMipMapLevel;
-    int numMipMapLevels;
-    int voxelGridLength;
-    GLuint voxelTexture;
     GLuint vertexArray;
     GLuint voxelBuffer;
     GLuint voxelDebugProgram;
@@ -34,11 +32,8 @@ public:
     DebugDraw(){}
     virtual ~DebugDraw(){}
 
-    void begin(GLuint voxelTexture, uint voxelGridLength, uint numMipMapLevels)
+    void begin(VoxelTexture* voxelTexture)
     {
-        this->voxelTexture = voxelTexture;
-        this->voxelGridLength = voxelGridLength;
-        this->numMipMapLevels = numMipMapLevels;
         this->currentMipMapLevel = 0;
 
         // Create buffer objects and vao
@@ -83,8 +78,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/voxelDebug.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
 
         voxelDebugProgram = glCreateProgram();
         glAttachShader(voxelDebugProgram, vertexShaderObject);
@@ -95,18 +90,18 @@ public:
         glLinkProgram(voxelDebugProgram);
         glf::checkProgram(voxelDebugProgram);
 
-        createCubesFromVoxels();
+        createCubesFromVoxels(voxelTexture);
     }
-    void createCubesFromVoxels()
+    void createCubesFromVoxels(VoxelTexture* voxelTexture)
     {
         mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glBindTexture(GL_TEXTURE_3D, voxelTexture);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
         
-        int mipMapVoxelGridLength = this->voxelGridLength;
+        int mipMapVoxelGridLength = voxelTexture->voxelGridLength;
         float voxelScale = 1.0f / mipMapVoxelGridLength;
-        for(int i = 0; i < this->numMipMapLevels; i++)
+        for(int i = 0; i < voxelTexture->numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = voxelArray.size();

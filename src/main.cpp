@@ -1,8 +1,8 @@
 #include <glf.hpp>
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "DebugDraw.h"
-#include "VoxelRaycaster.h"
+#include "demos/DebugDraw.h"
+#include "demos/VoxelRaycaster.h"
 #include "Utils.h"
 #include "VoxelTextureGenerator.h"
 
@@ -132,7 +132,7 @@ void keyboardEvent(uchar keyCode)
     {
         if (loadAllDemos || currentDemoType == DEBUGDRAW)
         {
-            debugDraw.createCubesFromVoxels();
+            debugDraw.createCubesFromVoxels(voxelTextureGenerator.getVoxelTexture());
         }
     }
 }
@@ -152,7 +152,7 @@ bool begin()
 
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
     {
-        debugDraw.begin(voxelTextureGenerator.getVoxelTexture(), voxelGridLength, numMipMapLevels);
+        debugDraw.begin(voxelTextureGenerator.getVoxelTexture());
         debugDraw.setMipMapLevel(currentMipMapLevel);
     }
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)

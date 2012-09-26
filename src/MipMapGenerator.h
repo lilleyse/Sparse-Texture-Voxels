@@ -5,6 +5,7 @@
 
 #include "ShaderConstants.h"
 #include "Utils.h"
+#include "VoxelTexture.h"
 
 class MipMapGenerator
 {
@@ -18,12 +19,12 @@ private:
 public:
 
     // This code is not super efficient since it is a short term solution that will be replaced by GPU-based mipmap generation
-    void generateMipMapCPU(GLuint voxelTexture, int voxelGridLength, int numMipMaps)
+    void generateMipMapCPU(VoxelTexture* voxelTexture)
     {
-        glBindTexture(GL_TEXTURE_3D, voxelTexture);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
 
-        int mipMapSideLength = voxelGridLength;
-        for(int i = 1; i < numMipMaps; i++)
+        int mipMapSideLength = voxelTexture->voxelGridLength;
+        for(int i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
             int prevMipMapSideLength = mipMapSideLength;
             mipMapSideLength /=2;
