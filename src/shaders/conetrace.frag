@@ -95,7 +95,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // sample texture
-    vec4 src = vec4( vec3(1.0), textureLod(inputTexture, pos, mipLevel).r );
+    vec4 src = textureLod(inputTexture, pos, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 

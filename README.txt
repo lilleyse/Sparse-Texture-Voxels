@@ -6,4 +6,8 @@ Controls:
 
 Left mouse - change camera view direction
 Right mouse - zoom in and out
-WASD - move camera
+Middle mouse - pan camera
+
+; and ' - toggle between textures
+, and . - change mip map levels
+1 to 9 - select demo mode (not all numbers are used)

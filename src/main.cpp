@@ -2,13 +2,13 @@
 #include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "DebugDraw.h"
-#include "VoxelRaycaster.h"
-#include "VoxelConetracer.h"
-#include "MipMapGenerator.h"
-#include "LoadTextureFile.h"
+#include "Utils.h"
+#include "demos/DebugDraw.h"
+#include "demos/VoxelRaycaster.h"
+#include "demos/VoxelConetracer.h"
+#include "VoxelTextureGenerator.h"
 
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, NONE};
+enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, MAX_DEMO_TYPES};
 
 namespace
 {
@@ -17,100 +17,33 @@ namespace
     const int SAMPLE_SIZE_HEIGHT(400);
     const int SAMPLE_MAJOR_VERSION(3);
     const int SAMPLE_MINOR_VERSION(3);
-
+    
+    // Window and updating
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
-    bool showDebugOutput = false;
-
-    uint voxelGridLength = 64;
-    GLuint voxelTexture;
     GLuint perFrameUBO;
-
     ThirdPersonCamera camera;
+    bool showDebugOutput = false;
+    float frameTime = 0.0f;
+    const float FRAME_TIME_DELTA = 0.01f;
+    bool showFPS = true;
+    Utils::Framerate fpsHandler;
+    
+    // Texture settings
+    VoxelTextureGenerator voxelTextureGenerator;
+    const std::string initialTextures[] = {"data/Bucky.raw"};
+    bool loadMultipleTextures = true;
+    uint voxelGridLength = 32;
+    uint numMipMapLevels;
+    uint currentMipMapLevel;
 
-    MipMapGenerator mipMapGenerator;
-
-    //Demo Types
+    // Demo settings
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
     VoxelConetracer voxelConetracer;
-    DemoType currentDemo = VOXELCONETRACER;
-    bool loadAllDemos = false;
-    
-    float frameTime = 0.0f;
-    const float FRAME_TIME_DELTA = 0.01f;
+    DemoType currentDemoType = DEBUGDRAW;
+    bool loadAllDemos = true;
 }
 
-void createVoxelTextureFromRaw(uchar* buffer, uint width, uint height, uint depth)
-{
-    // Create a dense 3D texture
-    int numMipMapLevels = Utils::getNumMipMapLevels(width); // assuming cube
-
-    glGenTextures(1, &voxelTexture);
-    glActiveTexture(GL_TEXTURE0 + VOXEL_TEXTURE_3D_BINDING);
-    glBindTexture(GL_TEXTURE_3D, voxelTexture);
-    glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_R8, width, height, depth);
-
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-
-    float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
-
-    // Fill entire texture (first mipmap level)
-    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, width, height, depth, GL_RED, GL_UNSIGNED_BYTE, buffer);
-
-    // Generate mipmaps automatically
-    //mipMapGenerator.generateMipMapCPU(voxelTexture, voxelGridLength, numMipMapLevels);
-    glGenerateMipmap(GL_TEXTURE_3D);
-}
-void createVoxelTexture()
-{
-    // Create a dense 3D texture
-    int numMipMapLevels = Utils::getNumMipMapLevels(voxelGridLength);
-    glGenTextures(1, &voxelTexture);
-    glActiveTexture(GL_TEXTURE0 + VOXEL_TEXTURE_3D_BINDING);
-    glBindTexture(GL_TEXTURE_3D, voxelTexture);
-    glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
-    float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
-    glTexParameterfv(GL_TEXTURE_3D, GL_TEXTURE_BORDER_COLOR, zeroes);
-
-    // Create the voxel data
-    std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
-
-    uint half = voxelGridLength / 2;
-    uint textureIndex = 0;
-    for(uint i = 0; i < voxelGridLength; i++)
-    for(uint j = 0; j < voxelGridLength; j++)
-    for(uint k = 0; k < voxelGridLength; k++) 
-    {
-        if (i<half && j<half && k<half)
-            textureData[textureIndex] = glm::u8vec4(255,0,0,127);
-        else if (i>=half && j<half && k<half)
-            textureData[textureIndex] = glm::u8vec4(0,255,0,127);
-        else if (i<half && j>=half && k<half)
-            textureData[textureIndex] = glm::u8vec4(0,0,255,127);
-        else if (i>=half && j>=half && k<half)
-            textureData[textureIndex] = glm::u8vec4(255,255,255,127);
-        else
-            textureData[textureIndex] = glm::u8vec4(127,127,127,127);
-
-        textureIndex++;
-    }
-
-    // Fill entire texture (first mipmap level)
-    glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, voxelGridLength, voxelGridLength, voxelGridLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData[0]);
-
-    // Generate mipmaps automatically
-    mipMapGenerator.generateMipMapCPU(voxelTexture, voxelGridLength, numMipMapLevels);
-}
 void initGL()
 {
     // Debug output
@@ -120,10 +53,7 @@ void initGL()
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
         glDebugMessageCallbackARB(&glf::debugOutput, NULL);
     }
-    else
-    {
-        printf("debug output extension not found");
-    }
+    else printf("debug output extension not found");
     
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
@@ -144,74 +74,77 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
+void setMipMapLevel(int level)
+{
+    if (level < 0) level = 0;
+    if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
+    if (level == currentMipMapLevel) return;
+    currentMipMapLevel = level;
+    if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        debugDraw.setMipMapLevel(currentMipMapLevel);
+    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
+        voxelRaycaster.setMipMapLevel(currentMipMapLevel);
+}
+
 void mouseEvent()
 {
     float cameraDistanceFromCenter = glm::length(camera.position);
-
     float rotateAmount = cameraDistanceFromCenter / 200.0f;
-    camera.rotate(-Window.LeftMouseDelta.x * rotateAmount, -Window.LeftMouseDelta.y * rotateAmount);
-    
-    float zoomAmount = cameraDistanceFromCenter / 100.0f;
-    camera.zoom(Window.RightMouseDelta.y * zoomAmount);
-
+    float zoomAmount = cameraDistanceFromCenter / 200.0f;
     float panAmount = cameraDistanceFromCenter / 500.0f;
+
+    camera.rotate(-Window.LeftMouseDelta.x * rotateAmount, -Window.LeftMouseDelta.y * rotateAmount);
+    camera.zoom(Window.RightMouseDelta.y * zoomAmount);
     camera.pan(-Window.MiddleMouseDelta.x * panAmount, Window.MiddleMouseDelta.y * panAmount);
 }
 
 void keyboardEvent(uchar keyCode)
 {
-    if (loadAllDemos && keyCode >= 49 && keyCode < 49 + NONE) 
-    {
-        currentDemo = (DemoType)((uint)keyCode - 49);
-    }
-    switch (currentDemo) 
-    {
-        case DEBUGDRAW:
-            debugDraw.keyboardEvent(keyCode);
-            break;
-        case VOXELRAYCASTER:
-            voxelRaycaster.keyboardEvent(keyCode);
-            break;
-        case VOXELCONETRACER:
-            voxelConetracer.keyboardEvent(keyCode);
-            break;
-    }   
+    // Changing demo
+    if (loadAllDemos && keyCode >= 49 && keyCode < 49 + MAX_DEMO_TYPES) 
+        currentDemoType = (DemoType)((uint)keyCode - 49);
+
+    // Changing mip map level
+    if (keyCode == 46) setMipMapLevel((int)currentMipMapLevel + 1);
+    if (keyCode == 44) setMipMapLevel((int)currentMipMapLevel - 1);
+
+    // Changing textures
+    bool setsNextTexture = keyCode == 59 && voxelTextureGenerator.setNextTexture();
+    bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
+    if (setsNextTexture || setsPreviousTexture)
+        if (loadAllDemos || currentDemoType == DEBUGDRAW)
+            debugDraw.createCubesFromVoxels(voxelTextureGenerator.getVoxelTexture());
 }
 
 bool begin()
 {
     initGL();
-    //createVoxelTexture();
-    
-    {
-        // hardcoded
-        uint width, height, depth;
-        width = height = depth = 32;
-        uint channels = 1;
 
-        uchar* buffer = new uchar[width*height*depth*channels];
-
-        LoadTextureFile::LoadRaw("data/Bucky.raw", width, height, depth, channels, buffer);
-
-        createVoxelTextureFromRaw(buffer, width, height, depth);
-    }
-    
     camera.setFarNearPlanes(.01f, 100.0f);
     camera.lookAt = glm::vec3(0.5f);
-    //camera.zoom(-2);
+    camera.zoom(-2);
 
-    if (loadAllDemos || currentDemo == DEBUGDRAW) 
-    {
-        debugDraw.begin(voxelTexture, voxelGridLength);
-    }
-    if (loadAllDemos || currentDemo == VOXELRAYCASTER)
-    {
+    // all process, nothing interesting here
+    voxelTextureGenerator.begin(voxelGridLength, loadMultipleTextures);
+    uint numInitialTextures = sizeof(initialTextures) / sizeof(initialTextures[0]);
+    for (uint i = 0; i < numInitialTextures; i++)
+        voxelTextureGenerator.createTexture(initialTextures[i]);
+    voxelTextureGenerator.createAllPresets();
+    voxelTextureGenerator.setTexture(0);
+    VoxelTexture* voxelTexture = voxelTextureGenerator.getVoxelTexture();
+    
+    // init demos
+    if (loadAllDemos || currentDemoType == DEBUGDRAW) 
+        debugDraw.begin(voxelTexture);
+    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.begin();
-    }
-    if (loadAllDemos || currentDemo == VOXELCONETRACER)
-    {
+    if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer.begin();
-    }
+    
+    // initial mip-map setting
+    numMipMapLevels = voxelTexture->numMipMapLevels;
+    currentMipMapLevel = UINT_MAX;
+    setMipMapLevel(currentMipMapLevel);
 
     return true;
 }
@@ -245,21 +178,17 @@ void display()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Display demo
-    switch (currentDemo) 
-    {
-        case DEBUGDRAW:
-            debugDraw.display(); 
-            break;
-        case VOXELRAYCASTER:
-            voxelRaycaster.display(); 
-            break;
-        case VOXELCONETRACER:
-            voxelConetracer.display(); 
-            break;
-    }  
+    if (currentDemoType == DEBUGDRAW)
+        debugDraw.display();
+    else if (currentDemoType == VOXELRAYCASTER)
+        voxelRaycaster.display(); 
+    else if (currentDemoType == VOXELCONETRACER)
+        voxelConetracer.display();
 
+    // Update
     glf::swapBuffers();
     frameTime += FRAME_TIME_DELTA;
+    if(showFPS) fpsHandler.display();
 }
 
 int main(int argc, char* argv[])

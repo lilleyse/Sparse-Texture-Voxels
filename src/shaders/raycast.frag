@@ -38,7 +38,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout (location = 0, index = 0) out vec4 fragColor;
-layout(binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
+layout (binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
+uniform float mipMapLevel;
 
 const uint MAX_STEPS = 128;
 const float ALPHA_THRESHOLD = 0.95;
@@ -120,9 +121,8 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 src = vec4(vec3(1.0),texture(testTexture, pos).r);
-    //src.a *= gStepSize;  // factor by how steps per voxel diag
-    src.a *= gStepSize*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
+    vec4 src = textureLod(testTexture, pos, mipMapLevel);
+    src.a *= gStepSize; //*ROOTTHREE*2.0; //factor by how steps per voxel sidelength (maybe?)
 
     // alpha blending
     vec4 dst = color;
@@ -150,7 +150,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*texture(testTexture, pos).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(testTexture, pos, mipMapLevel).a );
 
     pos += step;
     
@@ -173,7 +173,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*texture(testTexture, pos).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(testTexture, pos, mipMapLevel).a );
 
     pos += step;
 
@@ -194,7 +194,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = texture(testTexture, pos);
+    vec4 texel = textureLod(testTexture, pos, mipMapLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );
@@ -260,11 +260,6 @@ void main()
     else {
         cout = vec4(0.0);
     }
-
-    // test, sample the 3D texture
-    //uv.x *= aspect;  // correct to square
-    //vec3 textureIndex = vec3(uv, fract(uTime));
-    //vec4 color = texture(testTexture, textureIndex);
 
     // pre-multiply alpha to show
     cout.rgb = cout.rgb*cout.a;

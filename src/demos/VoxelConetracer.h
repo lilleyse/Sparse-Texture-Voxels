@@ -1,7 +1,9 @@
 #pragma once
 
 #include <glf.hpp>
+
 #include "ShaderConstants.h"
+#include "Utils.h"
 
 class VoxelConetracer
 {
@@ -52,8 +54,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/simpleShader.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/conetrace.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/shaders/simpleShader.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/shaders/conetrace.frag");
 
         fullScreenProgram = glCreateProgram();
         glAttachShader(fullScreenProgram, vertexShaderObject);
@@ -71,6 +73,4 @@ public:
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
-
-    virtual void keyboardEvent(uchar keyCode){}
 };

@@ -1,14 +1,12 @@
 #pragma once
 
 #include "Utils.h"
+#include "VoxelTexture.h"
 
 class DebugDraw
 {
 private:
     int currentMipMapLevel;
-    int maxMipMapLevel;
-    int voxelGridLength;
-    GLuint voxelTexture;
     GLuint vertexArray;
     GLuint voxelBuffer;
     GLuint voxelDebugProgram;
@@ -34,11 +32,9 @@ public:
     DebugDraw(){}
     virtual ~DebugDraw(){}
 
-    void begin(GLuint voxelTexture, int voxelGridLength)
+    void begin(VoxelTexture* voxelTexture)
     {
-        this->voxelGridLength = voxelGridLength;
-        this->voxelTexture = voxelTexture;
-        this->maxMipMapLevel = Utils::getNumMipMapLevels(voxelGridLength);
+        this->currentMipMapLevel = 0;
 
         // Create buffer objects and vao
         glm::vec3 vertices[numVerticesCube] = {glm::vec3(-.5, -.5, -.5), glm::vec3(-.5, -.5, .5), glm::vec3(-.5, .5, .5), glm::vec3(-.5, .5, -.5), glm::vec3(.5, .5, -.5), glm::vec3(.5, -.5, -.5), glm::vec3(.5, .5, .5), glm::vec3(.5, -.5, .5)};
@@ -82,8 +78,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/voxelDebug.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
 
         voxelDebugProgram = glCreateProgram();
         glAttachShader(voxelDebugProgram, vertexShaderObject);
@@ -94,17 +90,18 @@ public:
         glLinkProgram(voxelDebugProgram);
         glf::checkProgram(voxelDebugProgram);
 
-        createCubesFromVoxels();
+        createCubesFromVoxels(voxelTexture);
     }
-    void createCubesFromVoxels()
+    void createCubesFromVoxels(VoxelTexture* voxelTexture)
     {
+        mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glBindTexture(GL_TEXTURE_3D, voxelTexture);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->textureGL);
         
-        int mipMapVoxelGridLength = this->voxelGridLength;
+        int mipMapVoxelGridLength = voxelTexture->voxelGridLength;
         float voxelScale = 1.0f / mipMapVoxelGridLength;
-        for(int i = 0; i < this->maxMipMapLevel; i++)
+        for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = voxelArray.size();
@@ -122,7 +119,7 @@ public:
             {
                 glm::vec3 position = glm::vec3(j*voxelScale,k*voxelScale,l*voxelScale) + offset;
                 glm::u8vec4 color = imageData[textureIndex];
-                if(color.a != 0)
+                if(color.a > 25)
                 {
                     Voxel voxel;
                     voxel.color = glm::vec4(color)/255.0f;
@@ -142,7 +139,7 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    virtual void display()
+    void display()
     {
         uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
         uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
@@ -152,27 +149,8 @@ public:
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
     }
 
-    virtual void keyboardEvent(uchar keyCode)
+    void setMipMapLevel(uint mipMapLevel)
     {
-
-        if(keyCode == 44)
-        {
-            this->setMipMapLevel(this->getMipMapLevel() - 1);
-        }
-        else if(keyCode == 46)
-        {
-            this->setMipMapLevel(this->getMipMapLevel() + 1);
-        }
-    }
-    
-    uint getMipMapLevel()
-    {
-        return this->currentMipMapLevel;
-    }
-
-    bool setMipMapLevel(int level)
-    {
-        this->currentMipMapLevel = std::min(std::max(0, level), this->maxMipMapLevel - 1);
-        return (this->currentMipMapLevel != level);
+        this->currentMipMapLevel = mipMapLevel;
     }
 };
