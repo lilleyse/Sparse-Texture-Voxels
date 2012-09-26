@@ -198,7 +198,7 @@ void main()
     gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
 
     // distance corresponding to highest mip level
-    gMaxMipDist = 0.5 / gPixSizeAtDist;
+    gMaxMipDist = 1.0 / gPixSizeAtDist;
     
     // find max mipmap level, starting at 0.0
     gMaxMipLevel = 0.0;
