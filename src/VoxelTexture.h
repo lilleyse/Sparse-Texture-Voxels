@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glf.hpp>
+
 #include "Utils.h"
 
 class VoxelTexture
@@ -12,11 +13,11 @@ public:
     uint voxelGridLength;
     uint numMipMapLevels;
 
-    void begin(uint voxelGridLength, uint numMipMapLevels)
+    void begin(uint voxelGridLength)
     {
         //Create a default empty vector for each texture data
         this->voxelGridLength = voxelGridLength;
-        this->numMipMapLevels = numMipMapLevels;
+        this->numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
 
         // Create a dense 3D texture
         glGenTextures(1, &textureGL);

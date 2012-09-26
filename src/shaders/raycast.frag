@@ -41,7 +41,7 @@ layout (location = 0, index = 0) out vec4 fragColor;
 layout (binding = VOXEL_TEXTURE_3D_BINDING) uniform sampler3D testTexture;
 uniform float mipMapLevel;
 
-const uint MAX_STEPS = 64;
+const uint MAX_STEPS = 128;
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 8.0;
@@ -122,7 +122,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
     vec4 src = textureLod(testTexture, pos, mipMapLevel);
-    src.a *= gStepSize;  // factor by how steps per voxel diag
+    src.a *= gStepSize; //*ROOTTHREE*2.0;  // factor by how steps per voxel sidelength (maybe?)
 
     // alpha blending
     vec4 dst = color;
