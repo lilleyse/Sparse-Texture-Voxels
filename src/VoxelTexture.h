@@ -5,7 +5,9 @@
 
 class VoxelTexture
 {
+
 public:
+
     GLuint textureGL;
     uint voxelGridLength;
     uint numMipMapLevels;

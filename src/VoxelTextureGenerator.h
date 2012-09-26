@@ -21,28 +21,17 @@ private:
 
     MipMapGenerator mipMapGenerator;
 
-public:
-    std::string CUBE_PRESET;
-    std::string SPHERE_PRESET;
-    VoxelTextureGenerator()
-    {
-        CUBE_PRESET = "cube";
-        SPHERE_PRESET = "sphere";
-        currentTexture = -1;
-    }
-
-    void begin(uint voxelGridLength, uint numMipMapLevels, bool loadMultipleTextures) 
-    {   
-        this->loadMulitpleTextures = loadMultipleTextures;
-
-        voxelTexture = new VoxelTexture();
-        voxelTexture->begin(voxelGridLength, numMipMapLevels);
-
-        if (loadMultipleTextures) 
-        {
-            createTexture(CUBE_PRESET);
-            createTexture(SPHERE_PRESET);        
-        }
+    bool setTexture(int textureIndex)
+    {     
+        if (textureIndex < 0) textureIndex = textures.size() - 1;
+        if (textureIndex >= (int)textures.size()) textureIndex = 0;
+        if (textureIndex == currentTexture) return false;
+        currentTexture = textureIndex;
+            
+        // Fill entire texture (first mipmap level) then fill mipmaps
+        voxelTexture->setData(&(textures.at(currentTexture)[0]));
+        mipMapGenerator.generateMipMapCPU(voxelTexture);
+        return true;
     }
 
     void createTexture(std::string name)
@@ -103,6 +92,30 @@ public:
         }
     }
 
+public:
+    std::string CUBE_PRESET;
+    std::string SPHERE_PRESET;
+    VoxelTextureGenerator()
+    {
+        CUBE_PRESET = "cube";
+        SPHERE_PRESET = "sphere";
+        currentTexture = -1;
+    }
+
+    void begin(uint voxelGridLength, uint numMipMapLevels, bool loadMultipleTextures) 
+    {   
+        this->loadMulitpleTextures = loadMultipleTextures;
+
+        voxelTexture = new VoxelTexture();
+        voxelTexture->begin(voxelGridLength, numMipMapLevels);
+
+        if (loadMultipleTextures) 
+        {
+            createTexture(CUBE_PRESET);
+            createTexture(SPHERE_PRESET);        
+        }
+    }
+
     bool setTexture(std::string name)
     { 
         // Adds the texture's data to the gpu.
@@ -114,18 +127,7 @@ public:
         }
         return false;
     }
-    bool setTexture(int textureIndex)
-    {     
-        if (textureIndex < 0) textureIndex = textures.size() - 1;
-        if (textureIndex >= (int)textures.size()) textureIndex = 0;
-        if (textureIndex == currentTexture) return false;
-        currentTexture = textureIndex;
-            
-        // Fill entire texture (first mipmap level) then fill mipmaps
-        voxelTexture->setData(&(textures.at(currentTexture)[0]));
-        mipMapGenerator.generateMipMapCPU(voxelTexture);
-        return true;
-    }
+
     bool setNextTexture()
     {
         return setTexture((int)currentTexture + 1);

@@ -54,8 +54,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/simpleShader.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/raycast.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "simpleShader.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "raycast.frag");
 
         fullScreenProgram = glCreateProgram();
         glAttachShader(fullScreenProgram, vertexShaderObject);

@@ -1,8 +1,8 @@
 #include <glf.hpp>
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "DebugDraw.h"
-#include "VoxelRaycaster.h"
+#include "demos/DebugDraw.h"
+#include "demos/VoxelRaycaster.h"
 #include "Utils.h"
 #include "VoxelTextureGenerator.h"
 
