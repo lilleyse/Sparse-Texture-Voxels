@@ -228,7 +228,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   }
   
   float alpha = 1.0-tm;
-  return vec4(col/alpha, alpha);
+  return vec4( alpha==0 ? col : col/alpha , alpha);
 }
 
 void main()
@@ -269,8 +269,9 @@ void main()
     }
 
     // background color
-    vec4 bg = vec4(vec3(uv.y/2.0), 0.0);
+    vec4 bg = vec4(vec3(uv.y/2.0), 1.0);
 
     // alpha blend cout over bg
-    fragColor = vec4( mix(bg.rgb, cout.rgb, cout.a), 1.0 );
+    bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
+    fragColor = bg;
 }
