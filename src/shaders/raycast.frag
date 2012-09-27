@@ -39,11 +39,13 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER VARS
 //---------------------------------------------------------
 
+#define TEXTURE_TYPE colorTexture
+
 layout (location = 0, index = 0) out vec4 fragColor;
 layout (binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
 layout (binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
-uniform float mipMapLevel;
+uniform float uMipLevel;
 
 const uint MAX_STEPS = 64;
 const float ALPHA_THRESHOLD = 0.95;
@@ -56,8 +58,6 @@ float gStepSize;
 const int LIGHT_NUM = 1;
 vec3 gLightPos[LIGHT_NUM];
 vec3 gLightCol[LIGHT_NUM];
-
-#define TEXTURE_TYPE colorTexture
 
 
 //---------------------------------------------------------
@@ -128,7 +128,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
 
-    vec4 src = textureLod(TEXTURE_TYPE, pos, mipMapLevel);
+    vec4 src = textureLod(TEXTURE_TYPE, pos, uMipLevel);
     src.a *= gStepSize;  // factor by how steps per voxel diag
 
 
@@ -158,7 +158,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, mipMapLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, uMipLevel).a );
 
     pos += step;
     
@@ -181,7 +181,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, mipMapLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, uMipLevel).a );
 
     pos += step;
 
@@ -202,7 +202,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = textureLod(TEXTURE_TYPE, pos, mipMapLevel);
+    vec4 texel = textureLod(TEXTURE_TYPE, pos, uMipLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );
