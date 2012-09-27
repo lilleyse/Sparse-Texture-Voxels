@@ -54,7 +54,7 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/shaders/simpleShader.vert");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/shaders/fullscreen.vert");
         GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/shaders/conetrace.frag");
 
         fullScreenProgram = glCreateProgram();
