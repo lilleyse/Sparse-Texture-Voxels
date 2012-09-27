@@ -97,7 +97,10 @@ public:
                     }
                     else
                     {
-                        textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
+                        // "cleaner" texture, no black edges during linear interp, not sure if we should do this
+                        textureData.colorData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 0);
+
+                        //textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
                         textureData.normalData[textureIndex] = glm::vec3(0,0,0);
                     }
                     textureIndex++;

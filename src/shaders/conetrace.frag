@@ -155,11 +155,6 @@ void main()
     // scale by FOV
     float tanFOV = tan(uFOV/180.0*PI);
 
-    //vec3 rp = uCamPos+C
-        //+ (2.0*uv.x-1.0)*tanFOV*A 
-        //+ (2.0*uv.y-1.0)*tanFOV*B;
-    //vec3 rd = normalize(rp-uCamPos);
-
     vec3 rd = normalize(
         C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
     );
