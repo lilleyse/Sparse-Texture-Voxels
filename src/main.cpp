@@ -178,6 +178,7 @@ void display()
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
     perFrame.uTime = frameTime;
+    perFrame.uFOV = camera.fieldOfView;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);

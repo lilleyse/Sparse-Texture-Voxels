@@ -18,6 +18,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamUp;
     vec2 uResolution;
     float uTime;
+    float uFOV;
 };
 
 
@@ -244,13 +245,21 @@ void main()
     gLightPos[0].z = 2.0*cos(uTime);
 
 
-    /* CAMERA RAY */
+    // camera ray
     vec3 C = normalize(uCamLookAt-uCamPos);
+
+    // calc A (screen x)
+    // calc B (screen y) then scale down relative to aspect
+    // fov is for screen x axis
     vec3 A = normalize(cross(C,uCamUp));
     vec3 B = -1.0/(aspect)*normalize(cross(A,C));
-    
-    // scale A and B by root3/3 : fov = 30 degrees
-    vec3 ro = uCamPos+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
+
+    // scale by FOV
+    float tanFOV = tan(uFOV/180.0*PI);
+
+    vec3 ro = uCamPos+C
+        + (2.0*uv.x-1.0)*tanFOV*A 
+        + (2.0*uv.y-1.0)*tanFOV*B;
     vec3 rd = normalize(ro-uCamPos);
 
     // output color

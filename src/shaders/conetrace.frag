@@ -18,6 +18,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamUp;
     vec2 uResolution;
     float uTime;
+    float uFOV;
 };
 
 
@@ -47,7 +48,6 @@ const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 
 // needs to be uniforms
-const float uFOV = 30.0f;
 const float uTextureRes = 32.0f;
 
 float gTexelSize;

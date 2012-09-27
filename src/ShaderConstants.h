@@ -21,6 +21,7 @@ struct PerFrameUBO
     float padding3;
     glm::vec2 uResolution;
     float uTime;
+    float uFOV;
 };
 
 #define SHADER_DIRECTORY std::string("src/shaders/")
