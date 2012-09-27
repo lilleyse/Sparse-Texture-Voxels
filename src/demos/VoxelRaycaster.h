@@ -77,7 +77,7 @@ public:
     void setMipMapLevel(uint mipMapLevel)
     {
         glUseProgram(fullScreenProgram);
-        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "mipMapLevel");
+        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uMipLevel");
         glUniform1f(mipMapLevelUniform, (float)mipMapLevel);
     }
 };
