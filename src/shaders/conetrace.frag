@@ -47,9 +47,6 @@ const int MAX_STEPS = 128;
 const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 
-// needs to be uniforms
-const float uTextureRes = 64.0f;
-
 float gTexelSize;
 float gPixSizeAtDist;
 

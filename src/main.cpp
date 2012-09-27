@@ -137,8 +137,10 @@ bool begin()
         debugDraw.begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.begin();
-    if (loadAllDemos || currentDemoType == VOXELCONETRACER)
+    if (loadAllDemos || currentDemoType == VOXELCONETRACER) {
         voxelConetracer.begin();
+        voxelConetracer.setTextureResolution(voxelGridLength);
+    }
     
     // initial mip-map setting
     numMipMapLevels = voxelTexture->numMipMapLevels;

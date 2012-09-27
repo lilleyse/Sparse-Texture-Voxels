@@ -73,4 +73,11 @@ public:
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
+
+    void setTextureResolution(uint res)
+    {
+        glUseProgram(fullScreenProgram);
+        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
+        glUniform1f(mipMapLevelUniform, (float)res);
+    }
 };
