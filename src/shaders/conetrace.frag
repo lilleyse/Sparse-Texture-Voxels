@@ -146,7 +146,7 @@ void main()
     // scale by FOV
     float tanFOV = tan(uFOV/180.0*PI);
 
-    vec3 ro = uCamPosition+C 
+    vec3 ro = uCamPosition+C
         + (2.0*uv.x-1.0)*tanFOV*A 
         + (2.0*uv.y-1.0)*tanFOV*B;
     vec3 rd = normalize(ro-uCamPosition);
@@ -172,8 +172,8 @@ void main()
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(ro, rd, t))
-        cout = conetraceSimple(ro+rd*(t+EPS), rd);
+    if (textureVolumeIntersect(uCamPosition, rd, t))
+        cout = conetraceSimple(uCamPosition+rd*(t+EPS), rd);
     else
         cout = vec4(0.0);
 

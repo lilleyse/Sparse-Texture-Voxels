@@ -258,11 +258,11 @@ void main()
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(ro, rd, t)) {
+    if (textureVolumeIntersect(uCamPosition, rd, t)) {
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchLight(ro+rd*(t+EPS), rd);
+        cout = raymarchSimple(uCamPosition+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);

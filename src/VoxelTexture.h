@@ -37,8 +37,6 @@ public:
         glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
-        //glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        //glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
@@ -63,7 +61,6 @@ public:
         glGenTextures(1, &normalTexture);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGB32F, voxelGridLength, voxelGridLength, voxelGridLength);
-
     }
 
     // Data is assumed to be in RGBA format

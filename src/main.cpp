@@ -197,7 +197,7 @@ void display()
     }
     else if (currentDemoType == VOXELCONETRACER)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(true);
+        voxelTextureGenerator.getVoxelTexture()->display(false);
         voxelConetracer.display();
     }
 

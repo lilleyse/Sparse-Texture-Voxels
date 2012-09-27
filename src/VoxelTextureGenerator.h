@@ -114,6 +114,9 @@ public:
                 // store one channel buffer into four channel texture data
                 for (uint i = 0; i < voxelTextureSize; i++)
                     textureData.colorData[i] = glm::u8vec4(255, 255, 255, buffer[i]);
+
+                delete[] buffer;
+                file.close();
             }
 
             textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
