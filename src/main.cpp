@@ -30,9 +30,9 @@ namespace
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
-    const std::string initialTextures[] = {"data/Fuel.raw"};
+    const std::string initialTextures[] = {"data/Bucky.raw"};
     bool loadMultipleTextures = true;
-    uint voxelGridLength = 64;
+    uint voxelGridLength = 32;
     uint numMipMapLevels;
     uint currentMipMapLevel;
 
@@ -179,6 +179,7 @@ void display()
     perFrame.uCamPos = camera.position;
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
+    perFrame.uAspect = (float)Window.Size.x/Window.Size.y;
     perFrame.uTime = frameTime;
     perFrame.uFOV = camera.fieldOfView;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);

@@ -17,6 +17,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamPos;
     vec3 uCamUp;
     vec2 uResolution;
+    float uAspect;
     float uTime;
     float uFOV;
 };
@@ -45,6 +46,7 @@ layout (location = 0, index = 0) out vec4 fragColor;
 layout (binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
 layout (binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
+in vec2 vUV;
 uniform float uMipLevel;
 
 const uint MAX_STEPS = 64;
@@ -234,10 +236,6 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
 
 void main()
 {
-    float aspect = uResolution.x/uResolution.y;
-    vec2 uv = gl_FragCoord.xy/uResolution;
-    uv.y = 1.0-uv.y;
-
     // DEBUGTEST: manually init lights
     gLightCol[0] = vec3(1.0, 0.9, 0.8);
     gLightPos[0] = vec3(0.0, 2.0, 0.0);
@@ -252,14 +250,14 @@ void main()
     // calc B (screen y) then scale down relative to aspect
     // fov is for screen x axis
     vec3 A = normalize(cross(C,uCamUp));
-    vec3 B = -1.0/(aspect)*normalize(cross(A,C));
+    vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
 
     // scale by FOV
     float tanFOV = tan(uFOV/180.0*PI);
 
     vec3 ro = uCamPos+C
-        + (2.0*uv.x-1.0)*tanFOV*A 
-        + (2.0*uv.y-1.0)*tanFOV*B;
+        + (2.0*vUV.x-1.0)*tanFOV*A 
+        + (2.0*vUV.y-1.0)*tanFOV*B;
     vec3 rd = normalize(ro-uCamPos);
 
     // output color
@@ -278,7 +276,7 @@ void main()
     }
 
     // background color
-    vec4 bg = vec4(vec3(uv.y/2.0), 1.0);
+    vec4 bg = vec4(vec3(vUV.y/2.0), 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
