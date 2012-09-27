@@ -43,12 +43,12 @@ layout (location = 0, index = 0) out vec4 fragColor;
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
-const int MAX_STEPS = 512;
+const int MAX_STEPS = 128;
 const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 
 // needs to be uniforms
-const float uTextureRes = 32.0f;
+const float uTextureRes = 64.0f;
 
 float gTexelSize;
 float gPixSizeAtDist;
@@ -90,8 +90,17 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     // correctly interpolated texel size, automatic
     float pixSize = gPixSizeAtDist * dist;
     
-    // solve: pixSize = texelSize*2^mipLevel
-    float mipLevel = log2(pixSize/gTexelSize);
+    // calc mip size
+    // if pixSize smaller than texel, clamp. that's the smallest we can go
+    float mipLevel;
+    if (pixSize > gTexelSize) {
+        // solve: pixSize = texelSize*2^mipLevel
+        mipLevel = log2(pixSize/gTexelSize);
+    }
+    else {
+        mipLevel = 0.0;
+        pixSize = gTexelSize;
+    }
 
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -146,10 +155,14 @@ void main()
     // scale by FOV
     float tanFOV = tan(uFOV/180.0*PI);
 
-    vec3 ro = uCamPos+C
-        + (2.0*uv.x-1.0)*tanFOV*A 
-        + (2.0*uv.y-1.0)*tanFOV*B;
-    vec3 rd = normalize(ro-uCamPos);
+    //vec3 rp = uCamPos+C
+        //+ (2.0*uv.x-1.0)*tanFOV*A 
+        //+ (2.0*uv.y-1.0)*tanFOV*B;
+    //vec3 rd = normalize(rp-uCamPos);
+
+    vec3 rd = normalize(
+        C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
+    );
 
     
     //-----------------------------------------------------

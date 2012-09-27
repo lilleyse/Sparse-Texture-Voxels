@@ -30,9 +30,9 @@ namespace
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
-    const std::string initialTextures[] = {"data/Bucky.raw"};
+    const std::string initialTextures[] = {"data/Fuel.raw"};
     bool loadMultipleTextures = true;
-    uint voxelGridLength = 32;
+    uint voxelGridLength = 64;
     uint numMipMapLevels;
     uint currentMipMapLevel;
 
@@ -198,7 +198,7 @@ void display()
     }
     else if (currentDemoType == VOXELCONETRACER)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(false);
+        voxelTextureGenerator.getVoxelTexture()->display(true);
         voxelConetracer.display();
     }
 

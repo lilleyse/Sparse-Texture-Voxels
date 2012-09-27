@@ -45,7 +45,7 @@ layout (binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
 uniform float mipMapLevel;
 
-const uint MAX_STEPS = 128;
+const uint MAX_STEPS = 64;
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 8.0;
