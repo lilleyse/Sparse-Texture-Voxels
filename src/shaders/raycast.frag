@@ -14,7 +14,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
     vec3 uCamLookAt;
-    vec3 uCamPosition;
+    vec3 uCamPos;
     vec3 uCamUp;
     vec2 uResolution;
     float uTime;
@@ -245,24 +245,24 @@ void main()
 
 
     /* CAMERA RAY */
-    vec3 C = normalize(uCamLookAt-uCamPosition);
+    vec3 C = normalize(uCamLookAt-uCamPos);
     vec3 A = normalize(cross(C,uCamUp));
     vec3 B = -1.0/(aspect)*normalize(cross(A,C));
     
     // scale A and B by root3/3 : fov = 30 degrees
-    vec3 ro = uCamPosition+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
-    vec3 rd = normalize(ro-uCamPosition);
+    vec3 ro = uCamPos+C + (2.0*uv.x-1.0)/ROOTTHREE*A + (2.0*uv.y-1.0)/ROOTTHREE*B;
+    vec3 rd = normalize(ro-uCamPos);
 
     // output color
     vec4 cout;
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(uCamPosition, rd, t)) {
+    if (textureVolumeIntersect(uCamPos, rd, t)) {
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);
 
-        cout = raymarchSimple(uCamPosition+rd*(t+EPS), rd);
+        cout = raymarchLight(uCamPos+rd*(t+EPS), rd);
     }
     else {
         cout = vec4(0.0);

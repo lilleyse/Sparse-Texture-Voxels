@@ -174,7 +174,7 @@ void display()
     perFrame.uCamLookAt = camera.lookAt;
     camera.lookAt -= glm::vec3(0.5f);
 
-    perFrame.uCamPosition = camera.position;
+    perFrame.uCamPos = camera.position;
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
     perFrame.uTime = frameTime;

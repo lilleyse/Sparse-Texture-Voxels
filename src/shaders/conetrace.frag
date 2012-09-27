@@ -14,7 +14,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
     vec3 uCamLookAt;
-    vec3 uCamPosition;
+    vec3 uCamPos;
     vec3 uCamUp;
     vec2 uResolution;
     float uTime;
@@ -84,7 +84,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, uCamPosition);
+    float dist = distance(pos, uCamPos);
 
     // size of texel cube we want to be looking into
     // correctly interpolated texel size, automatic
@@ -135,7 +135,7 @@ void main()
     //-----------------------------------------------------
     
     // camera ray
-    vec3 C = normalize(uCamLookAt-uCamPosition);
+    vec3 C = normalize(uCamLookAt-uCamPos);
 
     // calc A (screen x)
     // calc B (screen y) then scale down relative to aspect
@@ -146,10 +146,10 @@ void main()
     // scale by FOV
     float tanFOV = tan(uFOV/180.0*PI);
 
-    vec3 ro = uCamPosition+C
+    vec3 ro = uCamPos+C
         + (2.0*uv.x-1.0)*tanFOV*A 
         + (2.0*uv.y-1.0)*tanFOV*B;
-    vec3 rd = normalize(ro-uCamPosition);
+    vec3 rd = normalize(ro-uCamPos);
 
     
     //-----------------------------------------------------
@@ -172,8 +172,8 @@ void main()
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(uCamPosition, rd, t))
-        cout = conetraceSimple(uCamPosition+rd*(t+EPS), rd);
+    if (textureVolumeIntersect(uCamPos, rd, t))
+        cout = conetraceSimple(uCamPos+rd*(t+EPS), rd);
     else
         cout = vec4(0.0);
 
