@@ -20,6 +20,7 @@ struct PerFrameUBO
     glm::vec3 uCamUp;
     float padding3;
     glm::vec2 uResolution;
+    float uAspect;
     float uTime;
     float uFOV;
 };

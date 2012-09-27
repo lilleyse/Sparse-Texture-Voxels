@@ -17,6 +17,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamPos;
     vec3 uCamUp;
     vec2 uResolution;
+    float uAspect;
     float uTime;
     float uFOV;
 };
