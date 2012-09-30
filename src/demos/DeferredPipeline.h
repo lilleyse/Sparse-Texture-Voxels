@@ -2,7 +2,6 @@
 #include <glf.hpp>
 #include "../Utils.h"
 #include "../ShaderConstants.h"
-#include "DebugDraw.h"
 #include "../VoxelTexture.h"
 #include "../FullScreenQuad.h"
 
@@ -21,8 +20,6 @@ private:
 
     GLuint deferredWriteProgram;
     GLuint deferredReadProgram;
-
-    DebugDraw debugDraw;
 
 public:
     void begin(VoxelTexture* voxelTexture, int screenWidth, int screenHeight)
@@ -105,9 +102,6 @@ public:
         glLinkProgram(deferredReadProgram);
         glf::checkProgram(deferredReadProgram);
 
-        // Initialize the debug draw
-        debugDraw.begin(voxelTexture);
-
     }
 
     void resize(int w, int h)
@@ -126,7 +120,7 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     }
 
-    void display(FullScreenQuad& fullScreenQuad)
+    void display(FullScreenQuad& fullScreenQuad, DebugDraw& debugDraw)
     {
 
         // Bind custom FBO then draw into it
@@ -152,15 +146,5 @@ public:
         // Show the results written to the FBO
         glUseProgram(deferredReadProgram);
         fullScreenQuad.display();
-    }
-
-    void voxelTextureUpdate(VoxelTexture* voxelTexture)
-    {
-        debugDraw.voxelTextureUpdate(voxelTexture);
-    }
-
-    void setMipMapLevel(uint mipMapLevel)
-    {
-        debugDraw.setMipMapLevel(mipMapLevel);
     }
 };

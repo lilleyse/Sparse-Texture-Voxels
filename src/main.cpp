@@ -88,12 +88,10 @@ void setMipMapLevel(int level)
     if (level == currentMipMapLevel) return;
     currentMipMapLevel = level;
     
-    if (loadAllDemos || currentDemoType == DEBUGDRAW)
+    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
         debugDraw.setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.setMipMapLevel(currentMipMapLevel);
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline.setMipMapLevel(currentMipMapLevel);
 }
 
 void mouseEvent()
@@ -123,10 +121,8 @@ void keyboardEvent(uchar keyCode)
     bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
     if (setsNextTexture || setsPreviousTexture)
     {
-        if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
             debugDraw.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
-        if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-            deferredPipeline.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
     }
 }
 
@@ -148,7 +144,7 @@ bool begin()
     VoxelTexture* voxelTexture = voxelTextureGenerator.getVoxelTexture();
     
     // init demos
-    if (loadAllDemos || currentDemoType == DEBUGDRAW) 
+    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE) 
         debugDraw.begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.begin();
@@ -233,7 +229,7 @@ void display()
     }
     else if (currentDemoType == DEFERRED_PIPELINE)
     {
-        deferredPipeline.display(fullScreenQuad);
+        deferredPipeline.display(fullScreenQuad, debugDraw);
     }
 
     // Update
