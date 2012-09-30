@@ -17,6 +17,8 @@ const uint DEFERRED_NORMALS_BINDING = 2;
 const uint COLOR_TEXTURE_3D_BINDING = 3;
 const uint NORMAL_TEXTURE_3D_BINDING = 4;
 
+const uint NON_USED_TEXTURE = 5;
+
 struct PerFrameUBO
 {
     glm::mat4 viewProjection;

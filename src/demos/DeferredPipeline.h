@@ -106,6 +106,11 @@ public:
 
     void resize(int w, int h)
     {
+
+        glActiveTexture(GL_TEXTURE0 + NON_USED_TEXTURE);
+        glBindTexture(GL_TEXTURE_2D, depthTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+
         // Make sure to resize the textures used in the deferred pipeline
         glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_BINDING);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
