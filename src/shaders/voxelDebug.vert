@@ -6,8 +6,11 @@
 #define DEBUG_TRANSFORM_ATTR 2
 #define DEBUG_COLOR_ATTR 3
 #define PER_FRAME_UBO_BINDING 0
-#define COLOR_TEXTURE_3D_BINDING 0
-#define NORMAL_TEXTURE_3D_BINDING 1
+#define DEFERRED_POSITIONS_BINDING 0
+#define DEFERRED_COLORS_BINDING 1
+#define DEFERRED_NORMALS_BINDING 2
+#define COLOR_TEXTURE_3D_BINDING 3
+#define NORMAL_TEXTURE_3D_BINDING 4
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -30,7 +33,10 @@ layout(location = DEBUG_COLOR_ATTR) in vec4 color;
 
 out block
 {
-    flat vec4 color;
+    vec3 position;
+    vec4 color;
+    vec3 normal;
+
 } vertexData;
 
 out gl_PerVertex
@@ -45,8 +51,13 @@ void main()
     mat4 modelMatrix = mat4(scale);
     modelMatrix[3] = vec4(transformation.xyz, 1.0);
 
+    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+
     // Caluclate the clip space position
-    gl_Position = viewProjection * modelMatrix * vec4(position, 1.0);
+    gl_Position = viewProjection * worldPosition;
     
-    vertexData.color = vec4(normal,1.0);
+    vertexData.position = vec3(worldPosition);
+    vertexData.color = color;
+    vertexData.normal = normal;
+
 }

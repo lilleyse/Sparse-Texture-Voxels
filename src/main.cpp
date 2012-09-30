@@ -6,9 +6,10 @@
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
+#include "demos/DeferredPipeline.h"
 #include "VoxelTextureGenerator.h"
 
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, MAX_DEMO_TYPES};
+enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
 
 namespace
 {
@@ -20,13 +21,13 @@ namespace
     
     // Window and updating
     glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
-    GLuint perFrameUBO;
     ThirdPersonCamera camera;
     bool showDebugOutput = false;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
     bool showFPS = true;
     Utils::Framerate fpsHandler;
+    FullScreenQuad fullScreenQuad;
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
@@ -40,9 +41,15 @@ namespace
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
     VoxelConetracer voxelConetracer;
+    DeferredPipeline deferredPipeline;
     DemoType currentDemoType = DEBUGDRAW;
     bool loadAllDemos = true;
+
+    // OpenGL stuff
+    GLuint perFrameUBO;
+
 }
+
 
 void initGL()
 {
@@ -80,10 +87,13 @@ void setMipMapLevel(int level)
     if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
     if (level == currentMipMapLevel) return;
     currentMipMapLevel = level;
+    
     if (loadAllDemos || currentDemoType == DEBUGDRAW)
         debugDraw.setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.setMipMapLevel(currentMipMapLevel);
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+        deferredPipeline.setMipMapLevel(currentMipMapLevel);
 }
 
 void mouseEvent()
@@ -112,8 +122,12 @@ void keyboardEvent(uchar keyCode)
     bool setsNextTexture = keyCode == 59 && voxelTextureGenerator.setNextTexture();
     bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
     if (setsNextTexture || setsPreviousTexture)
+    {
         if (loadAllDemos || currentDemoType == DEBUGDRAW)
-            debugDraw.createCubesFromVoxels(voxelTextureGenerator.getVoxelTexture());
+            debugDraw.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
+        if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+            deferredPipeline.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
+    }
 }
 
 bool begin()
@@ -124,6 +138,7 @@ bool begin()
     camera.zoom(-2);
 
     // all process, nothing interesting here
+    fullScreenQuad.begin();
     voxelTextureGenerator.begin(voxelGridLength, loadMultipleTextures);
     uint numInitialTextures = sizeof(initialTextures) / sizeof(initialTextures[0]);
     for (uint i = 0; i < numInitialTextures; i++)
@@ -141,6 +156,9 @@ bool begin()
         voxelConetracer.begin();
         voxelConetracer.setTextureResolution(voxelGridLength);
     }
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+        deferredPipeline.begin(voxelTexture, Window.Size.x, Window.Size.y);
+
     
     // initial mip-map setting
     numMipMapLevels = voxelTexture->numMipMapLevels;
@@ -155,11 +173,21 @@ bool end()
     return true;
 }
 
+void resize(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    camera.setAspectRatio(w, h);
+
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+    {
+        deferredPipeline.resize(w, h);
+    }
+}
+
 void display()
 {
     // Basic GL stuff
-    camera.setAspectRatio(Window.Size.x, Window.Size.y);
-    glViewport(0, 0, Window.Size.x, Window.Size.y);
+    
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
     glClearBufferfv(GL_COLOR, 0, clearColor);
@@ -191,18 +219,21 @@ void display()
     // Display demo
     if (currentDemoType == DEBUGDRAW)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(false);
         debugDraw.display();
     }
     else if (currentDemoType == VOXELRAYCASTER)
     {
         voxelTextureGenerator.getVoxelTexture()->display(false);
-        voxelRaycaster.display(); 
+        voxelRaycaster.display(fullScreenQuad); 
     }
     else if (currentDemoType == VOXELCONETRACER)
     {
         voxelTextureGenerator.getVoxelTexture()->display(true);
-        voxelConetracer.display();
+        voxelConetracer.display(fullScreenQuad);
+    }
+    else if (currentDemoType == DEFERRED_PIPELINE)
+    {
+        deferredPipeline.display(fullScreenQuad);
     }
 
     // Update

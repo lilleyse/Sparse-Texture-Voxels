@@ -8,8 +8,11 @@
 #define DEBUG_TRANSFORM_ATTR 2
 #define DEBUG_COLOR_ATTR 3
 #define PER_FRAME_UBO_BINDING 0
-#define COLOR_TEXTURE_3D_BINDING 0
-#define NORMAL_TEXTURE_3D_BINDING 1
+#define DEFERRED_POSITIONS_BINDING 0
+#define DEFERRED_COLORS_BINDING 1
+#define DEFERRED_NORMALS_BINDING 2
+#define COLOR_TEXTURE_3D_BINDING 3
+#define NORMAL_TEXTURE_3D_BINDING 4
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -243,7 +246,6 @@ void main()
     gLightPos[0].x = 2.0*sin(uTime);
     gLightPos[0].z = 2.0*cos(uTime);
 
-
     // camera ray
     vec3 C = normalize(uCamLookAt-uCamPos);
 
@@ -258,7 +260,7 @@ void main()
 
     vec3 ro = uCamPos+C
         + (2.0*vUV.x-1.0)*tanFOV*A 
-        + (2.0*vUV.y-1.0)*tanFOV*B;
+        + (1.0-2.0*vUV.y)*tanFOV*B;
     vec3 rd = normalize(ro-uCamPos);
 
     // output color

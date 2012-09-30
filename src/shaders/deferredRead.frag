@@ -1,4 +1,6 @@
-/******************  GLOBALS  **********************/
+//---------------------------------------------------------
+// GLOBALS
+//---------------------------------------------------------
 
 #version 420 core
 #define POSITION_ATTR 0
@@ -12,6 +14,7 @@
 #define COLOR_TEXTURE_3D_BINDING 3
 #define NORMAL_TEXTURE_3D_BINDING 4
 
+
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
@@ -24,19 +27,16 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
 };
 
-/***************************************************/
+layout (location = 0) out vec4 fragColor;
 
-layout (location = 0, index = 0) out vec4 fragColor;
+layout(binding = DEFERRED_POSITIONS_BINDING) uniform sampler2D positionTexture;
+layout(binding = DEFERRED_COLORS_BINDING) uniform sampler2D colorTexture;
+layout(binding = DEFERRED_NORMALS_BINDING) uniform sampler2D normalTexture;
 
-in block
-{
-    vec3 position;
-    vec4 color;
-    vec3 normal;
 
-} vertexData;
+in vec2 vUV;
 
 void main()
 {
-    fragColor = vertexData.color;
+    fragColor = texture(colorTexture, vUV);
 }

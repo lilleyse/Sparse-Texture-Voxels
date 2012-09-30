@@ -8,6 +8,7 @@ bool check();
 bool begin();
 bool end();
 void display();
+void resize(int w, int h);
 
 void keyboardEvent(unsigned char keyCode);
 void mouseEvent();
@@ -446,6 +447,7 @@ namespace glf
     static void reshape(int w, int h)
     {
         Window.Size = glm::ivec2(w, h);
+        resize(w, h);
     }
 
     static void idle()

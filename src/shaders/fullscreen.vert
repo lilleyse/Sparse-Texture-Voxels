@@ -8,8 +8,11 @@
 #define DEBUG_TRANSFORM_ATTR 2
 #define DEBUG_COLOR_ATTR 3
 #define PER_FRAME_UBO_BINDING 0
-#define COLOR_TEXTURE_3D_BINDING 0
-#define NORMAL_TEXTURE_3D_BINDING 1
+#define DEFERRED_POSITIONS_BINDING 0
+#define DEFERRED_COLORS_BINDING 1
+#define DEFERRED_NORMALS_BINDING 2
+#define COLOR_TEXTURE_3D_BINDING 3
+#define NORMAL_TEXTURE_3D_BINDING 4
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -45,7 +48,6 @@ out vec2 vUV;
 void main()
 {
     vUV = (position+1.0)/2.0;
-    vUV.y = 1.0-vUV.y;
 
     gl_Position = vec4(position, 0.0, 1.0);
 }

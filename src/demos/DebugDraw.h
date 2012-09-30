@@ -92,9 +92,9 @@ public:
         glLinkProgram(voxelDebugProgram);
         glf::checkProgram(voxelDebugProgram);
 
-        createCubesFromVoxels(voxelTexture);
+        voxelTextureUpdate(voxelTexture);
     }
-    void createCubesFromVoxels(VoxelTexture* voxelTexture)
+    void voxelTextureUpdate(VoxelTexture* voxelTexture)
     {
         mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
@@ -141,14 +141,19 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void display()
+    void display(GLuint shaderProgram)
     {
         uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
         uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
 
-        glUseProgram(voxelDebugProgram);
+        glUseProgram(shaderProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
+    }
+
+    void display()
+    {
+        display(voxelDebugProgram);
     }
 
     void setMipMapLevel(uint mipMapLevel)
