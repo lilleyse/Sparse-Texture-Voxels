@@ -44,7 +44,6 @@ void main()
 {
     positionOut = vec4(vertexData.position, 1.0);
     colorOut = vertexData.color;
-    // necessary?
     normalOut = vec4(normalize(vertexData.normal), 1.0);
 
 }
