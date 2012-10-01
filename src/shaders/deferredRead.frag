@@ -157,7 +157,7 @@ void main()
 
     vec3 V = normalize(pos-uCamPos);
     V = reflect(V, nor);
-    const float fov = 1.0;
+    const float fov = 0.1;
 
     // output color
     vec4 cout;

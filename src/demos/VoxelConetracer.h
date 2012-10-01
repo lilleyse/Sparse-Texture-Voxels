@@ -19,8 +19,8 @@ public:
     void begin()
     {
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/shaders/fullscreen.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/shaders/conetrace.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "conetrace.frag");
 
         fullScreenProgram = glCreateProgram();
         glAttachShader(fullScreenProgram, vertexShaderObject);
