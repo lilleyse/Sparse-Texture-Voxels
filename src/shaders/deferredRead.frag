@@ -61,7 +61,7 @@ uniform float uTextureRes;
 
 const int NUM_CONES = 5;
 const int MAX_STEPS = 128;
-const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
+const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 
 float gTexelSize;
@@ -97,7 +97,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd, float fov) {
   vec4 color = vec4(0.0);
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, uCamPos);
+    float dist = distance(pos, ro);
 
     // size of texel cube we want to be looking into
     // correctly interpolated texel size, automatic
@@ -157,7 +157,7 @@ void main()
 
     vec3 V = normalize(pos-uCamPos);
     V = reflect(V, nor);
-    const float fov = 0.1;
+    const float fov = 1.0;
 
     // output color
     vec4 cout;
@@ -170,8 +170,11 @@ void main()
 
     // background color
     vec4 bg = vec4(vec3((1.0-vUV.y)/2.0), 1.0);
+    //bg = vec4(0.0, 0.0, 0.0, 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
     fragColor = bg;
+
+    //fragColor = vec4(pos, 1.0);
 }

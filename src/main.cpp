@@ -226,6 +226,7 @@ void display()
     }
     else if (currentDemoType == DEFERRED_PIPELINE)
     {
+        voxelTextureGenerator.getVoxelTexture()->display(true);
         deferredPipeline.display(fullScreenQuad, debugDraw);
     }
 
