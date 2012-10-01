@@ -26,10 +26,12 @@ public:
 
     std::string CUBE_PRESET;
     std::string SPHERE_PRESET;
+    std::string CORNELL_BOX;
     VoxelTextureGenerator()
     {
         CUBE_PRESET = "cube";
         SPHERE_PRESET = "sphere";
+        CORNELL_BOX = "cornell box";
         currentTexture = UINT_MAX;
     }
 
@@ -44,6 +46,7 @@ public:
     {
         createTexture(CUBE_PRESET);
         createTexture(SPHERE_PRESET);  
+        createTexture(CORNELL_BOX);  
     }
     void createTexture(std::string name)
     {
@@ -103,6 +106,42 @@ public:
                         //textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
                         textureData.normalData[textureIndex] = glm::vec3(0,0,0);
                     }
+                    textureIndex++;
+                }
+            }
+            else if (name == CORNELL_BOX)
+            {
+                glm::vec3 sphereCenter = glm::vec3(voxelGridLength/4, voxelGridLength/4, voxelGridLength/4);
+                float sphereRadius = voxelGridLength/4.0f;
+
+                uint textureIndex = 0;
+                for(uint i = 0; i < voxelGridLength; i++)
+                for(uint j = 0; j < voxelGridLength; j++)
+                for(uint k = 0; k < voxelGridLength; k++) 
+                {
+                    float sphereDist = glm::distance(sphereCenter, glm::vec3(i,j,k));
+
+                    if (j==0 || 
+                        j==voxelGridLength-1 ||
+                        k==0) {
+                        textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,255.0f,255.0f);
+                    }
+				    else if (i==0) {
+                        textureData.colorData[textureIndex] = glm::u8vec4(255.0f,0,0,255.0f);
+                    }
+                    else if (i==voxelGridLength-1) {
+                        textureData.colorData[textureIndex] = glm::u8vec4(0,255.0f,0,255.0f);
+                    }
+                    else if (sphereDist<sphereRadius) {
+                        textureData.colorData[textureIndex] = glm::u8vec4(0.0f,0.0f,255.0f,255.0f);
+                    }
+                    else {
+                        textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
+                    }
+
+
+                    // not doing anything
+                    textureData.normalData[textureIndex] = glm::vec3(0,0,0);
                     textureIndex++;
                 }
             }
