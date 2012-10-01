@@ -119,7 +119,7 @@ public:
             for(int k = 0; k < mipMapVoxelGridLength; k++)
             for(int l = 0; l < mipMapVoxelGridLength; l++)
             {
-                glm::vec3 position = glm::vec3(j*voxelScale,k*voxelScale,l*voxelScale) + offset;
+                glm::vec3 position = glm::vec3(l*voxelScale,k*voxelScale,j*voxelScale) + offset;
                 glm::u8vec4 color = imageData[textureIndex];
                 if(color.a > 0)
                 {

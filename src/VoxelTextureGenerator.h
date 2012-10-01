@@ -133,7 +133,7 @@ public:
                         textureData.colorData[textureIndex] = glm::u8vec4(0,255.0f,0,255.0f);
                     }
                     else if (sphereDist<sphereRadius) {
-                        textureData.colorData[textureIndex] = glm::u8vec4(0.0f,0.0f,255.0f,255.0f);
+                        textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,0.0f,255.0f);
                     }
                     else {
                         textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
