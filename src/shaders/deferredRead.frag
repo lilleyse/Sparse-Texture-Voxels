@@ -17,6 +17,7 @@
 #define DEFERRED_COLORS_FBO_BINDING 1
 #define DEFERRED_NORMALS_FBO_BINDING 2
 
+
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
@@ -29,28 +30,16 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
 };
 
+layout (location = 0) out vec4 fragColor;
 
-//---------------------------------------------------------
-// SHADER VARS
-//---------------------------------------------------------
-
-layout(location = POSITION_ATTR) in vec2 position;
-
-out gl_PerVertex
-{
-    vec4 gl_Position;
-};
-
-out vec2 vUV;
+layout(binding = DEFERRED_POSITIONS_TEXTURE_BINDING) uniform sampler2D positionTexture;
+layout(binding = DEFERRED_COLORS_TEXTURE_BINDING) uniform sampler2D colorTexture;
+layout(binding = DEFERRED_NORMALS_TEXTURE_BINDING) uniform sampler2D normalTexture;
 
 
-//---------------------------------------------------------
-// PROGRAM
-//---------------------------------------------------------
+in vec2 vUV;
 
 void main()
 {
-    vUV = (position+1.0)/2.0;
-
-    gl_Position = vec4(position, 0.0, 1.0);
+    fragColor = texture(colorTexture, vUV);
 }

@@ -4,11 +4,18 @@
 
 #version 420 core
 #define POSITION_ATTR 0
-#define DEBUG_TRANSFORM_ATTR 1
-#define DEBUG_COLOR_ATTR 2
+#define NORMAL_ATTR 1
+#define DEBUG_TRANSFORM_ATTR 2
+#define DEBUG_COLOR_ATTR 3
 #define PER_FRAME_UBO_BINDING 0
 #define COLOR_TEXTURE_3D_BINDING 0
 #define NORMAL_TEXTURE_3D_BINDING 1
+#define DEFERRED_POSITIONS_TEXTURE_BINDING 2
+#define DEFERRED_COLORS_TEXTURE_BINDING 3
+#define DEFERRED_NORMALS_TEXTURE_BINDING 4
+#define DEFERRED_POSITIONS_FBO_BINDING 0
+#define DEFERRED_COLORS_FBO_BINDING 1
+#define DEFERRED_NORMALS_FBO_BINDING 2
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -242,6 +249,8 @@ void main()
     gLightPos[0].x = 2.0*sin(uTime);
     gLightPos[0].z = 2.0*cos(uTime);
 
+	// flip y
+	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
 
     // camera ray
     vec3 C = normalize(uCamLookAt-uCamPos);
@@ -256,8 +265,8 @@ void main()
     float tanFOV = tan(uFOV/180.0*PI);
 
     vec3 ro = uCamPos+C
-        + (2.0*vUV.x-1.0)*tanFOV*A 
-        + (2.0*vUV.y-1.0)*tanFOV*B;
+        + (2.0*uv.x-1.0)*tanFOV*A 
+        + (2.0*uv.y-1.0)*tanFOV*B;
     vec3 rd = normalize(ro-uCamPos);
 
     // output color
@@ -276,7 +285,7 @@ void main()
     }
 
     // background color
-    vec4 bg = vec4(vec3(vUV.y/2.0), 1.0);
+    vec4 bg = vec4(vec3(uv.y/2.0), 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);

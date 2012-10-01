@@ -17,6 +17,7 @@
 #define DEFERRED_COLORS_FBO_BINDING 1
 #define DEFERRED_NORMALS_FBO_BINDING 2
 
+
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
@@ -29,28 +30,23 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
 };
 
+// should these be vec4's for all of them?
+layout (location = DEFERRED_POSITIONS_FBO_BINDING) out vec4 positionOut;
+layout (location = DEFERRED_COLORS_FBO_BINDING) out vec4 colorOut;
+layout (location = DEFERRED_NORMALS_FBO_BINDING) out vec4 normalOut;
 
-//---------------------------------------------------------
-// SHADER VARS
-//---------------------------------------------------------
-
-layout(location = POSITION_ATTR) in vec2 position;
-
-out gl_PerVertex
+in block
 {
-    vec4 gl_Position;
-};
+    vec3 position;
+    vec4 color;
+    vec3 normal;
 
-out vec2 vUV;
-
-
-//---------------------------------------------------------
-// PROGRAM
-//---------------------------------------------------------
+} vertexData;
 
 void main()
 {
-    vUV = (position+1.0)/2.0;
+    positionOut = vec4(vertexData.position, 1.0);
+    colorOut = vertexData.color;
+    normalOut = vec4(normalize(vertexData.normal), 1.0);
 
-    gl_Position = vec4(position, 0.0, 1.0);
 }
