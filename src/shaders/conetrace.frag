@@ -48,7 +48,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER VARS
 //---------------------------------------------------------
 
-layout (location = 0, index = 0) out vec4 fragColor;
+layout(location = 0, index = 0) out vec4 fragColor;
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
@@ -144,12 +144,12 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
 
 void main()
 {
+	// flip uv.y
+	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
+
     //-----------------------------------------------------
     // CAMERA RAY
     //-----------------------------------------------------
-    
-	// flip y
-	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
 
     // camera ray
     vec3 C = normalize(uCamLookAt-uCamPos);
