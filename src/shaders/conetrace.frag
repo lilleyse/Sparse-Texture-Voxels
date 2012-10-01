@@ -56,7 +56,7 @@ in vec2 vUV;
 uniform float uTextureRes;
 
 const int MAX_STEPS = 128;
-const float STEPSIZE_WRT_TEXEL = 1.0;  // Cyrill uses 1/3
+const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 
 float gTexelSize;
