@@ -9,14 +9,14 @@ class DeferredPipeline
 {
 private:
 
+    std::vector<uint> fboAttachments;
+
     GLuint deferredFBO;
     GLuint depthTexture;
 
-    static const int numColorAttachments = 3;
     GLuint positionsTexture;
     GLuint colorsTexture;
     GLuint normalsTexture;
-
 
     GLuint deferredWriteProgram;
     GLuint deferredReadProgram;
@@ -52,28 +52,32 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
+        // If we go over 10 attachments, then change this number
+        fboAttachments = std::vector<uint>(MAX_FBO_BINDING_POINTS, GL_NONE);
+        fboAttachments[DEFERRED_POSITIONS_FBO_BINDING] = GL_COLOR_ATTACHMENT0 + DEFERRED_POSITIONS_FBO_BINDING;
+        fboAttachments[DEFERRED_COLORS_FBO_BINDING] = GL_COLOR_ATTACHMENT0 + DEFERRED_COLORS_FBO_BINDING;
+        fboAttachments[DEFERRED_NORMALS_FBO_BINDING] = GL_COLOR_ATTACHMENT0 + DEFERRED_NORMALS_FBO_BINDING;
 
         // Create deffered framebuffer object
         glGenFramebuffers(1, &deferredFBO);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, deferredFBO);
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthTexture, 0);
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, positionsTexture, 0);  
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, colorsTexture, 0); 
-        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, normalsTexture, 0);
-        uint fboAttachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-        glDrawBuffers(3, fboAttachments);
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_POSITIONS_FBO_BINDING], GL_TEXTURE_2D, positionsTexture, 0);  
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_COLORS_FBO_BINDING], GL_TEXTURE_2D, colorsTexture, 0); 
+        glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_NORMALS_FBO_BINDING], GL_TEXTURE_2D, normalsTexture, 0);
+        glDrawBuffers(MAX_FBO_BINDING_POINTS, &fboAttachments[0]);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
 
         // Bind all the textures so we can read back from them later in a separate shader
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_BINDING);
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
 
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_COLORS_BINDING);
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_COLORS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, colorsTexture);
 
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_BINDING);
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
 
         // Create program that writes the deferred data
@@ -107,20 +111,20 @@ public:
     void resize(int w, int h)
     {
 
+        // Make sure to resize the textures used in the deferred pipeline
         glActiveTexture(GL_TEXTURE0 + NON_USED_TEXTURE);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, w, h, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
 
-        // Make sure to resize the textures used in the deferred pipeline
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_BINDING);
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
 
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_COLORS_BINDING);
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_COLORS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, colorsTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_BINDING);
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     }
@@ -137,9 +141,10 @@ public:
        
         // Clear color attachment textures (positions, colors, normals)
         float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
-        for(int i = 0; i < numColorAttachments; i++)
+        for(uint i = 0; i < MAX_FBO_BINDING_POINTS; i++)
         {
-            glClearBufferfv(GL_COLOR, i, clearColor);
+            if(fboAttachments[i] != GL_NONE)
+                glClearBufferfv(GL_COLOR, i, clearColor);
         }
         
         // Write to the FBO
