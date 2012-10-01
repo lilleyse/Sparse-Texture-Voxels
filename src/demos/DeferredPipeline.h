@@ -81,8 +81,8 @@ public:
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
 
         // Create program that writes the deferred data
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/shaders/voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/shaders/deferredWrite.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredWrite.frag");
 
         deferredWriteProgram = glCreateProgram();
         glAttachShader(deferredWriteProgram, vertexShaderObject);
@@ -94,8 +94,8 @@ public:
         glf::checkProgram(deferredWriteProgram);
 
         // Create program that reads the deferred data
-        vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, "src/shaders/fullscreen.vert");
-        fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, "src/shaders/deferredRead.frag");
+        vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
 
         deferredReadProgram = glCreateProgram();
         glAttachShader(deferredReadProgram, vertexShaderObject);
