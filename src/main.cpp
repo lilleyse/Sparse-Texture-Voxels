@@ -132,6 +132,7 @@ bool begin()
 
     camera.setFarNearPlanes(.01f, 100.0f);
     camera.zoom(-2);
+    camera.lookAt = glm::vec3(0.5f);
 
     // all process, nothing interesting here
     fullScreenQuad.begin();
@@ -192,14 +193,8 @@ void display()
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
-    perFrame.viewProjection = camera.createProjectionMatrix() * camera.createViewMatrix();
-    
-    // Move lookAt to get the correct lookAt and position for the raycast demos, then revert back
-    camera.lookAt += glm::vec3(0.5f);
-    camera.createViewMatrix(); // updates position
+    perFrame.viewProjection = camera.createProjectionMatrix() * camera.createViewMatrix();    
     perFrame.uCamLookAt = camera.lookAt;
-    camera.lookAt -= glm::vec3(0.5f);
-
     perFrame.uCamPos = camera.position;
     perFrame.uCamUp = camera.upDir;
     perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);

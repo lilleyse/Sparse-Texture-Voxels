@@ -41,5 +41,5 @@ in vec2 vUV;
 
 void main()
 {
-    fragColor = texture(colorTexture, vUV);
+    fragColor = texture(positionTexture, vUV);
 }
