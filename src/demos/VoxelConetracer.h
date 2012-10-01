@@ -41,7 +41,7 @@ public:
     void setTextureResolution(uint res)
     {
         glUseProgram(fullScreenProgram);
-        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
-        glUniform1f(mipMapLevelUniform, (float)res);
+        GLuint textureResUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
+        glUniform1f(textureResUniform, (float)res);
     }
 };
