@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Utils.h"
-#include "VoxelTexture.h"
+#include "../Utils.h"
+#include "../VoxelTexture.h"
 
 class DebugDraw
 {

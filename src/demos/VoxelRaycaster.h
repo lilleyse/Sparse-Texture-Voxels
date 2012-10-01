@@ -2,8 +2,8 @@
 
 #include <glf.hpp>
 
-#include "ShaderConstants.h"
-#include "Utils.h"
+#include "../ShaderConstants.h"
+#include "../Utils.h"
 #include "../FullScreenQuad.h"
 
 class VoxelRaycaster
