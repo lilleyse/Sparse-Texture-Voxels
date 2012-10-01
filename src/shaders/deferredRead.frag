@@ -18,6 +18,10 @@
 #define DEFERRED_NORMALS_FBO_BINDING 2
 
 
+//---------------------------------------------------------
+// SHADER VARS
+//---------------------------------------------------------
+
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 viewProjection;
@@ -38,6 +42,11 @@ layout(binding = DEFERRED_NORMALS_TEXTURE_BINDING) uniform sampler2D normalTextu
 
 in vec2 vUV;
 
+
+//---------------------------------------------------------
+// PROGRAM
+//---------------------------------------------------------
+
 void main()
 {
     // DEBUGTEST: manually init lights
@@ -52,9 +61,17 @@ void main()
 
     const float KA = 0.2;
     const float KD = 0.8;
+    const float KS = 0.5;
+    const float SPEC = 100.0;
 
-    vec3 toLight = normalize(lightPos-pos);
-    col *= KA + KD*max(dot(toLight,nor),0.0);
+    // diffuse
+    vec3 L = normalize(lightPos-pos);
+    col *= (KA + KD*max(dot(L,nor),0.0))*lightCol;
+
+    // specular
+    vec3 V = normalize(pos-uCamPos);
+    vec3 R = reflect(L,nor);
+    col += KS*lightCol*pow(max(dot(R,V),0.0), SPEC);
 
     fragColor = vec4(col, 1.0);
 }
