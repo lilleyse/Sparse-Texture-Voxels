@@ -98,11 +98,12 @@ void GLFWCALL key(int k, int action)
 {
     if (action == GLFW_RELEASE)
     {
-        // Changing demo
-        std::cout << k << " " << (char)k << std::endl; 
-        if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES) 
+        // Changing demo (number keys and numpad)
+        if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES)
             currentDemoType = (DemoType)((uint)k - '1');
-
+        if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
+            currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
+            
         // Changing mip map level
         if (k == ',') setMipMapLevel((int)currentMipMapLevel + 1);
         if (k == '.') setMipMapLevel((int)currentMipMapLevel - 1);
