@@ -285,7 +285,7 @@ void main()
     }
 
     // background color
-    vec4 bg = vec4(vec3(uv.y/2.0), 1.0);
+    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
