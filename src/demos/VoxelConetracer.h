@@ -12,13 +12,18 @@ class VoxelConetracer
 
 private:
     GLuint fullScreenProgram;
+    VoxelTexture* voxelTexture;
+    FullScreenQuad* fullScreenQuad;
 
 public:
     VoxelConetracer(){}
     virtual ~VoxelConetracer(){}
 
-    void begin(VoxelTexture* voxelTexture)
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad)
     {
+        this->voxelTexture = voxelTexture;
+        this->fullScreenQuad = fullScreenQuad;
+
         // Create shader program
         GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
         GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "conetrace.frag");
@@ -37,9 +42,12 @@ public:
         glUniform1f(mipMapLevelUniform, (float)voxelTexture->voxelGridLength);
     }
 
-    void display(FullScreenQuad& fullScreenQuad)
+    void display()
     {
+        voxelTexture->enableLinearSampling();
+        voxelTexture->display();
+
         glUseProgram(fullScreenProgram);
-        fullScreenQuad.display();
+        fullScreenQuad->display();
     }
 };

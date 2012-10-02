@@ -21,9 +21,17 @@ private:
     GLuint deferredWriteProgram;
     GLuint deferredReadProgram;
 
+    VoxelTexture* voxelTexture;
+    FullScreenQuad* fullScreenQuad;
+    DebugDraw* debugDraw;
+
 public:
-    void begin(VoxelTexture* voxelTexture)
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad, DebugDraw* debugDraw)
     {
+        this->voxelTexture = voxelTexture;
+        this->fullScreenQuad = fullScreenQuad;
+        this->debugDraw = debugDraw;
+
         // Creation positions texture
         glGenTextures(1, &positionsTexture);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
@@ -127,8 +135,11 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     }
 
-    void display(FullScreenQuad& fullScreenQuad, DebugDraw& debugDraw)
+    void display()
     {
+        voxelTexture->enableLinearSampling();
+        voxelTexture->display();
+        
         // Bind custom FBO then draw into it
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, deferredFBO);
         
@@ -145,13 +156,13 @@ public:
         }
         
         // Write to the FBO
-        debugDraw.display(deferredWriteProgram);
+        debugDraw->display(deferredWriteProgram);
 
         // Bind the default window framebuffer
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);        
         
         // Show the results written to the FBO
         glUseProgram(deferredReadProgram);
-        fullScreenQuad.display();
+        fullScreenQuad->display();
     }
 };

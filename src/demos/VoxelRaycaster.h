@@ -11,13 +11,18 @@ class VoxelRaycaster
 
 private:
     GLuint fullScreenProgram;
+    VoxelTexture* voxelTexture;
+    FullScreenQuad* fullScreenQuad;
 
 public:
     VoxelRaycaster(){}
     virtual ~VoxelRaycaster(){}
 
-    void begin()
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad)
     {
+        this->voxelTexture = voxelTexture;
+        this->fullScreenQuad = fullScreenQuad;
+
         // Create shader program
         GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
         GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "raycast.frag");
@@ -32,10 +37,13 @@ public:
         glf::checkProgram(fullScreenProgram);
     }
 
-    void display(FullScreenQuad& fullScreenQuad)
+    void display()
     {
+        voxelTexture->enableNearestSampling();
+        voxelTexture->display();
+
         glUseProgram(fullScreenProgram);
-        fullScreenQuad.display();
+        fullScreenQuad->display();
     }
 
     void setMipMapLevel(uint mipMapLevel)
