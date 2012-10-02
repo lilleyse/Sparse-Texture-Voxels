@@ -65,7 +65,7 @@ const int MAX_STEPS = 128;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 1.0;
-const float AO_DIST_K = 0.25;
+const float AO_DIST_K = 0.5;
 
 float gTexelSize;
 
@@ -97,7 +97,7 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
 vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;  
   float dist = 0.0;
-  float pixSizeAtDist = tan(fov/180.0*PI);
+  float pixSizeAtDist = tan(fov);
   
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
@@ -151,7 +151,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;  
   float dist = 0.0;
-  float pixSizeAtDist = tan(fov/180.0*PI);
+  float pixSizeAtDist = tan(fov);
 
   float tm = 1.0;         // accumulated transmittance
   
@@ -210,19 +210,21 @@ void main()
 
 
     //-----------------------------------------------------
-    // GATHER CONE TRACE
+    // GATHER AO
     //-----------------------------------------------------
     
-    const float fov = 45.0;
-    float ao;
-    {
+    const float fov = radians(45.0);
+    const int NUM_AO_DIRS = 1;
+    float ao = 0.0;
+    for (int i=0; i<NUM_AO_DIRS; i++) {
         vec3 V = nor;
         float t;
-        if ( col.a!=0.0 && textureVolumeIntersect(pos+V*EPS, V+0.00000001, t) )
-            ao = conetraceVisibility(pos+V*(t+EPS), V, fov);
+        if ( col.a!=0.0 /*&& textureVolumeIntersect(pos+V*EPS, V+0.00000001, t)*/ )
+            ao += conetraceVisibility(pos+V*(t+EPS), V, fov);
         else
-            ao = 0.0;
+            ao += 0.0;
     }
+    ao /= float(NUM_AO_DIRS);
 
     // multiply AO into color
     col.rgb *= ao;
