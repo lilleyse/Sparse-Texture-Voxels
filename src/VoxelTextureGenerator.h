@@ -115,9 +115,9 @@ public:
                 float sphereRadius = voxelGridLength/4.0f;
 
                 uint textureIndex = 0;
+                for(uint k = 0; k < voxelGridLength; k++)
+                for(uint j = 0; j < voxelGridLength; j++)                
                 for(uint i = 0; i < voxelGridLength; i++)
-                for(uint j = 0; j < voxelGridLength; j++)
-                for(uint k = 0; k < voxelGridLength; k++) 
                 {
                     float sphereDist = glm::distance(sphereCenter, glm::vec3(i,j,k));
 

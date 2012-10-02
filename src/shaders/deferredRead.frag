@@ -157,24 +157,25 @@ void main()
 
     vec3 V = normalize(pos-uCamPos);
     V = reflect(V, nor);
-    const float fov = 1.0;
-
-    // output color
-    vec4 cout;
+    const float fov = 10.0;
+    
+    vec4 specCol;
 
     float t;
-    if ( col.a!=0.0 && textureVolumeIntersect(pos, V, t) )
-        cout = conetraceSimple(pos+V*(t+EPS), V, fov);
+    if ( col.a!=0.0 && textureVolumeIntersect(pos+V*EPS, V, t) )
+        specCol = conetraceSimple(pos+V*(t+EPS), V, fov);
     else
-        cout = vec4(0.0);
+        specCol = vec4(0.0);
+
+    vec4 cout = vec4(mix(col.rgb, specCol.rgb, 0.6), col.a);
 
     // background color
-    vec4 bg = vec4(vec3((1.0-vUV.y)/2.0), 1.0);
+    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
     //bg = vec4(0.0, 0.0, 0.0, 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
     fragColor = bg;
 
-    //fragColor = vec4(pos, 1.0);
+    //fragColor = vec4(nor, 1.0);
 }
