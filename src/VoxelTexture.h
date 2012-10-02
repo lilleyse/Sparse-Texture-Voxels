@@ -73,20 +73,20 @@ public:
         glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGB, GL_FLOAT, &textureData.normalData[0]);
     }
 
-    void display(bool linearSampling)
+    void enableLinearSampling()
     {
-        if(linearSampling)
-        {
-            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
-            glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
-        }
-        else
-        {
-            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
-            glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
-        }
+        glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
+        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
+    }
 
+    void enableNearestSampling()
+    {
+        glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
+        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
+    }
 
+    void display()
+    {
         // Rebind to the binding points in case binding points were messed up (like in MipMapGenerator)
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, colorTexture);

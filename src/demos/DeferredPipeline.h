@@ -2,8 +2,8 @@
 #include <glf.hpp>
 #include "../Utils.h"
 #include "../ShaderConstants.h"
-#include "../VoxelTexture.h"
 #include "../FullScreenQuad.h"
+#include "../VoxelTexture.h"
 
 class DeferredPipeline
 {
@@ -22,33 +22,29 @@ private:
     GLuint deferredReadProgram;
 
 public:
-    void begin(VoxelTexture* voxelTexture, int screenWidth, int screenHeight)
+    void begin(VoxelTexture* voxelTexture)
     {
         // Creation positions texture
         glGenTextures(1, &positionsTexture);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create colors texture
         glGenTextures(1, &colorsTexture);
         glBindTexture(GL_TEXTURE_2D, colorsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create normals texture
         glGenTextures(1, &normalsTexture);
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create depth texture
         glGenTextures(1, &depthTexture);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, screenWidth, screenHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -106,6 +102,9 @@ public:
         glLinkProgram(deferredReadProgram);
         glf::checkProgram(deferredReadProgram);
 
+        glUseProgram(deferredReadProgram);
+        GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");
+        glUniform1f(textureResUniform, (float)voxelTexture->voxelGridLength);
     }
 
     void resize(int w, int h)
@@ -154,12 +153,5 @@ public:
         // Show the results written to the FBO
         glUseProgram(deferredReadProgram);
         fullScreenQuad.display();
-    }
-
-    void setTextureResolution(uint res)
-    {
-        glUseProgram(deferredReadProgram);
-        GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");
-        glUniform1f(textureResUniform, (float)res);
     }
 };

@@ -27,27 +27,34 @@ namespace
     const float FRAME_TIME_DELTA = 0.01f;
     bool showFPS = true;
     Utils::Framerate fpsHandler;
-    FullScreenQuad fullScreenQuad;
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
-    const std::string initialTextures[] = {"data/Bucky.raw"};
-    bool loadMultipleTextures = true;
-    uint voxelGridLength = 32;
+    VoxelTexture* voxelTexture;
     uint numMipMapLevels;
-    uint currentMipMapLevel;
-
+    uint currentMipMapLevel = UINT_MAX;
+    uint voxelGridLength = 32;
+    const std::string voxelTextures[] = {
+        VoxelTextureGenerator::CORNELL_BOX,
+        VoxelTextureGenerator::SPHERE,
+        VoxelTextureGenerator::CUBE,
+        "data/Bucky.raw",
+    };
+    std::string initialVoxelTexture = voxelTextures[0];
+    
     // Demo settings
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
     VoxelConetracer voxelConetracer;
     DeferredPipeline deferredPipeline;
-    DemoType currentDemoType = DEBUGDRAW;
+
+    DemoType currentDemoType = DEFERRED_PIPELINE;
     bool loadAllDemos = true;
 
     // OpenGL stuff
+    FullScreenQuad fullScreenQuad;
     GLuint perFrameUBO;
-
+    
 }
 
 
@@ -122,7 +129,7 @@ void keyboardEvent(uchar keyCode)
     if (setsNextTexture || setsPreviousTexture)
     {
         if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
-            debugDraw.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
+            debugDraw.voxelTextureUpdate(voxelTexture);
     }
 }
 
@@ -136,32 +143,28 @@ bool begin()
 
     // all process, nothing interesting here
     fullScreenQuad.begin();
-    voxelTextureGenerator.begin(voxelGridLength, loadMultipleTextures);
-    uint numInitialTextures = sizeof(initialTextures) / sizeof(initialTextures[0]);
+    voxelTexture = new VoxelTexture();
+    voxelTextureGenerator.begin(voxelTexture, voxelGridLength);
+    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
     for (uint i = 0; i < numInitialTextures; i++)
-        voxelTextureGenerator.createTexture(initialTextures[i]);
-    voxelTextureGenerator.createAllPresets();
-    voxelTextureGenerator.setTexture(0);
-    VoxelTexture* voxelTexture = voxelTextureGenerator.getVoxelTexture();
+        voxelTextureGenerator.createTexture(voxelTextures[i]);
+    voxelTextureGenerator.setTexture(initialVoxelTexture);
     
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE) 
         debugDraw.begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.begin();
-    if (loadAllDemos || currentDemoType == VOXELCONETRACER) {
-        voxelConetracer.begin();
-        voxelConetracer.setTextureResolution(voxelGridLength);
-    }
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE) {
-        deferredPipeline.begin(voxelTexture, Window.Size.x, Window.Size.y);
-        deferredPipeline.setTextureResolution(voxelGridLength);
+    if (loadAllDemos || currentDemoType == VOXELCONETRACER)
+        voxelConetracer.begin(voxelTexture);
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+    {
+        deferredPipeline.begin(voxelTexture);
+        deferredPipeline.resize(Window.Size.x, Window.Size.y);
     }
 
-    
     // initial mip-map setting
     numMipMapLevels = voxelTexture->numMipMapLevels;
-    currentMipMapLevel = UINT_MAX;
     setMipMapLevel(currentMipMapLevel);
 
     return true;
@@ -178,15 +181,12 @@ void resize(int w, int h)
     camera.setAspectRatio(w, h);
 
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-    {
         deferredPipeline.resize(w, h);
-    }
 }
 
 void display()
 {
     // Basic GL stuff
-    
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
     glClearBufferfv(GL_COLOR, 0, clearColor);
@@ -207,8 +207,6 @@ void display()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-   
-
     // Display demo
     if (currentDemoType == DEBUGDRAW)
     {
@@ -216,17 +214,20 @@ void display()
     }
     else if (currentDemoType == VOXELRAYCASTER)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(false);
+        voxelTexture->enableNearestSampling();
+        voxelTexture->display();
         voxelRaycaster.display(fullScreenQuad); 
     }
     else if (currentDemoType == VOXELCONETRACER)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(true);
+        voxelTexture->enableLinearSampling();
+        voxelTexture->display();
         voxelConetracer.display(fullScreenQuad);
     }
     else if (currentDemoType == DEFERRED_PIPELINE)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(true);
+        voxelTexture->enableLinearSampling();
+        voxelTexture->display();
         deferredPipeline.display(fullScreenQuad, debugDraw);
     }
 

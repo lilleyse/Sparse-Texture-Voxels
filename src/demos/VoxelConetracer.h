@@ -5,6 +5,7 @@
 #include "../ShaderConstants.h"
 #include "../Utils.h"
 #include "../FullScreenQuad.h"
+#include "../VoxelTexture.h"
 
 class VoxelConetracer
 {
@@ -16,7 +17,7 @@ public:
     VoxelConetracer(){}
     virtual ~VoxelConetracer(){}
 
-    void begin()
+    void begin(VoxelTexture* voxelTexture)
     {
         // Create shader program
         GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
@@ -30,18 +31,15 @@ public:
 
         glLinkProgram(fullScreenProgram);
         glf::checkProgram(fullScreenProgram);
+        
+        glUseProgram(fullScreenProgram);
+        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
+        glUniform1f(mipMapLevelUniform, (float)voxelTexture->voxelGridLength);
     }
 
     void display(FullScreenQuad& fullScreenQuad)
     {
         glUseProgram(fullScreenProgram);
         fullScreenQuad.display();
-    }
-
-    void setTextureResolution(uint res)
-    {
-        glUseProgram(fullScreenProgram);
-        GLuint textureResUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
-        glUniform1f(textureResUniform, (float)res);
     }
 };
