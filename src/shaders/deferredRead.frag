@@ -96,7 +96,33 @@ vec3 rotate(vec3 vector, float angle, vec3 axis) {
     rotmat[1][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[6] = (y * z * u) + (x * s); 
     rotmat[2][2] = axis.z*axis.z*usat + csat;	        // Mat[10] = (z * z * u) + c; 
 
-    return vector * rotmat;
+    return rotmat*vector;
+
+    // source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToMatrix/index.htm
+
+    //float c = cos(angle);
+    //float s = sin(angle);
+    //float t = 1.0 - c;
+
+    //mat3 rot;
+    //rot[0][0] = c + axis.x*axis.x*t;
+    //rot[1][1] = c + axis.y*axis.y*t;
+    //rot[2][2] = c + axis.z*axis.z*t;
+
+    //float tmp1 = axis.x*axis.y*t;
+    //float tmp2 = axis.z*s;
+    //rot[1][0] = tmp1 + tmp2;
+    //rot[0][1] = tmp1 - tmp2;
+    //tmp1 = axis.x*axis.z*t;
+    //tmp2 = axis.y*s;
+    //rot[2][0] = tmp1 - tmp2;
+    //rot[0][2] = tmp1 + tmp2;
+    //tmp1 = axis.y*axis.z*t;
+    //tmp2 = axis.x*s;
+    //rot[2][1] = tmp1 + tmp2;
+    //rot[1][2] = tmp1 - tmp2;
+
+    //return rot*vector;
 }
 
 // find a perpendicular vector, non-particular
@@ -266,22 +292,21 @@ void main()
     // GATHER AO
     //-----------------------------------------------------
     
-    float ao = 0.0;
+    float ao;
     {
         const float NUM_AO_DIRS = 4.0;
         float fov = PI/NUM_AO_DIRS;
-        float anglerotate = 2.0*fov;
+        float anglerotate = 2.0*PI/NUM_AO_DIRS;
         vec3 axis = findPerpendicular(nor); // find a perpendicular vector
         for (float i=0.0; i<NUM_AO_DIRS; i++) {
             // rotate that vector around normal (to distribute cone around)
-            axis = rotate(axis, anglerotate*(i+uTime), nor);
+            axis = rotate(axis, anglerotate*(i), nor);
             
             // ray dir is normal rotated an fov over that vector
             vec3 rd = rotate(nor, fov, axis);
 
-            float t;
             if ( col.a!=0.0 )
-                ao += conetraceVisibility(pos+rd*(t+EPS), rd, fov);
+                ao += conetraceVisibility(pos+rd*EPS, rd, fov);
             else
                 ao += 0.0;
         }
@@ -296,6 +321,7 @@ void main()
 
     // multiply AO into color
     col.rgb = vec3(ao);
+    //col = ao;
 
 
     //-----------------------------------------------------
