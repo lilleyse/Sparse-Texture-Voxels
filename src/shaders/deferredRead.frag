@@ -65,6 +65,7 @@ const int MAX_STEPS = 128;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 1.0;
+const float AO_DIST_K = 0.25;
 
 float gTexelSize;
 
@@ -189,7 +190,7 @@ float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
   }
 
   // weight by distance f(r) = 1/(1+K*r)
-  float weight = (1.0+1.0*dist);
+  float weight = (1.0+AO_DIST_K*dist);
   
   return tm * weight;
 }
@@ -213,22 +214,25 @@ void main()
     //-----------------------------------------------------
     
     const float fov = 45.0;
-    vec4 coneCol;
+    float ao;
     {
         vec3 V = nor;
         float t;
-        if ( col.a!=0.0 /*&& textureVolumeIntersect(pos+V*EPS, V, t)*/ )
-            coneCol = vec4(conetraceVisibility(pos+V*(t+EPS), V, fov));
+        if ( col.a!=0.0 && textureVolumeIntersect(pos+V*EPS, V+0.00000001, t) )
+            ao = conetraceVisibility(pos+V*(t+EPS), V, fov);
         else
-            coneCol = vec4(0.0);
+            ao = 0.0;
     }
 
-    vec4 cout = coneCol;//vec4(mix(col.rgb, coneCol.rgb, 0.99), col.a);
+    // multiply AO into color
+    col.rgb *= ao;
 
 
     //-----------------------------------------------------
     // RENDER OUT
     //-----------------------------------------------------
+        
+    vec4 cout = col;
 
     // background color
     vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
