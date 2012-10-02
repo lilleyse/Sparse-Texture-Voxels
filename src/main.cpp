@@ -22,6 +22,7 @@ namespace
     bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
+    int frameCount = 0;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
     
@@ -134,25 +135,15 @@ void initGL()
     glewExperimental = GL_TRUE;
     glewInit();
 
-    // OpenGL version number
-    int* major = new int(); 
-    int* minor = new int();
-    int* rev = new int();
-    glfwGetGLVersion(major, minor, rev);
-    if (!((*major == openGLVersion.x && *minor >= openGLVersion.y) || *major > openGLVersion.x))
-    {
-        std::cout << "Need openGL version " << openGLVersion.x << "." << openGLVersion.y << ". You have " << *major << "." << *minor << "." << std::endl;
-    }
-
     // Debug output
     if(showDebugOutput && Utils::OpenGL::checkExtension("GL_ARB_debug_output"))
     {
-        //glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLARBPROC) glfwGetProcAddress("glDebugMessageControlARB");
-        //glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKARBPROC) glfwGetProcAddress("glDebugMessageCallbackARB");
-        //glDebugMessageInsertARB = (PFNGLDEBUGMESSAGEINSERTARBPROC) glfwGetProcAddress("glDebugMessageInsertARB");
-        //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-        //glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-        //glDebugMessageCallbackARB(&Utils::OpenGL::debugOutput, NULL);
+        glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLARBPROC) glfwGetProcAddress("glDebugMessageControlARB");
+        glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKARBPROC) glfwGetProcAddress("glDebugMessageCallbackARB");
+        glDebugMessageInsertARB = (PFNGLDEBUGMESSAGEINSERTARBPROC) glfwGetProcAddress("glDebugMessageInsertARB");
+        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+        glDebugMessageCallbackARB(&Utils::OpenGL::debugOutput, NULL);
     }
     else printf("debug output extension not found");
     
@@ -247,38 +238,30 @@ void display()
     frameTime += FRAME_TIME_DELTA;
 }
 
-void displayFPS(int* frameCount)
+void displayFPS()
 {
-    *frameCount += 1;
+    frameCount += 1;
     double currentTime = glfwGetTime();
     if(currentTime >= 1.0)
     {	
         std::ostringstream ss;
-		ss << applicationName << " (fps: " << (*frameCount/currentTime) << " )";
+		ss << applicationName << " (fps: " << (frameCount/currentTime) << " )";
         glfwSetWindowTitle(ss.str().c_str());
         glfwSetTime(0.0);
-        *frameCount = 0;
+        frameCount = 0;
     }
 }
 int main(int argc, char* argv[])
 {
-    if(!glfwInit())
-    {
-        fprintf(stderr, "Failed to initialize GLFW\n");
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
-
-    if(!glfwOpenWindow(windowSize.x, windowSize.y, 0, 0, 0, 0, 16, 0, GLFW_WINDOW))
-    {
-        fprintf( stderr, "Failed to open GLFW window\n" );
-        glfwTerminate();
-        exit(EXIT_FAILURE);
-    }
+    glfwInit();
+    glfwOpenWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, openGLVersion.x);
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, openGLVersion.y);
+    glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwOpenWindow(windowSize.x, windowSize.y, 0, 0, 0, 0, 24, 0, GLFW_WINDOW);
 
     begin();
-    int frameCount = 0;
-    bool running = true;
     glfwSetWindowTitle(applicationName.c_str());
     glfwSetWindowSizeCallback(resize);
     glfwSetMousePosCallback(mouseMove);
@@ -287,12 +270,13 @@ int main(int argc, char* argv[])
     glfwEnable(GLFW_STICKY_KEYS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
-    
+
+    bool running = true;
     do
     {
         display();
         glfwSwapBuffers();
-        if (showFPS) displayFPS(&frameCount);
+        if (showFPS) displayFPS();
         running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
     }
     while(running);

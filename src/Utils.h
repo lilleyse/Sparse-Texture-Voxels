@@ -181,11 +181,15 @@ namespace Utils
             GLint ExtensionCount = 0;
             glGetIntegerv(GL_NUM_EXTENSIONS, &ExtensionCount);
             for(GLint i = 0; i < ExtensionCount; ++i)
-                if(std::string((char const*)glGetStringi(GL_EXTENSIONS, i)) == std::string(String))
+            {
+                std::string extensionName = std::string((char const*)glGetStringi(GL_EXTENSIONS, i));
+                printf((extensionName + "\n").c_str());
+                if(extensionName == std::string(String))
                     return true;
+            }
             return false;
         }
-        static void GLAPIENTRY debugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
+        static void APIENTRY debugOutput(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar* message, GLvoid* userParam)
         {
             char debSource[32], debType[32], debSev[32];
             if(source == GL_DEBUG_SOURCE_API_ARB)
