@@ -191,10 +191,7 @@ bool begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-    {
         deferredPipeline->begin(voxelTexture, fullScreenQuad, debugDraw);
-        deferredPipeline->resize(windowSize.x, windowSize.y);
-    }
 
     setMipMapLevel(0);
 
