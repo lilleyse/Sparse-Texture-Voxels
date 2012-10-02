@@ -139,7 +139,6 @@ public:
                         textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
                     }
 
-
                     // not doing anything
                     textureData.normalData[textureIndex] = glm::vec3(0,0,0);
                     textureIndex++;
