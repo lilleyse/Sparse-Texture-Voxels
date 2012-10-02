@@ -105,8 +105,8 @@ void GLFWCALL key(int k, int action)
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
             
         // Changing mip map level
-        if (k == ',') setMipMapLevel((int)currentMipMapLevel + 1);
-        if (k == '.') setMipMapLevel((int)currentMipMapLevel - 1);
+        if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
+        if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
 
         // Changing textures
         bool setsNextTexture = k == ';' && voxelTextureGenerator.setNextTexture();
