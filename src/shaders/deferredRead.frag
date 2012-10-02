@@ -35,6 +35,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 #define EPS       0.0001
+#define EPS8      0.00000001
 #define PI        3.14159265
 #define HALFPI    1.57079633
 #define ROOTTWO   1.41421356
@@ -65,7 +66,7 @@ const int MAX_STEPS = 128;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 1.0;
-const float AO_DIST_K = 0.5;
+const float AO_DIST_K = 1.0;
 
 float gTexelSize;
 
@@ -74,28 +75,51 @@ float gTexelSize;
 // UTILITIES
 //---------------------------------------------------------
 
-// rotate vector a given angle over a given axis
+// rotate vector a given angle(rads) over a given axis
 // source: http://www.groupsrv.com/computers/about180175.html
 vec3 rotate(vec3 vector, float angle, vec3 axis) {
-    float satangle = radians(angle); 
-    float csat = cos(satangle); 
-    float ssat = sin(satangle); 
+    float csat = cos(angle);
+    float ssat = sin(angle);
     float usat = 1.0 - csat;
 
     mat3 rotmat;
-    rotmat[0][0] = axis.x*axis.x*usat + csat;	            //	Mat[0] = (x * x * u) + c; 
-    rotmat[1][0] = axis.y*axis.x*usat - (axis.z*ssat);      //	Mat[4] = (y * x * u) - (z * s); 
-    rotmat[2][0] = axis.z*axis.x*usat + (axis.y*ssat);      //	Mat[8] = (z * x * u) + (y * s); 
 
-    rotmat[0][1] = axis.x*axis.y*usat + (axis.z*ssat);      //	Mat[1] = (x * y * u) + (z * s); 
-    rotmat[1][1] = axis.y*axis.y*usat + csat;	            //	Mat[5] = (y * y * u) + c; 
-    rotmat[2][1] = axis.z*axis.y*usat - (axis.x*ssat);      //	Mat[9] = (z * y * u) - (x * s); 
+    rotmat[0][0] = axis.x*axis.x*usat + csat;	        // Mat[0] = (x * x * u) + c; 
+    rotmat[1][0] = axis.y*axis.x*usat - (axis.z*ssat);  // Mat[4] = (y * x * u) - (z * s); 
+    rotmat[2][0] = axis.z*axis.x*usat + (axis.y*ssat);  // Mat[8] = (z * x * u) + (y * s); 
+                                                           
+    rotmat[0][1] = axis.x*axis.y*usat + (axis.z*ssat);  // Mat[1] = (x * y * u) + (z * s); 
+    rotmat[1][1] = axis.y*axis.y*usat + csat;	        // Mat[5] = (y * y * u) + c; 
+    rotmat[2][1] = axis.z*axis.y*usat - (axis.x*ssat);  // Mat[9] = (z * y * u) - (x * s); 
+                                                           
+    rotmat[0][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[2] = (x * z * u) - (y * s); 
+    rotmat[1][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[6] = (y * z * u) + (x * s); 
+    rotmat[2][2] = axis.z*axis.z*usat + csat;	        // Mat[10] = (z * z * u) + c; 
 
-    rotmat[0][2] = axis.x*axis.z*usat - (axis.y*ssat);      //	Mat[2] = (x * z * u) - (y * s); 
-    rotmat[1][2] = axis.x*axis.z*usat - (axis.y*ssat);      //	Mat[6] = (y * z * u) + (x * s); 
-    rotmat[2][2] = axis.z*axis.z*usat + csat;	            //	Mat[10] = (z * z * u) + c; 
+    return vector * rotmat;
+}
 
-    return vector * rotmat; 
+// find a perpendicular vector, non-particular
+// in this case always parallel to xz-plane
+// v has to be normalized
+vec3 findPerpendicular(vec3 v) {
+    // solve: result dot v = 0
+    // so: X*v.x + Y*v.y + Z*v.z = 0
+    // fix y to 0 - parallel to xz-plane
+    // arbitrary fix x to 1.0, but if v.x == 1.0, then fix z
+    // so: v.x + Z*v.z = 0
+    
+    vec3 result = vec3(1.0, 0.0, -v.x/(v.z+EPS8));
+
+    //vec3 result;
+    //if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0)) 
+    //    result = vec3(0.0, 0.0, v.x);
+    //else if (EQUALS(abs(v.z),1.0))
+    //    result = vec3(1.0, 0.0, 0.0);
+    //else
+    //    result = vec3(1.0, 0.0, -v.x/(v.z+EPS8));
+        
+    return normalize(result);
 }
 
 // special case, optimized for 0.0 to 1.0
@@ -242,21 +266,36 @@ void main()
     // GATHER AO
     //-----------------------------------------------------
     
-    const float fov = radians(45.0);
-    const int NUM_AO_DIRS = 1;
     float ao = 0.0;
-    for (int i=0; i<NUM_AO_DIRS; i++) {
-        vec3 V = nor;
-        float t;
-        if ( col.a!=0.0 /*&& textureVolumeIntersect(pos+V*EPS, V+0.00000001, t)*/ )
-            ao += conetraceVisibility(pos+V*(t+EPS), V, fov);
-        else
-            ao += 0.0;
+    {
+        const float NUM_AO_DIRS = 4.0;
+        float fov = PI/NUM_AO_DIRS;
+        float anglerotate = 2.0*fov;
+        vec3 axis = findPerpendicular(nor); // find a perpendicular vector
+        for (float i=0.0; i<NUM_AO_DIRS; i++) {
+            // rotate that vector around normal (to distribute cone around)
+            axis = rotate(axis, anglerotate*(i+uTime), nor);
+            
+            // ray dir is normal rotated an fov over that vector
+            vec3 rd = rotate(nor, fov, axis);
+
+            float t;
+            if ( col.a!=0.0 )
+                ao += conetraceVisibility(pos+rd*(t+EPS), rd, fov);
+            else
+                ao += 0.0;
+        }
+        ao /= float(NUM_AO_DIRS);
     }
-    ao /= float(NUM_AO_DIRS);
+
+    // single cone
+    //if ( col.a!=0.0 )
+    //    ao += conetraceVisibility(pos+nor*EPS, nor, 45.0);
+    //else
+    //    ao += 0.0;
 
     // multiply AO into color
-    col.rgb *= ao;
+    col.rgb = vec3(ao);
 
 
     //-----------------------------------------------------

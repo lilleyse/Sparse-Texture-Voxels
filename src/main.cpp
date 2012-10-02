@@ -131,7 +131,7 @@ bool begin()
     initGL();
 
     camera.setFarNearPlanes(.01f, 100.0f);
-    camera.zoom(-2);
+    camera.zoom(3);
     camera.lookAt = glm::vec3(0.5f);
 
     // all process, nothing interesting here
