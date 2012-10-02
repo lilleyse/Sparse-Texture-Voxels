@@ -249,7 +249,7 @@ void main()
     gLightPos[0].x = 2.0*sin(uTime);
     gLightPos[0].z = 2.0*cos(uTime);
 
-	// flip y
+	// flip uv.y
 	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
 
     // camera ray
