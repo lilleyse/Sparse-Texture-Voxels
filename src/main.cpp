@@ -15,7 +15,7 @@ namespace
     // Window
     std::string applicationName("Sparse Texture Voxels");
     glm::ivec2 windowSize(600, 400);
-    glm::ivec2 openGLVersion(3, 3);
+    glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera camera;
     glm::ivec2 currentMousePos;
     glm::ivec2 oldMousePos;
@@ -132,6 +132,28 @@ void initGL()
 {
     glewExperimental = GL_TRUE;
     glewInit();
+
+    // OpenGL version number
+    int* major = new int(); 
+    int* minor = new int();
+    int* rev = new int();
+    glfwGetGLVersion(major, minor, rev);
+    if (!((*major == openGLVersion.x && *minor >= openGLVersion.y) || *major > openGLVersion.x))
+    {
+        std::cout << "Need openGL version " << openGLVersion.x << "." << openGLVersion.y << ". You have " << *major << "." << *minor << "." << std::endl;
+    }
+
+    // Debug output
+    if(showDebugOutput && Utils::OpenGL::checkExtension("GL_ARB_debug_output"))
+    {
+        //glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLARBPROC) glfwGetProcAddress("glDebugMessageControlARB");
+        //glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKARBPROC) glfwGetProcAddress("glDebugMessageCallbackARB");
+        //glDebugMessageInsertARB = (PFNGLDEBUGMESSAGEINSERTARBPROC) glfwGetProcAddress("glDebugMessageInsertARB");
+        //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
+        //glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+        //glDebugMessageCallbackARB(&Utils::OpenGL::debugOutput, NULL);
+    }
+    else printf("debug output extension not found");
     
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
@@ -252,7 +274,6 @@ int main(int argc, char* argv[])
         glfwTerminate();
         exit(EXIT_FAILURE);
     }
-    glfwGetWindowSize(&windowSize.x, &windowSize.y);
 
     begin();
     int frameCount = 0;
