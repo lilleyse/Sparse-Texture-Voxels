@@ -62,7 +62,8 @@ uniform float uTextureRes;
 const int NUM_CONES = 5;
 const int MAX_STEPS = 128;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
-const float ALPHA_THRESHOLD = 0.95;
+const float TRANSMIT_MIN = 0.05;
+const float TRANSMIT_K = 1.0;
 
 float gTexelSize;
 
@@ -90,20 +91,21 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
-// simple alpha blending
-vec4 conetraceSimple(vec3 ro, vec3 rd, float fov) {
+// transmittance accumulation
+vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
+  float pixSizeAtDist = tan(fov/180.0*PI);
   
-  vec4 color = vec4(0.0);
+  vec3 col = vec3(0.0);   // accumulated color
+  float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, ro);
+    float dist = distance(pos, uCamPos);
 
-    // size of texel cube we want to be looking into
-    // correctly interpolated texel size, automatic
-    float pixSize =  dist * tan(fov/180.0*PI);
+    // size of texel cube we want
+    float pixSize = dist * pixSizeAtDist;
     
-    // calc mip size
+    // calc mip size, clamp min to texelsize
     // if pixSize smaller than texel, clamp. that's the smallest we can go
     float mipLevel;
     if (pixSize > gTexelSize) {
@@ -119,31 +121,26 @@ vec4 conetraceSimple(vec3 ro, vec3 rd, float fov) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // sample texture
-    vec4 src = textureLod(tVoxColor, pos, mipLevel);
+    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-    // no need weight by "stepSize" since "pixSize" is size of an imaginary 
-    // texel cube exactly the size of a mip cube we want, if it existed, 
-    // but it doesn't so we interpolate between two mips to approximate it
-    // but need to weight by stepsize within texel
-    src.a *= STEPSIZE_WRT_TEXEL;
+    // delta transmittance
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    tm *= dtm;
 
-    // alpha blending
-    vec4 dst = color;
-    color.a = src.a + dst.a*(1.0-src.a);
-    color.rgb = EQUALSZERO(color.a) ? vec3(0.0) : 
-        (src.rgb*src.a + dst.rgb*dst.a*(1.0-src.a)) / color.a;
+    col += (1.0-dtm)*texel.rgb*tm;
 
     pos += stepSize*rd;
     
-    if (color.a > ALPHA_THRESHOLD ||
+    if (tm < TRANSMIT_MIN ||
       pos.x > 1.0 || pos.x < 0.0 ||
       pos.y > 1.0 || pos.y < 0.0 ||
       pos.z > 1.0 || pos.z < 0.0)
       break;
   }
   
-  return color;
+  float alpha = 1.0-tm;
+  return vec4( alpha==0 ? col : col/alpha , alpha);;
 }
 
 void main()
@@ -163,7 +160,7 @@ void main()
 
     float t;
     if ( col.a!=0.0 && textureVolumeIntersect(pos+V*EPS, V, t) )
-        specCol = conetraceSimple(pos+V*(t+EPS), V, fov);
+        specCol = conetraceAccum(pos+V*(t+EPS), V, fov);
     else
         specCol = vec4(0.0);
 
