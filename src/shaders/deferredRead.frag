@@ -37,6 +37,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 #define EPS       0.0001
 #define PI        3.14159265
 #define HALFPI    1.57079633
+#define ROOTTWO   1.41421356
 #define ROOTTHREE 1.73205081
 
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
@@ -93,15 +94,14 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
 
 // transmittance accumulation
 vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
-  vec3 pos = ro;
+  vec3 pos = ro;  
+  float dist = 0.0;
   float pixSizeAtDist = tan(fov/180.0*PI);
   
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, ro);
-
     // size of texel cube we want
     float pixSize = dist * pixSizeAtDist;
     
@@ -130,6 +130,8 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 
     col += (1.0-dtm)*texel.rgb*tm;
 
+    // increment
+    dist += stepSize;
     pos += stepSize*rd;
     
     if (tm < TRANSMIT_MIN ||
@@ -143,8 +145,61 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   return vec4( alpha==0 ? col : col/alpha , alpha);;
 }
 
+
+// for AO, dist weighted transmittance accumulation
+float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
+  vec3 pos = ro;  
+  float dist = 0.0;
+  float pixSizeAtDist = tan(fov/180.0*PI);
+
+  float tm = 1.0;         // accumulated transmittance
+  
+  for (int i=0; i<MAX_STEPS; ++i) {
+    // size of texel cube
+    float pixSize =  dist * pixSizeAtDist;
+    
+    // calc mip size
+    float mipLevel;
+    if (pixSize > gTexelSize) {
+        mipLevel = log2(pixSize/gTexelSize);
+    }
+    else {
+        mipLevel = 0.0;
+        pixSize = gTexelSize;
+    }
+
+    // take step relative to the interpolated size
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+
+    // sample texture
+    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+
+    // update transmittance
+    tm *= exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    
+    // increment
+    dist += stepSize;
+    pos += stepSize*rd;
+    
+    if (tm < TRANSMIT_MIN ||
+      pos.x > 1.0 || pos.x < 0.0 ||
+      pos.y > 1.0 || pos.y < 0.0 ||
+      pos.z > 1.0 || pos.z < 0.0)
+      break;
+  }
+
+  // weight by distance f(r) = 1/(1+K*r)
+  float weight = (1.0+1.0*dist);
+  
+  return tm * weight;
+}
+
 void main()
 {
+    //-----------------------------------------------------
+    // SETUP VARS
+    //-----------------------------------------------------
+
     // size of one texel in normalized texture coords
     gTexelSize = 1.0/uTextureRes;
 
@@ -152,23 +207,31 @@ void main()
     vec3 nor = texture(tNormal, vUV).rgb;
     vec4 col = texture(tColor, vUV);
 
-    vec3 V = normalize(pos-uCamPos);
-    V = reflect(V, nor);
-    const float fov = 10.0;
+
+    //-----------------------------------------------------
+    // GATHER CONE TRACE
+    //-----------------------------------------------------
     
-    vec4 specCol;
+    const float fov = 45.0;
+    vec4 coneCol;
+    {
+        vec3 V = nor;
+        float t;
+        if ( col.a!=0.0 /*&& textureVolumeIntersect(pos+V*EPS, V, t)*/ )
+            coneCol = vec4(conetraceVisibility(pos+V*(t+EPS), V, fov));
+        else
+            coneCol = vec4(0.0);
+    }
 
-    float t;
-    if ( col.a!=0.0 && textureVolumeIntersect(pos+V*EPS, V, t) )
-        specCol = conetraceAccum(pos+V*(t+EPS), V, fov);
-    else
-        specCol = vec4(0.0);
+    vec4 cout = coneCol;//vec4(mix(col.rgb, coneCol.rgb, 0.99), col.a);
 
-    vec4 cout = vec4(mix(col.rgb, specCol.rgb, 0.6), col.a);
+
+    //-----------------------------------------------------
+    // RENDER OUT
+    //-----------------------------------------------------
 
     // background color
     vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
-    //bg = vec4(0.0, 0.0, 0.0, 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
