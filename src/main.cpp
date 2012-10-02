@@ -153,8 +153,10 @@ bool begin()
         voxelConetracer.begin();
         voxelConetracer.setTextureResolution(voxelGridLength);
     }
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE) {
         deferredPipeline.begin(voxelTexture, Window.Size.x, Window.Size.y);
+        deferredPipeline.setTextureResolution(voxelGridLength);
+    }
 
     
     // initial mip-map setting
@@ -224,6 +226,7 @@ void display()
     }
     else if (currentDemoType == DEFERRED_PIPELINE)
     {
+        voxelTextureGenerator.getVoxelTexture()->display(true);
         deferredPipeline.display(fullScreenQuad, debugDraw);
     }
 
