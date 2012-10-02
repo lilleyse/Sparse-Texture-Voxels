@@ -81,8 +81,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
 
         voxelDebugProgram = glCreateProgram();
         glAttachShader(voxelDebugProgram, vertexShaderObject);
@@ -91,7 +91,7 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(voxelDebugProgram);
-        glf::checkProgram(voxelDebugProgram);
+        Utils::OpenGL::checkProgram(voxelDebugProgram);
 
         voxelTextureUpdate();
     }

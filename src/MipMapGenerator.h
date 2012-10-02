@@ -1,10 +1,7 @@
 #pragma once
-#include <glf.hpp>
-#include <CL/opencl.h>
-#include <sstream>
 
-#include "ShaderConstants.h"
 #include "Utils.h"
+#include "ShaderConstants.h"
 #include "VoxelTexture.h"
 
 class MipMapGenerator

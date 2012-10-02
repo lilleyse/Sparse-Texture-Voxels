@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glf.hpp>
 #include "Utils.h"
 
 const uint POSITION_ATTR = 0;
@@ -20,8 +19,6 @@ const uint MAX_FBO_BINDING_POINTS = 4;
 const uint DEFERRED_POSITIONS_FBO_BINDING = 0;
 const uint DEFERRED_COLORS_FBO_BINDING = 1;
 const uint DEFERRED_NORMALS_FBO_BINDING = 2;
-
-
 
 struct PerFrameUBO
 {

@@ -1,9 +1,7 @@
 #pragma once
 
-#include <glf.hpp>
-
-#include "../ShaderConstants.h"
 #include "../Utils.h"
+#include "../ShaderConstants.h"
 #include "../FullScreenQuad.h"
 
 class VoxelRaycaster
@@ -24,8 +22,8 @@ public:
         this->fullScreenQuad = fullScreenQuad;
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "raycast.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "raycast.frag");
 
         fullScreenProgram = glCreateProgram();
         glAttachShader(fullScreenProgram, vertexShaderObject);
@@ -34,7 +32,7 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(fullScreenProgram);
-        glf::checkProgram(fullScreenProgram);
+        Utils::OpenGL::checkProgram(fullScreenProgram);
     }
 
     void display()

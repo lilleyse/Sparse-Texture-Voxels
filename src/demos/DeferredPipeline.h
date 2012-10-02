@@ -1,5 +1,5 @@
 #pragma once
-#include <glf.hpp>
+
 #include "../Utils.h"
 #include "../ShaderConstants.h"
 #include "../FullScreenQuad.h"
@@ -85,8 +85,8 @@ public:
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
 
         // Create program that writes the deferred data
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredWrite.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredWrite.frag");
 
         deferredWriteProgram = glCreateProgram();
         glAttachShader(deferredWriteProgram, vertexShaderObject);
@@ -95,11 +95,11 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(deferredWriteProgram);
-        glf::checkProgram(deferredWriteProgram);
+        Utils::OpenGL::checkProgram(deferredWriteProgram);
 
         // Create program that reads the deferred data
-        vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
+        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
 
         deferredReadProgram = glCreateProgram();
         glAttachShader(deferredReadProgram, vertexShaderObject);
@@ -108,7 +108,7 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(deferredReadProgram);
-        glf::checkProgram(deferredReadProgram);
+        Utils::OpenGL::checkProgram(deferredReadProgram);
 
         glUseProgram(deferredReadProgram);
         GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");

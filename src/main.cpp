@@ -1,32 +1,29 @@
-#include <glf.hpp>
 #include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "Utils.h"
+#include "VoxelTextureGenerator.h"
+
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
-#include "VoxelTextureGenerator.h"
 
 enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
 
 namespace
 {
-    std::string const SAMPLE_NAME("Sparse Texture Voxels");
-    const int SAMPLE_SIZE_WIDTH(600);
-    const int SAMPLE_SIZE_HEIGHT(400);
-    const int SAMPLE_MAJOR_VERSION(3);
-    const int SAMPLE_MINOR_VERSION(3);
-    
-    // Window and updating
-    glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
+    // Window
+    std::string applicationName("Sparse Texture Voxels");
+    glm::ivec2 windowSize(600, 400);
+    glm::ivec2 openGLVersion(3, 3);
     ThirdPersonCamera camera;
+    glm::ivec2 currentMousePos;
+    glm::ivec2 oldMousePos;
     bool showDebugOutput = false;
+    bool showFPS = true;
+    bool vsync = false;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
-    bool showFPS = true;
-    Utils::Framerate fpsHandler;
     
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
@@ -53,16 +50,88 @@ namespace
     GLuint perFrameUBO;
 }
 
+void setMipMapLevel(int level)
+{
+    int numMipMapLevels = voxelTexture->numMipMapLevels;
+    if (level < 0) level = 0;
+    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
+    if (level == currentMipMapLevel) return;
+    currentMipMapLevel = level;
+    
+    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
+        debugDraw->setMipMapLevel(currentMipMapLevel);
+    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
+        voxelRaycaster->setMipMapLevel(currentMipMapLevel);
+}
+
+void GLFWCALL mouseMove(int x, int y)
+{
+    oldMousePos = currentMousePos;
+    currentMousePos = glm::ivec2(x,y);
+
+    bool leftPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    bool rightPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+    if (leftPress || rightPress || middlePress)
+    {
+        glm::ivec2 mouseDelta = currentMousePos - oldMousePos;
+        float cameraDistanceFromCenter = glm::length(camera.position);
+        if (leftPress)
+        {
+            float rotateAmount = cameraDistanceFromCenter / 200.0f;
+            camera.rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
+        }
+        else if (rightPress)
+        {
+            float zoomAmount = cameraDistanceFromCenter / 200.0f;
+            camera.zoom(mouseDelta.y * zoomAmount);
+        }
+        else if (middlePress)
+        {
+            float panAmount = cameraDistanceFromCenter / 500.0f;
+            camera.pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
+        }
+    }
+}
+
+void GLFWCALL key(int k, int action)
+{
+    if (action == GLFW_RELEASE)
+    {
+        // Changing demo
+        std::cout << k << " " << (char)k << std::endl; 
+        if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES) 
+            currentDemoType = (DemoType)((uint)k - '1');
+
+        // Changing mip map level
+        if (k == ',') setMipMapLevel((int)currentMipMapLevel + 1);
+        if (k == '.') setMipMapLevel((int)currentMipMapLevel - 1);
+
+        // Changing textures
+        bool setsNextTexture = k == ';' && voxelTextureGenerator.setNextTexture();
+        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator.setPreviousTexture();
+        if (setsNextTexture || setsPreviousTexture)
+        {
+            if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
+                debugDraw->voxelTextureUpdate();
+        }
+    }
+}
+
+void GLFWCALL resize(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    camera.setAspectRatio(w, h);
+    windowSize = glm::ivec2(w, h);
+
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+        deferredPipeline->resize(w, h);
+}
+
 void initGL()
 {
-    // Debug output
-    if(showDebugOutput && glf::checkExtension("GL_ARB_debug_output"))
-    {
-        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-        glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-        glDebugMessageCallbackARB(&glf::debugOutput, NULL);
-    }
-    else printf("debug output extension not found");
+    glewExperimental = GL_TRUE;
+    glewInit();
     
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
@@ -81,52 +150,6 @@ void initGL()
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LEQUAL);
     glDepthRange(0.0f, 1.0f);
-}
-
-void setMipMapLevel(int level)
-{
-    int numMipMapLevels = voxelTexture->numMipMapLevels;
-    if (level < 0) level = 0;
-    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
-    if (level == currentMipMapLevel) return;
-    currentMipMapLevel = level;
-    
-    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
-        debugDraw->setMipMapLevel(currentMipMapLevel);
-    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster->setMipMapLevel(currentMipMapLevel);
-}
-
-void mouseEvent()
-{
-    float cameraDistanceFromCenter = glm::length(camera.position);
-    float rotateAmount = cameraDistanceFromCenter / 200.0f;
-    float zoomAmount = cameraDistanceFromCenter / 200.0f;
-    float panAmount = cameraDistanceFromCenter / 500.0f;
-
-    camera.rotate(-Window.LeftMouseDelta.x * rotateAmount, -Window.LeftMouseDelta.y * rotateAmount);
-    camera.zoom(Window.RightMouseDelta.y * zoomAmount);
-    camera.pan(-Window.MiddleMouseDelta.x * panAmount, Window.MiddleMouseDelta.y * panAmount);
-}
-
-void keyboardEvent(uchar keyCode)
-{
-    // Changing demo
-    if (loadAllDemos && keyCode >= 49 && keyCode < 49 + MAX_DEMO_TYPES) 
-        currentDemoType = (DemoType)((uint)keyCode - 49);
-
-    // Changing mip map level
-    if (keyCode == 46) setMipMapLevel((int)currentMipMapLevel + 1);
-    if (keyCode == 44) setMipMapLevel((int)currentMipMapLevel - 1);
-
-    // Changing textures
-    bool setsNextTexture = keyCode == 59 && voxelTextureGenerator.setNextTexture();
-    bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
-    if (setsNextTexture || setsPreviousTexture)
-    {
-        if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
-            debugDraw->voxelTextureUpdate();
-    }
 }
 
 bool begin()
@@ -156,26 +179,12 @@ bool begin()
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
     {
         deferredPipeline->begin(voxelTexture, fullScreenQuad, debugDraw);
-        deferredPipeline->resize(Window.Size.x, Window.Size.y);
+        deferredPipeline->resize(windowSize.x, windowSize.y);
     }
 
     setMipMapLevel(0);
 
     return true;
-}
-
-bool end()
-{
-    return true;
-}
-
-void resize(int w, int h)
-{
-    glViewport(0, 0, w, h);
-    camera.setAspectRatio(w, h);
-
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->resize(w, h);
 }
 
 void display()
@@ -193,8 +202,8 @@ void display()
     perFrame.uCamLookAt = camera.lookAt;
     perFrame.uCamPos = camera.position;
     perFrame.uCamUp = camera.upDir;
-    perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
-    perFrame.uAspect = (float)Window.Size.x/Window.Size.y;
+    perFrame.uResolution = glm::vec2(windowSize);
+    perFrame.uAspect = (float)windowSize.x/windowSize.y;
     perFrame.uTime = frameTime;
     perFrame.uFOV = camera.fieldOfView;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
@@ -212,16 +221,60 @@ void display()
         deferredPipeline->display();
 
     // Update
-    glf::swapBuffers();
     frameTime += FRAME_TIME_DELTA;
-    if(showFPS) fpsHandler.display();
 }
 
+void displayFPS(int* frameCount)
+{
+    *frameCount += 1;
+    double currentTime = glfwGetTime();
+    if(currentTime >= 1.0)
+    {	
+        std::ostringstream ss;
+		ss << applicationName << " (fps: " << (*frameCount/currentTime) << " )";
+        glfwSetWindowTitle(ss.str().c_str());
+        glfwSetTime(0.0);
+        *frameCount = 0;
+    }
+}
 int main(int argc, char* argv[])
 {
-    return glf::run(
-        argc, argv,
-        glm::ivec2(::SAMPLE_SIZE_WIDTH, ::SAMPLE_SIZE_HEIGHT),
-        WGL_CONTEXT_CORE_PROFILE_BIT_ARB, ::SAMPLE_MAJOR_VERSION,
-        ::SAMPLE_MINOR_VERSION);
+    if(!glfwInit())
+    {
+        fprintf(stderr, "Failed to initialize GLFW\n");
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+
+    if(!glfwOpenWindow(windowSize.x, windowSize.y, 0, 0, 0, 0, 16, 0, GLFW_WINDOW))
+    {
+        fprintf( stderr, "Failed to open GLFW window\n" );
+        glfwTerminate();
+        exit(EXIT_FAILURE);
+    }
+    glfwGetWindowSize(&windowSize.x, &windowSize.y);
+
+    begin();
+    int frameCount = 0;
+    bool running = true;
+    glfwSetWindowTitle(applicationName.c_str());
+    glfwSetWindowSizeCallback(resize);
+    glfwSetMousePosCallback(mouseMove);
+    glfwSetKeyCallback(key);
+    glfwEnable(GLFW_KEY_REPEAT);
+    glfwEnable(GLFW_STICKY_KEYS);
+    glfwSwapInterval(vsync ? 1 : 0);
+    glfwSetTime(0.0);
+    
+    do
+    {
+        display();
+        glfwSwapBuffers();
+        if (showFPS) displayFPS(&frameCount);
+        running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+    }
+    while(running);
+
+    glfwTerminate();
+    exit(EXIT_SUCCESS);
 }

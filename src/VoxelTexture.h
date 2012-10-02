@@ -1,7 +1,5 @@
 #pragma once
 
-#include <glf.hpp>
-
 #include "Utils.h"
 
 struct TextureData

@@ -1,12 +1,5 @@
 #pragma once
 
-#include <glf.hpp>
-#include <map>
-#include <utility>
-#include <iostream>
-#include <fstream>
-#include <limits>
-
 #include "Utils.h"
 #include "VoxelTexture.h"
 #include "MipMapGenerator.h"
