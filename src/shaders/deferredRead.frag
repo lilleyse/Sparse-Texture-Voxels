@@ -100,7 +100,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, uCamPos);
+    float dist = distance(pos, ro);
 
     // size of texel cube we want
     float pixSize = dist * pixSizeAtDist;
