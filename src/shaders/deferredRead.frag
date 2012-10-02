@@ -292,7 +292,7 @@ void main()
     // GATHER AO
     //-----------------------------------------------------
     
-    float ao;
+    float ao = 0.0;
     {
         const float NUM_AO_DIRS = 4.0;
         float fov = PI/NUM_AO_DIRS;
@@ -321,7 +321,6 @@ void main()
 
     // multiply AO into color
     col.rgb = vec3(ao);
-    //col = ao;
 
 
     //-----------------------------------------------------
