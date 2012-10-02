@@ -8,6 +8,7 @@
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
 #include "VoxelTextureGenerator.h"
+#include "core/CoreEngine.h"
 
 enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
 
@@ -38,6 +39,7 @@ namespace
     uint currentMipMapLevel;
 
     // Demo settings
+    CoreEngine coreEngine;
     DebugDraw debugDraw;
     VoxelRaycaster voxelRaycaster;
     VoxelConetracer voxelConetracer;
@@ -88,7 +90,7 @@ void setMipMapLevel(int level)
     if (level == currentMipMapLevel) return;
     currentMipMapLevel = level;
     
-    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
+    if (loadAllDemos || currentDemoType == DEBUGDRAW)
         debugDraw.setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.setMipMapLevel(currentMipMapLevel);
@@ -121,7 +123,7 @@ void keyboardEvent(uchar keyCode)
     bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
     if (setsNextTexture || setsPreviousTexture)
     {
-        if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
+        if (loadAllDemos || currentDemoType == DEBUGDRAW)
             debugDraw.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
     }
 }
@@ -145,7 +147,7 @@ bool begin()
     VoxelTexture* voxelTexture = voxelTextureGenerator.getVoxelTexture();
     
     // init demos
-    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE) 
+    if (loadAllDemos || currentDemoType == DEBUGDRAW) 
         debugDraw.begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster.begin();
@@ -154,7 +156,10 @@ bool begin()
         voxelConetracer.setTextureResolution(voxelGridLength);
     }
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline.begin(voxelTexture, Window.Size.x, Window.Size.y);
+    {
+        coreEngine.begin();
+        deferredPipeline.begin(Window.Size.x, Window.Size.y);
+    }
 
     
     // initial mip-map setting
@@ -224,7 +229,7 @@ void display()
     }
     else if (currentDemoType == DEFERRED_PIPELINE)
     {
-        deferredPipeline.display(fullScreenQuad, debugDraw);
+        deferredPipeline.display(fullScreenQuad, coreEngine);
     }
 
     // Update

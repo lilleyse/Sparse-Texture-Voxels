@@ -4,6 +4,7 @@
 #include "../ShaderConstants.h"
 #include "../VoxelTexture.h"
 #include "../FullScreenQuad.h"
+#include "../core/CoreEngine.h"
 
 class DeferredPipeline
 {
@@ -22,7 +23,7 @@ private:
     GLuint deferredReadProgram;
 
 public:
-    void begin(VoxelTexture* voxelTexture, int screenWidth, int screenHeight)
+    void begin(int screenWidth, int screenHeight)
     {
         // Creation positions texture
         glGenTextures(1, &positionsTexture);
@@ -53,7 +54,7 @@ public:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // If we go over 10 attachments, then change this number
-        fboAttachments = std::vector<uint>(MAX_FBO_BINDING_POINTS, GL_NONE);
+        fboAttachments = std::vector<uint>(FBO_BINDING_POINT_ARRAY_SIZE, GL_NONE);
         fboAttachments[DEFERRED_POSITIONS_FBO_BINDING] = GL_COLOR_ATTACHMENT0 + DEFERRED_POSITIONS_FBO_BINDING;
         fboAttachments[DEFERRED_COLORS_FBO_BINDING] = GL_COLOR_ATTACHMENT0 + DEFERRED_COLORS_FBO_BINDING;
         fboAttachments[DEFERRED_NORMALS_FBO_BINDING] = GL_COLOR_ATTACHMENT0 + DEFERRED_NORMALS_FBO_BINDING;
@@ -65,7 +66,7 @@ public:
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_POSITIONS_FBO_BINDING], GL_TEXTURE_2D, positionsTexture, 0);  
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_COLORS_FBO_BINDING], GL_TEXTURE_2D, colorsTexture, 0); 
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_NORMALS_FBO_BINDING], GL_TEXTURE_2D, normalsTexture, 0);
-        glDrawBuffers(MAX_FBO_BINDING_POINTS, &fboAttachments[0]);
+        glDrawBuffers(FBO_BINDING_POINT_ARRAY_SIZE, &fboAttachments[0]);
 
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -80,22 +81,9 @@ public:
         glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_TEXTURE_BINDING);
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
 
-        // Create program that writes the deferred data
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredWrite.frag");
-
-        deferredWriteProgram = glCreateProgram();
-        glAttachShader(deferredWriteProgram, vertexShaderObject);
-        glAttachShader(deferredWriteProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-
-        glLinkProgram(deferredWriteProgram);
-        glf::checkProgram(deferredWriteProgram);
-
         // Create program that reads the deferred data
-        vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
+        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
 
         deferredReadProgram = glCreateProgram();
         glAttachShader(deferredReadProgram, vertexShaderObject);
@@ -129,7 +117,7 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     }
 
-    void display(FullScreenQuad& fullScreenQuad, DebugDraw& debugDraw)
+    void display(FullScreenQuad& fullScreenQuad, CoreEngine& coreEngine)
     {
 
         // Bind custom FBO then draw into it
@@ -141,14 +129,14 @@ public:
        
         // Clear color attachment textures (positions, colors, normals)
         float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
-        for(uint i = 0; i < MAX_FBO_BINDING_POINTS; i++)
+        for(uint i = 0; i < FBO_BINDING_POINT_ARRAY_SIZE; i++)
         {
             if(fboAttachments[i] != GL_NONE)
                 glClearBufferfv(GL_COLOR, i, clearColor);
         }
         
         // Write to the FBO
-        debugDraw.display(deferredWriteProgram);
+        coreEngine.display();
 
         // Bind the default window framebuffer
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);        
