@@ -139,7 +139,8 @@ bool begin()
 
     // set up full screen quad and voxel textures
     fullScreenQuad->begin();
-    voxelTextureGenerator.begin(voxelTexture, voxelGridLength);
+    voxelTexture->begin(voxelGridLength);
+    voxelTextureGenerator.begin(voxelTexture);
     uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
     for (uint i = 0; i < numInitialTextures; i++)
         voxelTextureGenerator.createTexture(voxelTextures[i]);

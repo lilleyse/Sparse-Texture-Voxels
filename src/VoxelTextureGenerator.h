@@ -27,11 +27,10 @@ public:
     static std::string SPHERE;
     static std::string CORNELL_BOX;
 
-    void begin(VoxelTexture* voxelTexture, uint voxelGridLength) 
+    void begin(VoxelTexture* voxelTexture) 
     {
         currentTexture = UINT_MAX;
         this->voxelTexture = voxelTexture;
-        this->voxelTexture->begin(voxelGridLength);
     }
     void createTexture(std::string name)
     {
