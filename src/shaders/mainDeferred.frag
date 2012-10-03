@@ -44,40 +44,53 @@
 #define MAX_POINT_LIGHTS                8
 
 
-layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
+layout (location = DEFERRED_POSITIONS_FBO_BINDING) out vec4 positionOut;
+layout (location = DEFERRED_COLORS_FBO_BINDING) out vec4 colorOut;
+layout (location = DEFERRED_NORMALS_FBO_BINDING) out vec4 normalOut;
+
+layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+
+
+in block
 {
-    mat4 viewProjection;
-    vec3 uCamLookAt;
-    vec3 uCamPos;
-    vec3 uCamUp;
-    vec2 uResolution;
-    float uAspect;
-    float uTime;
-    float uFOV;
+    vec3 position;
+    vec3 normal;
+    vec2 uv;
+    flat ivec2 propertyIndex;
+} vertexData;
+
+struct MeshMaterial
+{
+    vec4 diffuseColor;
+    vec4 specularColor;
+    ivec2 textureLayer;
+};
+
+layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
+{
+    MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
 };
 
 
-//---------------------------------------------------------
-// SHADER VARS
-//---------------------------------------------------------
-
-layout(location = POSITION_ATTR) in vec2 position;
-
-out gl_PerVertex
+MeshMaterial getMeshMaterial()
 {
-    vec4 gl_Position;
-};
+    int index = vertexData.propertyIndex[MATERIAL_INDEX];
+    return meshMaterialArray[index];
+}
 
-out vec2 vUV;
+vec4 getDiffuseColor(MeshMaterial material)
+{
+    int textureId = material.textureLayer.x;
+    int textureLayer = material.textureLayer.y;
+    vec4 diffuseColor = material.diffuseColor;//textureId == -1 ? material.diffuseColor : texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    return diffuseColor;
+}
 
-
-//---------------------------------------------------------
-// PROGRAM
-//---------------------------------------------------------
+layout (location = 0, index = 0) out vec4 fragColor;
 
 void main()
-{
-    vUV = (position+1.0)/2.0;
-
-    gl_Position = vec4(position, 0.0, 1.0);
+{    
+    positionOut = vec4(vertexData.position, 1.0);
+    colorOut = getDiffuseColor(getMeshMaterial());
+    normalOut = vec4(normalize(vertexData.normal), 1.0);
 }
