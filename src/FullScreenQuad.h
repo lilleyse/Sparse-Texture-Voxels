@@ -53,6 +53,4 @@ public:
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
-
-
 };

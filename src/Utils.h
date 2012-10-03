@@ -34,25 +34,25 @@ typedef unsigned int uint;
 
 namespace Utils
 {
+    std::string loadFile(std::string const & Filename)
+    {
+        std::ifstream stream(Filename.c_str(), std::ios::in);
+
+        if(!stream.is_open())
+            return "";
+
+        std::string Line = "";
+        std::string Text = "";
+
+        while(getline(stream, Line))
+            Text += "\n" + Line;
+
+        stream.close();
+
+        return Text;
+    }
     namespace OpenGL
     {
-        std::string loadFile(std::string const & Filename)
-        {
-            std::ifstream stream(Filename.c_str(), std::ios::in);
-
-            if(!stream.is_open())
-                return "";
-
-            std::string Line = "";
-            std::string Text = "";
-
-            while(getline(stream, Line))
-                Text += "\n" + Line;
-
-            stream.close();
-
-            return Text;
-        }
         bool checkProgram(GLuint ProgramName)
         {
             if(!ProgramName)
@@ -102,7 +102,7 @@ namespace Utils
 
             if(!Source.empty())
             {
-                std::string SourceContent = Utils::OpenGL::loadFile(Source);
+                std::string SourceContent = Utils::loadFile(Source);
                 char const * SourcePointer = SourceContent.c_str();
                 Name = glCreateShader(Type);
                 glShaderSource(Name, 1, &SourcePointer, NULL);

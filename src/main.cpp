@@ -8,8 +8,6 @@
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
 
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
-
 namespace
 {
     // Window
@@ -27,18 +25,20 @@ namespace
     const float FRAME_TIME_DELTA = 0.01f;
     
     // Texture settings
-    VoxelTextureGenerator voxelTextureGenerator;
-    VoxelTexture* voxelTexture = new VoxelTexture();
-    uint currentMipMapLevel = UINT_MAX;
-    uint voxelGridLength = 32;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         "data/Bucky.raw",
     };
+    std::string initialVoxelTexture = voxelTextures[0];
+    uint voxelGridLength = 32;
+    uint currentMipMapLevel = 0;
+    VoxelTextureGenerator voxelTextureGenerator;
+    VoxelTexture* voxelTexture = new VoxelTexture();
     
     // Demo settings
+    enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
     DebugDraw* debugDraw = new DebugDraw();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
@@ -56,7 +56,6 @@ void setMipMapLevel(int level)
     int numMipMapLevels = voxelTexture->numMipMapLevels;
     if (level < 0) level = 0;
     if (level >= numMipMapLevels) level = numMipMapLevels - 1;
-    if (level == currentMipMapLevel) return;
     currentMipMapLevel = level;
     
     if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
@@ -166,7 +165,7 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
-bool begin()
+void begin()
 {
     initGL();
 
@@ -181,7 +180,7 @@ bool begin()
     uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
     for (uint i = 0; i < numInitialTextures; i++)
         voxelTextureGenerator.createTexture(voxelTextures[i]);
-    voxelTextureGenerator.setTexture(voxelTextures[0]);
+    voxelTextureGenerator.setTexture(initialVoxelTexture);
     
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE) 
@@ -193,9 +192,7 @@ bool begin()
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->begin(voxelTexture, fullScreenQuad, debugDraw);
 
-    setMipMapLevel(0);
-
-    return true;
+    setMipMapLevel(currentMipMapLevel);
 }
 
 void display()
@@ -230,9 +227,6 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->display();
-
-    // Update
-    frameTime += FRAME_TIME_DELTA;
 }
 
 void displayFPS()
@@ -273,6 +267,7 @@ int main(int argc, char* argv[])
     {
         display();
         glfwSwapBuffers();
+        frameTime += FRAME_TIME_DELTA;
         if (showFPS) displayFPS();
         running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
     }
