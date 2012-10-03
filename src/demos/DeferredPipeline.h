@@ -19,7 +19,6 @@ private:
     GLuint colorsTexture;
     GLuint normalsTexture;
 
-    GLuint deferredWriteProgram;
     GLuint deferredReadProgram;
 
 public:
@@ -98,7 +97,6 @@ public:
 
     void resize(int w, int h)
     {
-
         // Make sure to resize the textures used in the deferred pipeline
         glActiveTexture(GL_TEXTURE0 + NON_USED_TEXTURE);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
@@ -119,7 +117,6 @@ public:
 
     void display(FullScreenQuad& fullScreenQuad, CoreEngine& coreEngine)
     {
-
         // Bind custom FBO then draw into it
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, deferredFBO);
         
@@ -144,5 +141,12 @@ public:
         // Show the results written to the FBO
         glUseProgram(deferredReadProgram);
         fullScreenQuad.display();
+    }
+
+    void setTextureResolution(uint res)
+    {
+        glUseProgram(deferredReadProgram);
+        GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");
+        glUniform1f(textureResUniform, (float)res);
     }
 };

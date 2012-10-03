@@ -74,16 +74,18 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER VARS
 //---------------------------------------------------------
 
-layout (location = 0, index = 0) out vec4 fragColor;
+layout(location = 0, index = 0) out vec4 fragColor;
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
 in vec2 vUV;
 uniform float uTextureRes;
 
-const int MAX_STEPS = 128;
+const int MAX_STEPS = 256;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
+const float TRANSMIT_MIN = 0.05;
+const float TRANSMIT_K = 1.0;
 
 float gTexelSize;
 float gPixSizeAtDist;
@@ -168,14 +170,71 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   return color;
 }
 
+// transmittance accumulation
+vec4 conetraceAccum(vec3 ro, vec3 rd) {
+  vec3 pos = ro;
+  
+  vec3 col = vec3(0.0);   // accumulated color
+  float tm = 1.0;         // accumulated transmittance
+  
+  for (int i=0; i<MAX_STEPS; ++i) {
+    float dist = distance(pos, uCamPos);
+
+    // size of texel cube we want to be looking into
+    // correctly interpolated texel size, automatic
+    float pixSize = gPixSizeAtDist * dist;
+    
+    // calc mip size
+    // if pixSize smaller than texel, clamp. that's the smallest we can go
+    float mipLevel;
+    if (pixSize > gTexelSize) {
+        // solve: pixSize = texelSize*2^mipLevel
+        mipLevel = log2(pixSize/gTexelSize);
+    }
+    else {
+        mipLevel = 0.0;
+        pixSize = gTexelSize;
+    }
+
+    // take step relative to the interpolated size
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+
+    // sample texture
+    vec4 texel = textureLod(colorTexture, pos, mipLevel);
+    
+    // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
+    // no need weight by "stepSize" since "pixSize" is size of an imaginary 
+    // texel cube exactly the size of a mip cube we want, if it existed, 
+    // but it doesn't so we interpolate between two mips to approximate it
+    // but need to weight by stepsize within texel
+
+    // delta transmittance
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    tm *= dtm;
+
+    col += (1.0-dtm)*texel.rgb*tm;
+
+    pos += stepSize*rd;
+    
+    if (tm < TRANSMIT_MIN ||
+      pos.x > 1.0 || pos.x < 0.0 ||
+      pos.y > 1.0 || pos.y < 0.0 ||
+      pos.z > 1.0 || pos.z < 0.0)
+      break;
+  }
+  
+  float alpha = 1.0-tm;
+  return vec4( alpha==0 ? col : col/alpha , alpha);;
+}
+
 void main()
 {
+	// flip uv.y
+	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
+
     //-----------------------------------------------------
     // CAMERA RAY
     //-----------------------------------------------------
-    
-	// flip y
-	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
 
     // camera ray
     vec3 C = normalize(uCamLookAt-uCamPos);
@@ -187,7 +246,7 @@ void main()
     vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
 
     // scale by FOV
-    float tanFOV = tan(uFOV/180.0*PI);
+    float tanFOV = tan(radians(uFOV));
 
     vec3 rd = normalize(
         C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
@@ -214,13 +273,13 @@ void main()
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(uCamPos, rd, t))
-        cout = conetraceSimple(uCamPos+rd*(t+EPS), rd);
+    if (textureVolumeIntersect(uCamPos+rd*EPS, rd, t))
+        cout = conetraceAccum(uCamPos+rd*(t+EPS), rd);
     else
         cout = vec4(0.0);
 
     // background color
-    vec4 bg = vec4(vec3(uv.y/2.0), 1.0);
+    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);

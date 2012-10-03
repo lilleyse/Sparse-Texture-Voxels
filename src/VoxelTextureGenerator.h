@@ -63,10 +63,10 @@ public:
             if (name == CUBE_PRESET)
             {
                 uint textureIndex = 0;
-                uint half = voxelGridLength / 2;
-                for(uint i = 0; i < voxelGridLength; i++)
+                uint half = voxelGridLength / 2;                
+                for(uint k = 0; k < voxelGridLength; k++)
                 for(uint j = 0; j < voxelGridLength; j++)
-                for(uint k = 0; k < voxelGridLength; k++) 
+                for(uint i = 0; i < voxelGridLength; i++) 
                 {
                     if (i<half && j<half && k<half)
                         textureData.colorData[textureIndex] = glm::u8vec4(255,0,0,127);
@@ -88,9 +88,9 @@ public:
                 uint textureIndex = 0;
                 glm::vec3 center = glm::vec3(voxelGridLength/2);
                 float radius = voxelGridLength/2.0f;
+                for(uint k = 0; k < voxelGridLength; k++)
+                for(uint j = 0; j < voxelGridLength; j++)                
                 for(uint i = 0; i < voxelGridLength; i++)
-                for(uint j = 0; j < voxelGridLength; j++)
-                for(uint k = 0; k < voxelGridLength; k++) 
                 {
                     float distanceFromCenter = glm::distance(center, glm::vec3(i,j,k));
 				    if(distanceFromCenter < radius)
@@ -115,15 +115,15 @@ public:
                 float sphereRadius = voxelGridLength/4.0f;
 
                 uint textureIndex = 0;
-                for(uint i = 0; i < voxelGridLength; i++)
+                for(uint k = 0; k < voxelGridLength; k++)                
                 for(uint j = 0; j < voxelGridLength; j++)
-                for(uint k = 0; k < voxelGridLength; k++) 
+                for(uint i = 0; i < voxelGridLength; i++)
                 {
                     float sphereDist = glm::distance(sphereCenter, glm::vec3(i,j,k));
 
                     if (j==0 || 
                         j==voxelGridLength-1 ||
-                        k==0) {
+                        k==0 ) {
                         textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,255.0f,255.0f);
                     }
 				    else if (i==0) {
@@ -133,12 +133,11 @@ public:
                         textureData.colorData[textureIndex] = glm::u8vec4(0,255.0f,0,255.0f);
                     }
                     else if (sphereDist<sphereRadius) {
-                        textureData.colorData[textureIndex] = glm::u8vec4(0.0f,0.0f,255.0f,255.0f);
+                        textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,0.0f,255.0f);
                     }
                     else {
                         textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
                     }
-
 
                     // not doing anything
                     textureData.normalData[textureIndex] = glm::vec3(0,0,0);

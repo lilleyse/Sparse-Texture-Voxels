@@ -276,7 +276,7 @@ void main()
     gLightPos[0].x = 2.0*sin(uTime);
     gLightPos[0].z = 2.0*cos(uTime);
 
-	// flip y
+	// flip uv.y
 	vec2 uv = vec2(vUV.x, 1.0-vUV.y);
 
     // camera ray
@@ -289,7 +289,7 @@ void main()
     vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
 
     // scale by FOV
-    float tanFOV = tan(uFOV/180.0*PI);
+    float tanFOV = tan(radians(uFOV));
 
     vec3 ro = uCamPos+C
         + (2.0*uv.x-1.0)*tanFOV*A 
@@ -312,7 +312,7 @@ void main()
     }
 
     // background color
-    vec4 bg = vec4(vec3(uv.y/2.0), 1.0);
+    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
