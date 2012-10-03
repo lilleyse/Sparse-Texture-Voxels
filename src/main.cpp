@@ -8,7 +8,7 @@
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
 #include "VoxelTextureGenerator.h"
-#include "core/CoreEngine.h"
+#include "engine/CoreEngine.h"
 
 enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
 

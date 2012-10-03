@@ -4,7 +4,7 @@
 #include "../ShaderConstants.h"
 #include "../VoxelTexture.h"
 #include "../FullScreenQuad.h"
-#include "../core/CoreEngine.h"
+#include "../engine/CoreEngine.h"
 
 class DeferredPipeline
 {
