@@ -16,7 +16,7 @@ namespace
     glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera camera;
     glm::ivec2 currentMousePos;
-    bool showDebugOutput = false;
+    bool showDebugOutput = true;
     bool showFPS = true;
     bool vsync = false;
     int frameCount = 0;
@@ -43,7 +43,7 @@ namespace
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     DemoType currentDemoType = DEBUGDRAW;
-    bool loadAllDemos = false;
+    bool loadAllDemos = true;
 
     // OpenGL stuff
     CoreEngine* coreEngine = new CoreEngine();
@@ -147,7 +147,7 @@ void initGL()
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(perFrameUBO), NULL, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(PerFrameUBO), NULL, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, PER_FRAME_UBO_BINDING, perFrameUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
