@@ -78,51 +78,51 @@ float gTexelSize;
 // rotate vector a given angle(rads) over a given axis
 // source: http://www.groupsrv.com/computers/about180175.html
 vec3 rotate(vec3 vector, float angle, vec3 axis) {
-    float csat = cos(angle);
-    float ssat = sin(angle);
-    float usat = 1.0 - csat;
-
-    mat3 rotmat;
-
-    rotmat[0][0] = axis.x*axis.x*usat + csat;	        // Mat[0] = (x * x * u) + c; 
-    rotmat[1][0] = axis.y*axis.x*usat - (axis.z*ssat);  // Mat[4] = (y * x * u) - (z * s); 
-    rotmat[2][0] = axis.z*axis.x*usat + (axis.y*ssat);  // Mat[8] = (z * x * u) + (y * s); 
-                                                           
-    rotmat[0][1] = axis.x*axis.y*usat + (axis.z*ssat);  // Mat[1] = (x * y * u) + (z * s); 
-    rotmat[1][1] = axis.y*axis.y*usat + csat;	        // Mat[5] = (y * y * u) + c; 
-    rotmat[2][1] = axis.z*axis.y*usat - (axis.x*ssat);  // Mat[9] = (z * y * u) - (x * s); 
-                                                           
-    rotmat[0][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[2] = (x * z * u) - (y * s); 
-    rotmat[1][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[6] = (y * z * u) + (x * s); 
-    rotmat[2][2] = axis.z*axis.z*usat + csat;	        // Mat[10] = (z * z * u) + c; 
-
-    return rotmat*vector;
+    //float csat = cos(angle);
+    //float ssat = sin(angle);
+    //float usat = 1.0 - csat;
+//
+    //mat3 rotmat;
+//
+    //rotmat[0][0] = axis.x*axis.x*usat + csat;	        // Mat[0] = (x * x * u) + c; 
+    //rotmat[1][0] = axis.y*axis.x*usat - (axis.z*ssat);  // Mat[4] = (y * x * u) - (z * s); 
+    //rotmat[2][0] = axis.z*axis.x*usat + (axis.y*ssat);  // Mat[8] = (z * x * u) + (y * s); 
+                                                           //
+    //rotmat[0][1] = axis.x*axis.y*usat + (axis.z*ssat);  // Mat[1] = (x * y * u) + (z * s); 
+    //rotmat[1][1] = axis.y*axis.y*usat + csat;	        // Mat[5] = (y * y * u) + c; 
+    //rotmat[2][1] = axis.z*axis.y*usat - (axis.x*ssat);  // Mat[9] = (z * y * u) - (x * s); 
+                                                           //
+    //rotmat[0][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[2] = (x * z * u) - (y * s); 
+    //rotmat[1][2] = axis.x*axis.z*usat - (axis.y*ssat);  // Mat[6] = (y * z * u) + (x * s); 
+    //rotmat[2][2] = axis.z*axis.z*usat + csat;	        // Mat[10] = (z * z * u) + c; 
+//
+    //return rotmat*vector;
 
     // source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToMatrix/index.htm
 
-    //float c = cos(angle);
-    //float s = sin(angle);
-    //float t = 1.0 - c;
+    float c = cos(angle);
+    float s = sin(angle);
+    float t = 1.0 - c;
 
-    //mat3 rot;
-    //rot[0][0] = c + axis.x*axis.x*t;
-    //rot[1][1] = c + axis.y*axis.y*t;
-    //rot[2][2] = c + axis.z*axis.z*t;
+    mat3 rot;
+    rot[0][0] = c + axis.x*axis.x*t;
+    rot[1][1] = c + axis.y*axis.y*t;
+    rot[2][2] = c + axis.z*axis.z*t;
 
-    //float tmp1 = axis.x*axis.y*t;
-    //float tmp2 = axis.z*s;
-    //rot[1][0] = tmp1 + tmp2;
-    //rot[0][1] = tmp1 - tmp2;
-    //tmp1 = axis.x*axis.z*t;
-    //tmp2 = axis.y*s;
-    //rot[2][0] = tmp1 - tmp2;
-    //rot[0][2] = tmp1 + tmp2;
-    //tmp1 = axis.y*axis.z*t;
-    //tmp2 = axis.x*s;
-    //rot[2][1] = tmp1 + tmp2;
-    //rot[1][2] = tmp1 - tmp2;
+    float tmp1 = axis.x*axis.y*t;
+    float tmp2 = axis.z*s;
+    rot[1][0] = tmp1 + tmp2;
+    rot[0][1] = tmp1 - tmp2;
+    tmp1 = axis.x*axis.z*t;
+    tmp2 = axis.y*s;
+    rot[2][0] = tmp1 - tmp2;
+    rot[0][2] = tmp1 + tmp2;
+    tmp1 = axis.y*axis.z*t;
+    tmp2 = axis.x*s;
+    rot[2][1] = tmp1 + tmp2;
+    rot[1][2] = tmp1 - tmp2;
 
-    //return rot*vector;
+    return rot*vector;
 }
 
 // find a perpendicular vector, non-particular
@@ -135,15 +135,15 @@ vec3 findPerpendicular(vec3 v) {
     // arbitrary fix x to 1.0, but if v.x == 1.0, then fix z
     // so: v.x + Z*v.z = 0
     
-    vec3 result = vec3(1.0, 0.0, -v.x/(v.z+EPS8));
+    //vec3 result = vec3(1.0, 0.0, -v.x/(v.z+EPS8));
 
-    //vec3 result;
-    //if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0)) 
-    //    result = vec3(0.0, 0.0, v.x);
-    //else if (EQUALS(abs(v.z),1.0))
-    //    result = vec3(1.0, 0.0, 0.0);
-    //else
-    //    result = vec3(1.0, 0.0, -v.x/(v.z+EPS8));
+    vec3 result;
+    if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0)) 
+        result = vec3(0.0, 0.0, 1.0);
+    else if (EQUALS(abs(v.z),1.0))
+        result = vec3(1.0, 0.0, 0.0);
+    else
+        result = vec3(1.0, 0.0, -v.x/(v.z+EPS8));
         
     return normalize(result);
 }
@@ -298,19 +298,19 @@ void main()
         float fov = PI/NUM_AO_DIRS;
         float anglerotate = 2.0*PI/NUM_AO_DIRS;
         vec3 axis = findPerpendicular(nor); // find a perpendicular vector
-        for (float i=0.0; i<NUM_AO_DIRS; i++) {
+        for (int i=0; i<4; i++) {
             // rotate that vector around normal (to distribute cone around)
-            axis = rotate(axis, anglerotate*(i), nor);
+            vec3 rotatedAxis = rotate(axis, anglerotate*(float(i)), nor);
             
             // ray dir is normal rotated an fov over that vector
-            vec3 rd = rotate(nor, fov, axis);
+            vec3 rd = rotate(nor, fov, rotatedAxis);
 
-            if ( col.a!=0.0 )
+            if ( !EQUALSZERO(col.a) )
                 ao += conetraceVisibility(pos+rd*EPS, rd, fov);
             else
                 ao += 0.0;
         }
-        ao /= float(NUM_AO_DIRS);
+        ao /= NUM_AO_DIRS;
     }
 
     // single cone

@@ -42,8 +42,8 @@ namespace
     VoxelRaycaster voxelRaycaster;
     VoxelConetracer voxelConetracer;
     DeferredPipeline deferredPipeline;
-    DemoType currentDemoType = DEBUGDRAW;
-    bool loadAllDemos = true;
+    DemoType currentDemoType = DEFERRED_PIPELINE;
+    bool loadAllDemos = false;
 
     // OpenGL stuff
     GLuint perFrameUBO;
