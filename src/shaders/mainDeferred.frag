@@ -82,7 +82,7 @@ vec4 getDiffuseColor(MeshMaterial material)
 {
     int textureId = material.textureLayer.x;
     int textureLayer = material.textureLayer.y;
-    vec4 diffuseColor = textureId == -1 ? material.diffuseColor : texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    vec4 diffuseColor = material.diffuseColor;//textureId == -1 ? material.diffuseColor : texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
     return diffuseColor;
 }
 

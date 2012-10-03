@@ -32,7 +32,7 @@ private:
     {
         // Find the render group first
         RenderGroup* myRenderGroup = 0;
-        for(unsigned int i = 0; i < renderGroups.size(); i++)
+        for(uint i = 0; i < renderGroups.size(); i++)
         {
             RenderGroup* renderGroup = renderGroups[i];
 
@@ -46,7 +46,7 @@ private:
         if(myRenderGroup == 0)
         {
             // If no render group could add the object, create a new render group and add the object to it
-            unsigned int ID = renderGroups.size();
+            uint ID = renderGroups.size();
             myRenderGroup = new RenderGroup(object, mesh, ID);
             renderGroups.push_back(myRenderGroup);
         }
@@ -148,17 +148,17 @@ public:
 
     void commitToGL()
     {
-        unsigned int meshCount = 0;
-        unsigned int globalBaseInstance = 0;
+        uint meshCount = 0;
+        uint globalBaseInstance = 0;
 
         // For each render group ...
-        for(unsigned int i = 0; i < renderGroups.size(); i++)
+        for(uint i = 0; i < renderGroups.size(); i++)
         {
             RenderGroup* renderGroup = renderGroups[i];
             meshCount += renderGroup->meshCount;
 
             // Set the base instances
-            for(unsigned int j = 0; j < renderGroup->drawCommands.size(); j++)
+            for(uint j = 0; j < renderGroup->drawCommands.size(); j++)
             {
                 DrawCommand& drawCommand = renderGroup->drawCommands[j];
                 drawCommand.baseInstance = globalBaseInstance;
@@ -174,7 +174,7 @@ public:
 
 
         // For every object ...
-        for(unsigned int i = 0; i < objects.size(); i++)
+        for(uint i = 0; i < objects.size(); i++)
         {
             Object* object = objects[i];
             
@@ -191,10 +191,10 @@ public:
                 meshGroupRenderGroup = drawCommand.renderGroupIDForNextMeshGroup;
                 meshGroupDrawCommand = drawCommand.drawCommandIDForNextMeshGroup;
 
-                unsigned int baseInstance = drawCommand.baseInstance;
-                unsigned int instanceCount = drawCommand.primCount++;
-                unsigned int globalIndex = baseInstance + instanceCount;
-                unsigned int materialOffset = drawCommand.materialOffset;
+                uint baseInstance = drawCommand.baseInstance;
+                uint instanceCount = drawCommand.primCount++;
+                uint globalIndex = baseInstance + instanceCount;
+                uint materialOffset = drawCommand.materialOffset;
 
                 glm::ivec2 perObjectDynamic;
                 perObjectDynamic[POSITION_INDEX] = objectIndex;
@@ -211,7 +211,7 @@ public:
         perObjectBufferDynamic = new PerObjectBufferDynamic(&perObjectArrayDynamic[0], sizeof(glm::ivec2)*perObjectArrayDynamic.size());
 
         // For each render group ...
-        for(unsigned int i = 0; i < renderGroups.size(); i++)
+        for(uint i = 0; i < renderGroups.size(); i++)
         {
             RenderGroup* renderGroup = renderGroups[i];        
             
@@ -223,7 +223,7 @@ public:
 
     void display()
     {
-        for(unsigned int i = 0; i < renderGroups.size(); i++)
+        for(uint i = 0; i < renderGroups.size(); i++)
         {
             RenderGroup* renderGroup = renderGroups[i];
             if(!renderGroup->disabled)

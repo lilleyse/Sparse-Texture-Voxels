@@ -12,7 +12,7 @@ struct TextureLibrary
     {
         gli::texture2D::format_type format;
         glm::uvec2 resolution;
-        unsigned int numMipMaps;
+        uint numMipMaps;
         std::vector<gli::texture2D> textures;
 
         bool operator==(const TextureArray& other) const
@@ -26,8 +26,8 @@ struct TextureLibrary
     // Meta information about a particular 2d texture
     struct TextureMetaData
     {
-        unsigned int textureArrayID;
-        unsigned int indexInArray;
+        uint textureArrayID;
+        uint indexInArray;
     };
 
     std::map<std::string, TextureMetaData> textureNames;
@@ -93,7 +93,7 @@ struct TextureLibrary
 
     void commitToGL()
     {
-        unsigned int numTextureArrays = textureArrays.size();
+        uint numTextureArrays = textureArrays.size();
         if(numTextureArrays > MAX_TEXTURE_ARRAYS)
         {
             printf("too many texture arrays! Change the MAX_TEXTURE_ARRAYS constant");
@@ -105,7 +105,7 @@ struct TextureLibrary
         glGenTextures(numTextureArrays, textureArraysGL);
 
         // Loop over the texture arrays
-        for(unsigned int i = 0; i < textureArrays.size(); i++)
+        for(uint i = 0; i < textureArrays.size(); i++)
         {
             TextureArray& textureArray = textureArrays[i];
 
@@ -139,7 +139,7 @@ struct TextureLibrary
             glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAX_LEVEL, textureArray.numMipMaps-1);
 
             // Fill in the data for each texture in the texture array
-            for(unsigned int j = 0; j < textureArray.textures.size(); j++)
+            for(uint j = 0; j < textureArray.textures.size(); j++)
             {
                 gli::texture2D& textureData = textureArray.textures[j];
 

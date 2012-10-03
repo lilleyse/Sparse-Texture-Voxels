@@ -20,7 +20,7 @@ struct Scene
     ~Scene()
     {
         //delete all Objects
-        for(unsigned int i = 0; i < objects.size(); i++)
+        for(uint i = 0; i < objects.size(); i++)
         {
             delete objects[i];
         }

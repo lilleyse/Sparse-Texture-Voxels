@@ -48,26 +48,26 @@ struct Mesh
     glm::vec3 extents;
     float radius;
     
-    unsigned int numVertices;
-    unsigned int baseVertex;
+    uint numVertices;
+    uint baseVertex;
     void* vertexData;
 
-    unsigned int numElements;
-    unsigned int baseElement;
+    uint numElements;
+    uint baseElement;
     void* elementArrayData;
 
     // General properties
-    unsigned int vertexSize;
-    unsigned int elementSize;
+    uint vertexSize;
+    uint elementSize;
     GLenum elementType;
     GLenum drawPrimitive;
 
     Mesh* nextLOD;
     Mesh* nextMeshGroup;
 
-    unsigned int materialIndex;
+    uint materialIndex;
 
-    Mesh(void* vertexData, void* elementArrayData, glm::vec3& extents, GLenum drawPrimitive, unsigned int vertexSize, unsigned int numVertices, unsigned int elementSize, unsigned int numElements, unsigned int materialIndex)
+    Mesh(void* vertexData, void* elementArrayData, glm::vec3& extents, GLenum drawPrimitive, uint vertexSize, uint numVertices, uint elementSize, uint numElements, uint materialIndex)
     :        
         vertexData(vertexData),
         elementArrayData(elementArrayData),

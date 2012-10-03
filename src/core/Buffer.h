@@ -55,7 +55,7 @@ struct MeshBuffer
     GLuint vertexBufferObject;
     GLuint elementArrayBufferObject;
 
-    MeshBuffer(unsigned int vertexBufferSize, unsigned int elementArrayBufferSize, GLenum usageType)
+    MeshBuffer(uint vertexBufferSize, uint elementArrayBufferSize, GLenum usageType)
     {
 
         glGenBuffers(1, &vertexBufferObject);
@@ -69,14 +69,14 @@ struct MeshBuffer
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    void subVertexBuffer(void* vertexData, unsigned int vertexDataOffset, unsigned int vertexDataLength)
+    void subVertexBuffer(void* vertexData, uint vertexDataOffset, uint vertexDataLength)
     {
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
         glBufferSubData(GL_ARRAY_BUFFER, vertexDataOffset, vertexDataLength, vertexData);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void subElementArrayBuffer(void* elementArrayData, unsigned int elementArrayDataOffset, unsigned int elementArrayDataLength)
+    void subElementArrayBuffer(void* elementArrayData, uint elementArrayDataOffset, uint elementArrayDataLength)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBufferObject);
         glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, elementArrayDataOffset, elementArrayDataLength, elementArrayData);

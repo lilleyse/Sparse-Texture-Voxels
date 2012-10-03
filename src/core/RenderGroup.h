@@ -30,7 +30,7 @@ struct DrawCommand
 struct RenderGroup
 {
     // Unique identifier for this render group
-    unsigned int ID;
+    uint ID;
 
     // Draw commands
     std::vector<DrawCommand> drawCommands;
@@ -49,7 +49,7 @@ struct RenderGroup
 
     bool disabled;
 
-    RenderGroup(Object* object, Mesh* mesh, unsigned int ID)
+    RenderGroup(Object* object, Mesh* mesh, uint ID)
     :
         vertexSize(mesh->vertexSize),
         elementSize(mesh->elementSize),
@@ -70,8 +70,8 @@ struct RenderGroup
 
     struct MeshMetaData
     {
-        unsigned int renderGroupID;
-        unsigned int drawCommandIndex;
+        uint renderGroupID;
+        uint drawCommandIndex;
     };
 
     // Returns the draw index that the mesh is placed into
@@ -83,7 +83,7 @@ struct RenderGroup
         int drawCommandIndex = -1;
 
         // Loop over the draw commands
-        for(unsigned int i = 0; i < drawCommands.size(); i++)
+        for(uint i = 0; i < drawCommands.size(); i++)
         {
             DrawCommand& drawCommand = drawCommands[i];
             // If the draw ommand matches this mesh ...

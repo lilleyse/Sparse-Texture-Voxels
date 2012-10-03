@@ -21,13 +21,13 @@ struct MeshLoader
     ~MeshLoader(){}
 
     // meshName == NULL if you don't care to reference this mesh by name
-    Mesh* createMesh(GLenum drawPrimitive, glm::vec3& extents, std::vector<VertexType>* vertexData, std::vector<ElementType>* elementArrayData, unsigned int materialIndex)
+    Mesh* createMesh(GLenum drawPrimitive, glm::vec3& extents, std::vector<VertexType>* vertexData, std::vector<ElementType>* elementArrayData, uint materialIndex)
     {
         // Create the Mesh
-        unsigned int numVertices = (*vertexData).size();
-        unsigned int vertexSize = sizeof(VertexType);
-        unsigned int numElements = (*elementArrayData).size();
-        unsigned int elementSize = sizeof(ElementType);
+        uint numVertices = (*vertexData).size();
+        uint vertexSize = sizeof(VertexType);
+        uint numElements = (*elementArrayData).size();
+        uint elementSize = sizeof(ElementType);
         
         Mesh* mesh = new Mesh(&(*vertexData)[0], &(*elementArrayData)[0], extents, drawPrimitive, vertexSize, numVertices, elementSize, numElements, materialIndex);
 
@@ -134,7 +134,7 @@ struct MeshLoader
                 std::vector<ElementType>* elementArrayData = parseElementArrayString(elementArrayString, numElements);
                 
                 std::string materialName = elementArrayElement->Attribute("material");
-                unsigned int materialIndex = materialLibrary.getMaterial(materialName);
+                uint materialIndex = materialLibrary.getMaterial(materialName);
 
                 // Create the mesh
                 Mesh* meshGroup = createMesh(GL_TRIANGLES, extents, vertexData, elementArrayData, materialIndex);
