@@ -63,7 +63,8 @@ struct SceneLibrary
         }
 
         // Loop over objects and create them
-        for(XMLElement* objectElement = header->FirstChildElement("object"); objectElement != 0; objectElement = objectElement->NextSiblingElement("object"))
+        XMLElement* objectsElement = header->FirstChildElement("objects");
+        for(XMLElement* objectElement = objectsElement->FirstChildElement("object"); objectElement != 0; objectElement = objectElement->NextSiblingElement("object"))
         {
             // Get object name
             std::string objectName = objectElement->FirstChildElement("name")->FirstChild()->Value();
@@ -122,52 +123,56 @@ struct SceneLibrary
         
 
         // Loop over lights and create them
-        for(XMLElement* lightElement = header->FirstChildElement("light"); lightElement != 0; lightElement = lightElement->NextSiblingElement("light"))
+        XMLElement* lightsElement = header->FirstChildElement("lights");
+        if(lightsElement)
         {
-            glm::vec3 color;
-            std::string colorString = lightElement->FirstChildElement("color")->FirstChild()->Value();
-            std::vector<std::string> colorPieces = Utils::parseSpaceSeparatedString(colorString);
-            color.x = (float)std::atof(colorPieces[0].c_str());
-            color.y = (float)std::atof(colorPieces[1].c_str());
-            color.z = (float)std::atof(colorPieces[2].c_str());
-
-            glm::vec3 ambient;
-            std::string ambientString = lightElement->FirstChildElement("ambient")->FirstChild()->Value();
-            std::vector<std::string> ambientPieces = Utils::parseSpaceSeparatedString(ambientString);
-            ambient.x = (float)std::atof(ambientPieces[0].c_str());
-            ambient.y = (float)std::atof(ambientPieces[1].c_str());
-            ambient.z = (float)std::atof(ambientPieces[2].c_str());
-
-            std::string lightType = lightElement->Attribute("type");
-            if(lightType == "directional")
+            for(XMLElement* lightElement = lightsElement->FirstChildElement("light"); lightElement != 0; lightElement = lightElement->NextSiblingElement("light"))
             {
-                glm::vec3 direction;
-                std::string directionString = lightElement->FirstChildElement("direction")->FirstChild()->Value();
-                std::vector<std::string> directionPieces = Utils::parseSpaceSeparatedString(directionString);
-                direction.x = (float)std::atof(directionPieces[0].c_str());
-                direction.y = (float)std::atof(directionPieces[1].c_str());
-                direction.z = (float)std::atof(directionPieces[2].c_str());
+                glm::vec3 color;
+                std::string colorString = lightElement->FirstChildElement("color")->FirstChild()->Value();
+                std::vector<std::string> colorPieces = Utils::parseSpaceSeparatedString(colorString);
+                color.x = (float)std::atof(colorPieces[0].c_str());
+                color.y = (float)std::atof(colorPieces[1].c_str());
+                color.z = (float)std::atof(colorPieces[2].c_str());
 
-                DirectionalLight dirLight;
-                dirLight.base.color = color;
-                dirLight.base.ambient = ambient;
-                dirLight.direction = direction;
-                scene->addDirectionalLight(dirLight);
-            }
-            else if(lightType == "point")
-            {
-                glm::vec4 position(1.0);
-                std::string positionString = lightElement->FirstChildElement("position")->FirstChild()->Value();
-                std::vector<std::string> positionPieces = Utils::parseSpaceSeparatedString(positionString);
-                position.x = (float)std::atof(positionPieces[0].c_str());
-                position.y = (float)std::atof(positionPieces[1].c_str());
-                position.z = (float)std::atof(positionPieces[2].c_str());
+                glm::vec3 ambient;
+                std::string ambientString = lightElement->FirstChildElement("ambient")->FirstChild()->Value();
+                std::vector<std::string> ambientPieces = Utils::parseSpaceSeparatedString(ambientString);
+                ambient.x = (float)std::atof(ambientPieces[0].c_str());
+                ambient.y = (float)std::atof(ambientPieces[1].c_str());
+                ambient.z = (float)std::atof(ambientPieces[2].c_str());
 
-                PointLight pointLight;
-                pointLight.base.color = color;
-                pointLight.base.ambient = ambient;
-                pointLight.position = position;
-                scene->addPointLight(pointLight);
+                std::string lightType = lightElement->Attribute("type");
+                if(lightType == "directional")
+                {
+                    glm::vec3 direction;
+                    std::string directionString = lightElement->FirstChildElement("direction")->FirstChild()->Value();
+                    std::vector<std::string> directionPieces = Utils::parseSpaceSeparatedString(directionString);
+                    direction.x = (float)std::atof(directionPieces[0].c_str());
+                    direction.y = (float)std::atof(directionPieces[1].c_str());
+                    direction.z = (float)std::atof(directionPieces[2].c_str());
+
+                    DirectionalLight dirLight;
+                    dirLight.base.color = color;
+                    dirLight.base.ambient = ambient;
+                    dirLight.direction = direction;
+                    scene->addDirectionalLight(dirLight);
+                }
+                else if(lightType == "point")
+                {
+                    glm::vec4 position(1.0);
+                    std::string positionString = lightElement->FirstChildElement("position")->FirstChild()->Value();
+                    std::vector<std::string> positionPieces = Utils::parseSpaceSeparatedString(positionString);
+                    position.x = (float)std::atof(positionPieces[0].c_str());
+                    position.y = (float)std::atof(positionPieces[1].c_str());
+                    position.z = (float)std::atof(positionPieces[2].c_str());
+
+                    PointLight pointLight;
+                    pointLight.base.color = color;
+                    pointLight.base.ambient = ambient;
+                    pointLight.position = position;
+                    scene->addPointLight(pointLight);
+                }
             }
         }
 

@@ -2,24 +2,21 @@
 <Scene>
     <info>
         <name>world</name>
-        <bottom_corner>-5 -5 -5</bottom_corner>
-        <top_corner>5 5 5</top_corner>
+        <bottom_corner>-5.66207 -3.60709 -2.14174</bottom_corner>
+        <top_corner>5.66207 3.60709 2.14174</top_corner>
     </info>
     <meshes>
-        <mesh name="cow"/>
+        <mesh name="cow" />
     </meshes>
-    <object>
-        <name>cow</name>
-        <mesh>cow</mesh>
-    </object>
-    <!--light type="directional">
-        <color>1 1 1</color>
-        <ambient>.2 .2 .2</ambient>
-        <direction>0 -1 0</direction>
-    </light-->
-    <!--light type="point">
-        <color>1 1 1</color>
-        <ambient>.2 .2 .2</ambient>
-        <position>-10 10 -4</position>
-    </light-->
+    <objects>
+        <object>
+            <name>cow</name>
+            <mesh>cow</mesh>
+            <translate>0 0 -0</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+    </objects>
 </Scene>
