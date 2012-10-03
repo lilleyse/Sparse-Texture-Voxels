@@ -1,18 +1,15 @@
 #pragma once
 
+#include <tinyxml2.h>
+
+#include "../Utils.h"
 #include "Buffer.h"
 #include "ShaderLibrary.h"
 #include "RenderData.h"
 #include "MaterialLibrary.h"
-#include <map>
-#include <glf.hpp>
-#include <tinyxml2.h>
 #include "Mesh.h"
-#include <istream>
-#include <sstream>
-#include <iterator>
-#include <iostream>
 #include "MeshLoader.h"
+
 using namespace tinyxml2;
 
 struct MeshLibrary

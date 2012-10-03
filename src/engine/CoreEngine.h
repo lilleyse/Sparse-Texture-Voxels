@@ -1,15 +1,13 @@
 #pragma once
-#include <glf.hpp>
 
+#include "../Utils.h"
 #include "Mesh.h"
 #include "MeshLibrary.h"
 #include "Lighting.h"
 #include "Object.h"
 #include "Scene.h"
 #include "ShaderLibrary.h"
-#include "../Utils.h"
 #include "SceneLibrary.h"
-
 
 class CoreEngine
 {

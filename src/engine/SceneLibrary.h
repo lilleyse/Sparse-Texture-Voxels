@@ -1,9 +1,12 @@
 #pragma once
-#include "Scene.h"
+
 #include <tinyxml2.h>
+
 #include "../Utils.h"
+#include "Scene.h"
 #include "MeshLibrary.h"
 #include "ShaderLibrary.h"
+
 using namespace tinyxml2;
 
 struct SceneLibrary

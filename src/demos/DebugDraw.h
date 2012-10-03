@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Utils.h"
-#include "VoxelTexture.h"
+#include "../Utils.h"
+#include "../VoxelTexture.h"
 
 class DebugDraw
 {
@@ -12,6 +12,7 @@ private:
     GLuint voxelDebugProgram;
     static const uint numVerticesCube = 24;
     static const uint numElementsCube = 36; 
+    VoxelTexture* voxelTexture;
 
     struct MipMapInfo
     {
@@ -35,9 +36,9 @@ public:
     void begin(VoxelTexture* voxelTexture)
     {
         this->currentMipMapLevel = 0;
+        this->voxelTexture = voxelTexture;
 
         // Create buffer objects and vao
-        
         glm::vec3 vertices[numVerticesCube*2] = {glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, 0.5, -0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, -0.5, 0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, -0.5, -0.5), glm::vec3(1, 0, -0), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, -1, -0), glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 1, -0), glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 1, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 1, -0), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 1, -0)};
         unsigned short elements[numElementsCube] = {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23};
 
@@ -80,8 +81,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
 
         voxelDebugProgram = glCreateProgram();
         glAttachShader(voxelDebugProgram, vertexShaderObject);
@@ -90,11 +91,11 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(voxelDebugProgram);
-        glf::checkProgram(voxelDebugProgram);
+        Utils::OpenGL::checkProgram(voxelDebugProgram);
 
-        voxelTextureUpdate(voxelTexture);
+        voxelTextureUpdate();
     }
-    void voxelTextureUpdate(VoxelTexture* voxelTexture)
+    void voxelTextureUpdate()
     {
         mipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
@@ -141,19 +142,14 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void display(GLuint shaderProgram)
+    void display()
     {
         uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
         uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
 
-        glUseProgram(shaderProgram);
+        glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
-    }
-
-    void display()
-    {
-        display(voxelDebugProgram);
     }
 
     void setMipMapLevel(uint mipMapLevel)

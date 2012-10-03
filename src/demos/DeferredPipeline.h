@@ -1,9 +1,9 @@
 #pragma once
-#include <glf.hpp>
+
 #include "../Utils.h"
 #include "../ShaderConstants.h"
-#include "../VoxelTexture.h"
 #include "../FullScreenQuad.h"
+#include "../VoxelTexture.h"
 #include "../engine/CoreEngine.h"
 
 class DeferredPipeline
@@ -21,34 +21,38 @@ private:
 
     GLuint deferredReadProgram;
 
+    VoxelTexture* voxelTexture;
+    FullScreenQuad* fullScreenQuad;
+    CoreEngine* coreEngine;
+
 public:
-    void begin(int screenWidth, int screenHeight)
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad, CoreEngine* coreEngine)
     {
+        this->voxelTexture = voxelTexture;
+        this->fullScreenQuad = fullScreenQuad;
+        this->coreEngine = coreEngine;
+
         // Creation positions texture
         glGenTextures(1, &positionsTexture);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create colors texture
         glGenTextures(1, &colorsTexture);
         glBindTexture(GL_TEXTURE_2D, colorsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, screenWidth, screenHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create normals texture
         glGenTextures(1, &normalsTexture);
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, screenWidth, screenHeight, 0, GL_RGBA, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create depth texture
         glGenTextures(1, &depthTexture);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, screenWidth, screenHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -81,8 +85,8 @@ public:
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
 
         // Create program that reads the deferred data
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
 
         deferredReadProgram = glCreateProgram();
         glAttachShader(deferredReadProgram, vertexShaderObject);
@@ -91,8 +95,11 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(deferredReadProgram);
-        glf::checkProgram(deferredReadProgram);
+        Utils::OpenGL::checkProgram(deferredReadProgram);
 
+        glUseProgram(deferredReadProgram);
+        GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");
+        glUniform1f(textureResUniform, (float)voxelTexture->voxelGridLength);
     }
 
     void resize(int w, int h)
@@ -115,8 +122,11 @@ public:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, w, h, 0, GL_RGBA, GL_FLOAT, NULL);
     }
 
-    void display(FullScreenQuad& fullScreenQuad, CoreEngine& coreEngine)
+    void display()
     {
+        voxelTexture->enableLinearSampling();
+        voxelTexture->display();
+        
         // Bind custom FBO then draw into it
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, deferredFBO);
         
@@ -132,21 +142,14 @@ public:
                 glClearBufferfv(GL_COLOR, i, clearColor);
         }
         
-        // Write to the FBO
-        coreEngine.display();
+        // Render to the FBO
+        coreEngine->display();
 
         // Bind the default window framebuffer
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);        
         
         // Show the results written to the FBO
         glUseProgram(deferredReadProgram);
-        fullScreenQuad.display();
-    }
-
-    void setTextureResolution(uint res)
-    {
-        glUseProgram(deferredReadProgram);
-        GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");
-        glUniform1f(textureResUniform, (float)res);
+        fullScreenQuad->display();
     }
 };
