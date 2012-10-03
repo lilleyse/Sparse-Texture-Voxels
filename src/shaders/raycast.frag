@@ -262,7 +262,7 @@ void main()
     vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
 
     // scale by FOV
-    float tanFOV = tan(uFOV/180.0*PI);
+    float tanFOV = tan(radians(uFOV));
 
     vec3 ro = uCamPos+C
         + (2.0*uv.x-1.0)*tanFOV*A 
