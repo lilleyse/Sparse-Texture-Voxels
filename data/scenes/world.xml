@@ -7,16 +7,10 @@
     </info>
     <meshes>
         <mesh name="cow"/>
-        <mesh name="alien"/>
     </meshes>
     <object>
         <name>cow</name>
         <mesh>cow</mesh>
-    </object>
-    <object>
-        <name>alien</name>
-        <mesh>alien</mesh>
-        <translate>2 0 2</translate>
     </object>
     <!--light type="directional">
         <color>1 1 1</color>
