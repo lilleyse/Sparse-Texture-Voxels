@@ -99,7 +99,7 @@ public:
 
                     if (j==0 || 
                         j==voxelGridLength-1 ||
-                        k==0) {
+                        k==0 ) {
                         textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,255.0f,255.0f);
                     }
 				    else if (i==0) {

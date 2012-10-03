@@ -2,7 +2,7 @@
 #include "ShaderConstants.h"
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
-
+#include "engine/CoreEngine.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
@@ -16,7 +16,6 @@ namespace
     glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera camera;
     glm::ivec2 currentMousePos;
-    glm::ivec2 oldMousePos;
     bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
@@ -43,10 +42,11 @@ namespace
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
-    DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = true;
+    DemoType currentDemoType = DEBUGDRAW;
+    bool loadAllDemos = false;
 
     // OpenGL stuff
+    CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
     GLuint perFrameUBO;
 }
@@ -58,7 +58,7 @@ void setMipMapLevel(int level)
     if (level >= numMipMapLevels) level = numMipMapLevels - 1;
     currentMipMapLevel = level;
     
-    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
+    if (loadAllDemos || currentDemoType == DEBUGDRAW)
         debugDraw->setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->setMipMapLevel(currentMipMapLevel);
@@ -66,15 +66,15 @@ void setMipMapLevel(int level)
 
 void GLFWCALL mouseMove(int x, int y)
 {
-    oldMousePos = currentMousePos;
-    currentMousePos = glm::ivec2(x,y);
+    glm::ivec2 newMousePos = glm::ivec2(x,y);
+    glm::ivec2 mouseDelta = newMousePos - currentMousePos; 
+    currentMousePos = newMousePos;
 
     bool leftPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     bool rightPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     if (leftPress || rightPress || middlePress)
     {
-        glm::ivec2 mouseDelta = currentMousePos - oldMousePos;
         float cameraDistanceFromCenter = glm::length(camera.position);
         if (leftPress)
         {
@@ -112,10 +112,8 @@ void GLFWCALL key(int k, int action)
         bool setsNextTexture = k == ';' && voxelTextureGenerator.setNextTexture();
         bool setsPreviousTexture = k == '\'' && voxelTextureGenerator.setPreviousTexture();
         if (setsNextTexture || setsPreviousTexture)
-        {
-            if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE)
+            if (loadAllDemos || currentDemoType == DEBUGDRAW)
                 debugDraw->voxelTextureUpdate();
-        }
     }
 }
 
@@ -149,7 +147,7 @@ void initGL()
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(PerFrameUBO), NULL, GL_STREAM_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(perFrameUBO), NULL, GL_STREAM_DRAW);
     glBindBufferBase(GL_UNIFORM_BUFFER, PER_FRAME_UBO_BINDING, perFrameUBO);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
@@ -170,10 +168,11 @@ void begin()
     initGL();
 
     camera.setFarNearPlanes(.01f, 100.0f);
-    camera.zoom(-2);
+    camera.zoom(3);
     camera.lookAt = glm::vec3(0.5f);
 
-    // set up full screen quad and voxel textures
+    // set up miscellaneous things
+    coreEngine->begin();
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength);
     voxelTextureGenerator.begin(voxelTexture);
@@ -183,14 +182,14 @@ void begin()
     voxelTextureGenerator.setTexture(initialVoxelTexture);
     
     // init demos
-    if (loadAllDemos || currentDemoType == DEBUGDRAW || currentDemoType == DEFERRED_PIPELINE) 
+    if (loadAllDemos || currentDemoType == DEBUGDRAW) 
         debugDraw->begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->begin(voxelTexture, fullScreenQuad, debugDraw);
+        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
 
     setMipMapLevel(currentMipMapLevel);
 }

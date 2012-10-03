@@ -142,19 +142,14 @@ public:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-    void display(GLuint shaderProgram)
+    void display()
     {
         uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
         uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
 
-        glUseProgram(shaderProgram);
+        glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
-    }
-
-    void display()
-    {
-        display(voxelDebugProgram);
     }
 
     void setMipMapLevel(uint mipMapLevel)

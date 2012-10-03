@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<Scene>
+    <info>
+        <name>world</name>
+        <bottom_corner>-5 -5 -5</bottom_corner>
+        <top_corner>5 5 5</top_corner>
+    </info>
+    <meshes>
+        <mesh name="cow"/>
+    </meshes>
+    <object>
+        <name>cow</name>
+        <mesh>cow</mesh>
+    </object>
+    <!--light type="directional">
+        <color>1 1 1</color>
+        <ambient>.2 .2 .2</ambient>
+        <direction>0 -1 0</direction>
+    </light-->
+    <!--light type="point">
+        <color>1 1 1</color>
+        <ambient>.2 .2 .2</ambient>
+        <position>-10 10 -4</position>
+    </light-->
+</Scene>
