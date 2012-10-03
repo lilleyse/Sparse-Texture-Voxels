@@ -16,7 +16,7 @@ namespace
     glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera camera;
     glm::ivec2 currentMousePos;
-    bool showDebugOutput = true;
+    bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
     int frameCount = 0;
@@ -42,7 +42,7 @@ namespace
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
-    DemoType currentDemoType = DEBUGDRAW;
+    DemoType currentDemoType = DEFERRED_PIPELINE;
     bool loadAllDemos = true;
 
     // OpenGL stuff
