@@ -1,7 +1,8 @@
 #pragma once
+
+#include "../Utils.h"
 #include "ShaderLibrary.h"
 #include "Buffer.h"
-#include "../Utils.h"
 
 struct DrawElements
 {

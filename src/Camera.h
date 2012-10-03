@@ -1,5 +1,6 @@
 #pragma once
-#include <glf.hpp>
+
+#include "Utils.h"
 
 struct Camera
 {
@@ -39,7 +40,7 @@ struct Camera
     }
     void setAspectRatio(int width, int height)
     {
-        aspectRatio = (float)Window.Size.x / Window.Size.y;
+        aspectRatio = (float)width/height;
     }
 
     glm::mat4 createProjectionMatrix()

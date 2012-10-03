@@ -1,26 +1,30 @@
 #pragma once
 
-#include <glf.hpp>
-
-#include "ShaderConstants.h"
-#include "Utils.h"
+#include "../Utils.h"
+#include "../ShaderConstants.h"
 #include "../FullScreenQuad.h"
+#include "../VoxelTexture.h"
 
 class VoxelConetracer
 {
 
 private:
     GLuint fullScreenProgram;
+    VoxelTexture* voxelTexture;
+    FullScreenQuad* fullScreenQuad;
 
 public:
     VoxelConetracer(){}
     virtual ~VoxelConetracer(){}
 
-    void begin()
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad)
     {
+        this->voxelTexture = voxelTexture;
+        this->fullScreenQuad = fullScreenQuad;
+
         // Create shader program
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "conetrace.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "conetrace.frag");
 
         fullScreenProgram = glCreateProgram();
         glAttachShader(fullScreenProgram, vertexShaderObject);
@@ -29,19 +33,19 @@ public:
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(fullScreenProgram);
-        glf::checkProgram(fullScreenProgram);
+        Utils::OpenGL::checkProgram(fullScreenProgram);
+        
+        glUseProgram(fullScreenProgram);
+        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
+        glUniform1f(mipMapLevelUniform, (float)voxelTexture->voxelGridLength);
     }
 
-    void display(FullScreenQuad& fullScreenQuad)
+    void display()
     {
-        glUseProgram(fullScreenProgram);
-        fullScreenQuad.display();
-    }
+        voxelTexture->enableLinearSampling();
+        voxelTexture->display();
 
-    void setTextureResolution(uint res)
-    {
         glUseProgram(fullScreenProgram);
-        GLuint textureResUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
-        glUniform1f(textureResUniform, (float)res);
+        fullScreenQuad->display();
     }
 };

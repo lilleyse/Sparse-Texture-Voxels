@@ -1,5 +1,6 @@
 #pragma once
-#include <glf.hpp>
+
+#include "Utils.h"
 #include "ShaderConstants.h"
 
 class FullScreenQuad
@@ -52,6 +53,4 @@ public:
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
-
-
 };

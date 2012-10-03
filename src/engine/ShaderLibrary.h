@@ -1,5 +1,6 @@
 #pragma once
-#include <glf.hpp>
+
+#include "../Utils.h"
 
 struct ShaderLibrary
 {
@@ -24,8 +25,8 @@ struct ShaderLibrary
         glf::checkProgram(mainPassShader);
         */
 
-        GLuint vertexShaderObject = glf::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
-        GLuint fragmentShaderObject = glf::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainDeferred.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainDeferred.frag");
 
         debugDrawShader = glCreateProgram();
         glAttachShader(debugDrawShader, vertexShaderObject);
@@ -34,6 +35,6 @@ struct ShaderLibrary
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(debugDrawShader);
-        glf::checkProgram(debugDrawShader);
+        Utils::OpenGL::checkProgram(debugDrawShader);
     }
 };

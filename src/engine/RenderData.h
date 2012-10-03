@@ -1,15 +1,13 @@
 #pragma once
-#include "Buffer.h"
-#include "ShaderLibrary.h"
+
 #include <CL/opencl.h>
-#include <set>
-#include "Object.h"
-#include "RenderGroup.h"
-#include <map>
+
 #include "../Utils.h"
 #include "../ShaderConstants.h"
-
-
+#include "Buffer.h"
+#include "ShaderLibrary.h"
+#include "Object.h"
+#include "RenderGroup.h"
 
 class RenderData
 {

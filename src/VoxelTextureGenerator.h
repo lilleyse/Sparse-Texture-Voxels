@@ -1,12 +1,5 @@
 #pragma once
 
-#include <glf.hpp>
-#include <map>
-#include <utility>
-#include <iostream>
-#include <fstream>
-#include <limits>
-
 #include "Utils.h"
 #include "VoxelTexture.h"
 #include "MipMapGenerator.h"
@@ -19,34 +12,18 @@ private:
     VoxelTexture* voxelTexture;
     std::map<std::string, uint> textureNamesToIndexes;
     std::vector<TextureData> textures;
-    bool loadMultipleTextures;
     uint currentTexture;
 
 public:
 
-    std::string CUBE_PRESET;
-    std::string SPHERE_PRESET;
-    std::string CORNELL_BOX;
-    VoxelTextureGenerator()
+    static std::string CUBE;
+    static std::string SPHERE;
+    static std::string CORNELL_BOX;
+
+    void begin(VoxelTexture* voxelTexture) 
     {
-        CUBE_PRESET = "cube";
-        SPHERE_PRESET = "sphere";
-        CORNELL_BOX = "cornell box";
         currentTexture = UINT_MAX;
-    }
-
-    void begin(uint voxelGridLength, bool loadMultipleTextures) 
-    {   
-        this->loadMultipleTextures = loadMultipleTextures;
-        voxelTexture = new VoxelTexture();
-        voxelTexture->begin(voxelGridLength);
-    }
-
-    void createAllPresets()
-    {
-        createTexture(CUBE_PRESET);
-        createTexture(SPHERE_PRESET);  
-        createTexture(CORNELL_BOX);  
+        this->voxelTexture = voxelTexture;
     }
     void createTexture(std::string name)
     {
@@ -57,10 +34,9 @@ public:
         textureData.colorData.resize(voxelTextureSize);
         textureData.normalData.resize(voxelTextureSize);
         
-
-        if (textureNamesToIndexes.find(name) == textureNamesToIndexes.end() && (textures.size() == 0 || this->loadMultipleTextures))
+        if (textureNamesToIndexes.find(name) == textureNamesToIndexes.end())
         {
-            if (name == CUBE_PRESET)
+            if (name == CUBE)
             {
                 uint textureIndex = 0;
                 uint half = voxelGridLength / 2;                
@@ -83,7 +59,7 @@ public:
                     textureIndex++;
                 }
             }
-            else if (name == SPHERE_PRESET)
+            else if (name == SPHERE)
             {
                 uint textureIndex = 0;
                 glm::vec3 center = glm::vec3(voxelGridLength/2);
@@ -146,18 +122,26 @@ public:
             }
             else 
             {
-                // try to load a raw voxel texture
-                std::ifstream file(name, std::ios::in|std::ios::binary);
-                if (!file) return;
-                uchar* buffer = new uchar[voxelTextureSize];
-                file.read((char*)buffer, voxelTextureSize);
+                std::string extension = name.substr(name.find_last_of(".") + 1);
+                if (extension == "raw")
+                {
+                    // try to load a raw voxel texture
+                    std::ifstream file(name, std::ios::in|std::ios::binary);
+                    if (!file) return;
+                    uchar* buffer = new uchar[voxelTextureSize];
+                    file.read((char*)buffer, voxelTextureSize);
 
-                // store one channel buffer into four channel texture data
-                for (uint i = 0; i < voxelTextureSize; i++)
-                    textureData.colorData[i] = glm::u8vec4(255, 255, 255, buffer[i]);
+                    // store one channel buffer into four channel texture data
+                    for (uint i = 0; i < voxelTextureSize; i++)
+                        textureData.colorData[i] = glm::u8vec4(255, 255, 255, buffer[i]);
 
-                delete[] buffer;
-                file.close();
+                    delete[] buffer;
+                    file.close();
+                }
+                else if (extension == "xml")
+                {
+
+                }
             }
 
             textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
@@ -195,8 +179,8 @@ public:
     {
         return setTexture((int)currentTexture - 1);
     }
-    VoxelTexture* getVoxelTexture()
-    {
-        return voxelTexture;
-    }
 };
+
+std::string VoxelTextureGenerator::CUBE = "cube";
+std::string VoxelTextureGenerator::SPHERE = "sphere";
+std::string VoxelTextureGenerator::CORNELL_BOX = "cornell box";

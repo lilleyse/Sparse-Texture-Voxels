@@ -1,8 +1,12 @@
 #pragma once
+
+#include <tinyxml2.h>
+
+#include "../Utils.h"
+#include "../ShaderConstants.h"
 #include "TextureLibrary.h"
 #include "RenderData.h"
-#include "../ShaderConstants.h"
-#include <tinyxml2.h>
+
 using namespace tinyxml2;
 
 // A place to load materials. Contains the textureLibrary.

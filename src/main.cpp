@@ -1,66 +1,146 @@
-#include <glf.hpp>
 #include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "Utils.h"
+#include "VoxelTextureGenerator.h"
+#include "engine/CoreEngine.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
-#include "VoxelTextureGenerator.h"
-#include "engine/CoreEngine.h"
-
-enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
 
 namespace
 {
-    std::string const SAMPLE_NAME("Sparse Texture Voxels");
-    const int SAMPLE_SIZE_WIDTH(600);
-    const int SAMPLE_SIZE_HEIGHT(400);
-    const int SAMPLE_MAJOR_VERSION(3);
-    const int SAMPLE_MINOR_VERSION(3);
-    
-    // Window and updating
-    glf::window Window(glm::ivec2(SAMPLE_SIZE_WIDTH, SAMPLE_SIZE_HEIGHT));
+    // Window
+    std::string applicationName("Sparse Texture Voxels");
+    glm::ivec2 windowSize(600, 400);
+    glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera camera;
+    glm::ivec2 currentMousePos;
     bool showDebugOutput = false;
+    bool showFPS = true;
+    bool vsync = false;
+    int frameCount = 0;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
-    bool showFPS = true;
-    Utils::Framerate fpsHandler;
-    FullScreenQuad fullScreenQuad;
     
     // Texture settings
-    VoxelTextureGenerator voxelTextureGenerator;
-    const std::string initialTextures[] = {"data/Bucky.raw"};
-    bool loadMultipleTextures = true;
+    const std::string voxelTextures[] = {
+        VoxelTextureGenerator::CORNELL_BOX,
+        VoxelTextureGenerator::SPHERE,
+        VoxelTextureGenerator::CUBE,
+        "data/Bucky.raw",
+    };
+    std::string initialVoxelTexture = voxelTextures[0];
     uint voxelGridLength = 32;
-    uint numMipMapLevels;
-    uint currentMipMapLevel;
-
+    uint currentMipMapLevel = 0;
+    VoxelTextureGenerator voxelTextureGenerator;
+    VoxelTexture* voxelTexture = new VoxelTexture();
+    
     // Demo settings
-    CoreEngine coreEngine;
-    DebugDraw debugDraw;
-    VoxelRaycaster voxelRaycaster;
-    VoxelConetracer voxelConetracer;
-    DeferredPipeline deferredPipeline;
+    enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
+    DebugDraw* debugDraw = new DebugDraw();
+    VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
+    VoxelConetracer* voxelConetracer = new VoxelConetracer();
+    DeferredPipeline* deferredPipeline = new DeferredPipeline();
     DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = false;
+    bool loadAllDemos = true;
 
     // OpenGL stuff
+    CoreEngine* coreEngine = new CoreEngine();
+    FullScreenQuad* fullScreenQuad = new FullScreenQuad();
     GLuint perFrameUBO;
-
 }
 
+void setMipMapLevel(int level)
+{
+    int numMipMapLevels = voxelTexture->numMipMapLevels;
+    if (level < 0) level = 0;
+    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
+    currentMipMapLevel = level;
+    
+    if (loadAllDemos || currentDemoType == DEBUGDRAW)
+        debugDraw->setMipMapLevel(currentMipMapLevel);
+    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
+        voxelRaycaster->setMipMapLevel(currentMipMapLevel);
+}
+
+void GLFWCALL mouseMove(int x, int y)
+{
+    glm::ivec2 newMousePos = glm::ivec2(x,y);
+    glm::ivec2 mouseDelta = newMousePos - currentMousePos; 
+    currentMousePos = newMousePos;
+
+    bool leftPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+    bool rightPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
+    bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
+    if (leftPress || rightPress || middlePress)
+    {
+        float cameraDistanceFromCenter = glm::length(camera.position);
+        if (leftPress)
+        {
+            float rotateAmount = cameraDistanceFromCenter / 200.0f;
+            camera.rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
+        }
+        else if (rightPress)
+        {
+            float zoomAmount = cameraDistanceFromCenter / 200.0f;
+            camera.zoom(mouseDelta.y * zoomAmount);
+        }
+        else if (middlePress)
+        {
+            float panAmount = cameraDistanceFromCenter / 500.0f;
+            camera.pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
+        }
+    }
+}
+
+void GLFWCALL key(int k, int action)
+{
+    if (action == GLFW_RELEASE)
+    {
+        // Changing demo (number keys and numpad)
+        if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES)
+            currentDemoType = (DemoType)((uint)k - '1');
+        if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
+            currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
+            
+        // Changing mip map level
+        if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
+        if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
+
+        // Changing textures
+        bool setsNextTexture = k == ';' && voxelTextureGenerator.setNextTexture();
+        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator.setPreviousTexture();
+        if (setsNextTexture || setsPreviousTexture)
+            if (loadAllDemos || currentDemoType == DEBUGDRAW)
+                debugDraw->voxelTextureUpdate();
+    }
+}
+
+void GLFWCALL resize(int w, int h)
+{
+    glViewport(0, 0, w, h);
+    camera.setAspectRatio(w, h);
+    windowSize = glm::ivec2(w, h);
+
+    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+        deferredPipeline->resize(w, h);
+}
 
 void initGL()
 {
+    glewExperimental = GL_TRUE;
+    glewInit();
+
     // Debug output
-    if(showDebugOutput && glf::checkExtension("GL_ARB_debug_output"))
+    if(showDebugOutput && Utils::OpenGL::checkExtension("GL_ARB_debug_output"))
     {
+        glDebugMessageControlARB = (PFNGLDEBUGMESSAGECONTROLARBPROC) glfwGetProcAddress("glDebugMessageControlARB");
+        glDebugMessageCallbackARB = (PFNGLDEBUGMESSAGECALLBACKARBPROC) glfwGetProcAddress("glDebugMessageCallbackARB");
+        glDebugMessageInsertARB = (PFNGLDEBUGMESSAGEINSERTARBPROC) glfwGetProcAddress("glDebugMessageInsertARB");
         glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-        glDebugMessageCallbackARB(&glf::debugOutput, NULL);
+        glDebugMessageCallbackARB(&Utils::OpenGL::debugOutput, NULL);
     }
     else printf("debug output extension not found");
     
@@ -83,52 +163,7 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
-void setMipMapLevel(int level)
-{
-    if (level < 0) level = 0;
-    if (level >= (int)numMipMapLevels) level = numMipMapLevels - 1;
-    if (level == currentMipMapLevel) return;
-    currentMipMapLevel = level;
-    
-    if (loadAllDemos || currentDemoType == DEBUGDRAW)
-        debugDraw.setMipMapLevel(currentMipMapLevel);
-    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster.setMipMapLevel(currentMipMapLevel);
-}
-
-void mouseEvent()
-{
-    float cameraDistanceFromCenter = glm::length(camera.position);
-    float rotateAmount = cameraDistanceFromCenter / 200.0f;
-    float zoomAmount = cameraDistanceFromCenter / 200.0f;
-    float panAmount = cameraDistanceFromCenter / 500.0f;
-
-    camera.rotate(-Window.LeftMouseDelta.x * rotateAmount, -Window.LeftMouseDelta.y * rotateAmount);
-    camera.zoom(Window.RightMouseDelta.y * zoomAmount);
-    camera.pan(-Window.MiddleMouseDelta.x * panAmount, Window.MiddleMouseDelta.y * panAmount);
-}
-
-void keyboardEvent(uchar keyCode)
-{
-    // Changing demo
-    if (loadAllDemos && keyCode >= 49 && keyCode < 49 + MAX_DEMO_TYPES) 
-        currentDemoType = (DemoType)((uint)keyCode - 49);
-
-    // Changing mip map level
-    if (keyCode == 46) setMipMapLevel((int)currentMipMapLevel + 1);
-    if (keyCode == 44) setMipMapLevel((int)currentMipMapLevel - 1);
-
-    // Changing textures
-    bool setsNextTexture = keyCode == 59 && voxelTextureGenerator.setNextTexture();
-    bool setsPreviousTexture = keyCode == 39 && voxelTextureGenerator.setPreviousTexture();
-    if (setsNextTexture || setsPreviousTexture)
-    {
-        if (loadAllDemos || currentDemoType == DEBUGDRAW)
-            debugDraw.voxelTextureUpdate(voxelTextureGenerator.getVoxelTexture());
-    }
-}
-
-bool begin()
+void begin()
 {
     initGL();
 
@@ -136,60 +171,32 @@ bool begin()
     camera.zoom(3);
     camera.lookAt = glm::vec3(0.5f);
 
-    // all process, nothing interesting here
-    fullScreenQuad.begin();
-    voxelTextureGenerator.begin(voxelGridLength, loadMultipleTextures);
-    uint numInitialTextures = sizeof(initialTextures) / sizeof(initialTextures[0]);
+    // set up miscellaneous things
+    coreEngine->begin();
+    fullScreenQuad->begin();
+    voxelTexture->begin(voxelGridLength);
+    voxelTextureGenerator.begin(voxelTexture);
+    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
     for (uint i = 0; i < numInitialTextures; i++)
-        voxelTextureGenerator.createTexture(initialTextures[i]);
-    voxelTextureGenerator.createAllPresets();
-    voxelTextureGenerator.setTexture(0);
-    VoxelTexture* voxelTexture = voxelTextureGenerator.getVoxelTexture();
+        voxelTextureGenerator.createTexture(voxelTextures[i]);
+    voxelTextureGenerator.setTexture(initialVoxelTexture);
     
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
-        debugDraw.begin(voxelTexture);
+        debugDraw->begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster.begin();
-    if (loadAllDemos || currentDemoType == VOXELCONETRACER) {
-        voxelConetracer.begin();
-        voxelConetracer.setTextureResolution(voxelGridLength);
-    }
+        voxelRaycaster->begin(voxelTexture, fullScreenQuad);
+    if (loadAllDemos || currentDemoType == VOXELCONETRACER)
+        voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-    {
-        coreEngine.begin();
-        deferredPipeline.begin(Window.Size.x, Window.Size.y);
-    }
+        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
 
-    
-    // initial mip-map setting
-    numMipMapLevels = voxelTexture->numMipMapLevels;
-    currentMipMapLevel = UINT_MAX;
     setMipMapLevel(currentMipMapLevel);
-
-    return true;
-}
-
-bool end()
-{
-    return true;
-}
-
-void resize(int w, int h)
-{
-    glViewport(0, 0, w, h);
-    camera.setAspectRatio(w, h);
-
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-    {
-        deferredPipeline.resize(w, h);
-    }
 }
 
 void display()
 {
     // Basic GL stuff
-    
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
     glClearBufferfv(GL_COLOR, 0, clearColor);
@@ -202,47 +209,69 @@ void display()
     perFrame.uCamLookAt = camera.lookAt;
     perFrame.uCamPos = camera.position;
     perFrame.uCamUp = camera.upDir;
-    perFrame.uResolution = glm::vec2(Window.Size.x, Window.Size.y);
-    perFrame.uAspect = (float)Window.Size.x/Window.Size.y;
+    perFrame.uResolution = glm::vec2(windowSize);
+    perFrame.uAspect = (float)windowSize.x/windowSize.y;
     perFrame.uTime = frameTime;
     perFrame.uFOV = camera.fieldOfView;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-   
-
     // Display demo
     if (currentDemoType == DEBUGDRAW)
-    {
-        debugDraw.display();
-    }
+        debugDraw->display();
     else if (currentDemoType == VOXELRAYCASTER)
-    {
-        voxelTextureGenerator.getVoxelTexture()->display(false);
-        voxelRaycaster.display(fullScreenQuad); 
-    }
-    else if (currentDemoType == VOXELCONETRACER)
-    {
-        voxelTextureGenerator.getVoxelTexture()->display(true);
-        voxelConetracer.display(fullScreenQuad);
-    }
+        voxelRaycaster->display(); 
+    else if (currentDemoType == VOXELCONETRACER)  
+        voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
-    {
-        deferredPipeline.display(fullScreenQuad, coreEngine);
-    }
-
-    // Update
-    glf::swapBuffers();
-    frameTime += FRAME_TIME_DELTA;
-    if(showFPS) fpsHandler.display();
+        deferredPipeline->display();
 }
 
+void displayFPS()
+{
+    frameCount += 1;
+    double currentTime = glfwGetTime();
+    if(currentTime >= 1.0)
+    {	
+        std::ostringstream ss;
+		ss << applicationName << " (fps: " << (frameCount/currentTime) << " )";
+        glfwSetWindowTitle(ss.str().c_str());
+        glfwSetTime(0.0);
+        frameCount = 0;
+    }
+}
 int main(int argc, char* argv[])
 {
-    return glf::run(
-        argc, argv,
-        glm::ivec2(::SAMPLE_SIZE_WIDTH, ::SAMPLE_SIZE_HEIGHT),
-        WGL_CONTEXT_CORE_PROFILE_BIT_ARB, ::SAMPLE_MAJOR_VERSION,
-        ::SAMPLE_MINOR_VERSION);
+    glfwInit();
+    glfwOpenWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+    glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, openGLVersion.x);
+    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, openGLVersion.y);
+    glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwOpenWindow(windowSize.x, windowSize.y, 0, 0, 0, 0, 24, 0, GLFW_WINDOW);
+
+    begin();
+    glfwSetWindowTitle(applicationName.c_str());
+    glfwSetWindowSizeCallback(resize);
+    glfwSetMousePosCallback(mouseMove);
+    glfwSetKeyCallback(key);
+    glfwEnable(GLFW_KEY_REPEAT);
+    glfwEnable(GLFW_STICKY_KEYS);
+    glfwSwapInterval(vsync ? 1 : 0);
+    glfwSetTime(0.0);
+
+    bool running = true;
+    do
+    {
+        display();
+        glfwSwapBuffers();
+        frameTime += FRAME_TIME_DELTA;
+        if (showFPS) displayFPS();
+        running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
+    }
+    while(running);
+
+    glfwTerminate();
+    exit(EXIT_SUCCESS);
 }
