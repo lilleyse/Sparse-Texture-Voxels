@@ -298,9 +298,9 @@ void main()
         float fov = PI/NUM_AO_DIRS;
         float anglerotate = 2.0*PI/NUM_AO_DIRS;
         vec3 axis = findPerpendicular(nor); // find a perpendicular vector
-        for (int i=0; i<4; i++) {
+        for (float i=0.0; i<NUM_AO_DIRS; i++) {
             // rotate that vector around normal (to distribute cone around)
-            vec3 rotatedAxis = rotate(axis, anglerotate*(float(i)), nor);
+            vec3 rotatedAxis = rotate(axis, anglerotate*(i+EPS), nor);
             
             // ray dir is normal rotated an fov over that vector
             vec3 rd = rotate(nor, fov, rotatedAxis);
