@@ -5,7 +5,7 @@
 struct TextureData
 {
     std::vector<glm::u8vec4> colorData;
-    std::vector<glm::vec3> normalData;
+    std::vector<glm::vec4> normalData;
 };
 
 class VoxelTexture
@@ -58,7 +58,7 @@ public:
         // Create a dense 3D normals texture
         glGenTextures(1, &normalTexture);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
-        glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGB32F, voxelGridLength, voxelGridLength, voxelGridLength);
+        glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA32F, voxelGridLength, voxelGridLength, voxelGridLength);
     }
 
     // Data is assumed to be in RGBA format
@@ -68,7 +68,7 @@ public:
         glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.colorData[0]);
    
         glBindTexture(GL_TEXTURE_3D, normalTexture);
-        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGB, GL_FLOAT, &textureData.normalData[0]);
+        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_FLOAT, &textureData.normalData[0]);
     }
 
     void enableLinearSampling()

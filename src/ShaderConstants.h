@@ -32,7 +32,12 @@ const uint RESERVED_TEXTURE_ARRAY_5                 = 11;
 const uint RESERVED_TEXTURE_ARRAY_6                 = 12;
 const uint RESERVED_TEXTURE_ARRAY_7                 = 13;
 const uint RESERVED_TEXTURE_ARRAY_8                 = 14;
-const uint RESERVED_TEXTURE_ARRAY_9                 = 15;                              
+const uint RESERVED_TEXTURE_ARRAY_9                 = 15;
+
+// Image binding points
+const uint NON_USED_IMAGE                           = 0;
+const uint COLOR_IMAGE_3D_BINDING                   = 1;
+const uint NORMAL_IMAGE_3D_BINDING                  = 2;
 
 // Framebuffer object outputs
 const uint DEFERRED_POSITIONS_FBO_BINDING       = 0;
@@ -52,7 +57,7 @@ const uint MAX_POINT_LIGHTS                 = 8;
 
 struct PerFrameUBO
 {
-    glm::mat4 viewProjection;
+    glm::mat4 uViewProjection;
     glm::vec3 uCamLookAt;
     float padding1;
     glm::vec3 uCamPos;

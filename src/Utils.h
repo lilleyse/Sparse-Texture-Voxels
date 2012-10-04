@@ -36,10 +36,12 @@
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
-const std::string SHADER_DIRECTORY = std::string("src/shaders/");
-const std::string SCENE_DIRECTORY = std::string("data/scenes/");
-const std::string IMAGE_DIRECTORY = std::string("data/images/");
-const std::string MESH_DIRECTORY = std::string("data/meshes/");
+const std::string SOURCE_DIRECTORY = std::string("src/");
+const std::string DATA_DIRECTORY = std::string("data/");
+const std::string SHADER_DIRECTORY = std::string(SOURCE_DIRECTORY + "shaders/");
+const std::string SCENE_DIRECTORY = std::string(DATA_DIRECTORY + "scenes/");
+const std::string IMAGE_DIRECTORY = std::string(DATA_DIRECTORY + "images/");
+const std::string MESH_DIRECTORY = std::string(DATA_DIRECTORY + "meshes/");
 
 namespace Utils
 {

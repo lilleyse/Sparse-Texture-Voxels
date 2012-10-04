@@ -21,14 +21,14 @@ private:
 
 public:
 
-    void begin()
+    void begin(std::string filename)
     {
         shaderLibrary.begin();
         renderData.begin();
         meshLibrary.begin();
         sceneLibrary.begin();
 
-        scene = sceneLibrary.addScene(renderData, meshLibrary, shaderLibrary, "world", SCENE_DIRECTORY + "world.xml");
+        scene = sceneLibrary.addScene(renderData, meshLibrary, shaderLibrary, filename, filename);
         meshLibrary.commitToGL(renderData);
         scene->commitToGL();
         renderData.commitToGL();

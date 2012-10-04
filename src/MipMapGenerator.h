@@ -31,7 +31,7 @@ public:
             glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
             glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_UNSIGNED_BYTE, &prevMipData.colorData[0]);
             glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
-            glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGB, GL_FLOAT, &prevMipData.normalData[0]);
+            glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_FLOAT, &prevMipData.normalData[0]);
            
             TextureData currMipData;
             currMipData.colorData.resize(mipMapSideLength*mipMapSideLength*mipMapSideLength);
@@ -55,7 +55,7 @@ public:
                     glm::vec4 neighborColor(prevMipData.colorData[neighborIndex1d]);
                     summedColor += glm::vec4(glm::vec3(neighborColor)*(neighborColor.a/255.0f), neighborColor.a/255.0f);
                 
-                    glm::vec3 neighborNormal = prevMipData.normalData[neighborIndex1d];
+                    glm::vec3 neighborNormal = glm::vec3(prevMipData.normalData[neighborIndex1d]);
                     summedNormal += neighborNormal;
                 }
 
@@ -66,7 +66,7 @@ public:
 
                 uint index1d = indexConverter(mipMapSideLength, glm::uvec3(j,k,l));
                 currMipData.colorData[index1d] = glm::u8vec4(finalColor);
-                currMipData.normalData[index1d] = finalNormal;
+                currMipData.normalData[index1d] = glm::vec4(finalNormal, 0.0f);
             }
 
             voxelTexture->setData(currMipData, mipMapSideLength, i);
