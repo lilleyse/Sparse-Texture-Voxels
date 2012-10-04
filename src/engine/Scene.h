@@ -29,15 +29,20 @@ struct Scene
 
     void addObject(RenderData& renderData, Object* object)
     {
+        glm::vec3 translation = object->getTranslation();
+        glm::vec3 scale = object->getScale();
+
+
         // Adjust object for a unit cube scene
         glm::vec3 worldSize = maxBounds - minBounds;
-        glm::vec3 normalizedPosition = (object->getTranslation() - minBounds)/worldSize;
+        glm::vec3 normalizedPosition = (translation - minBounds)/worldSize;
         object->setTranslation(normalizedPosition);
 
-        glm::vec3 normalizedScale = object->getScale()/worldSize;
+        glm::vec3 normalizedScale = scale/worldSize;
         object->setScale(normalizedScale);
 
         // Rotation should be unmodified
+
 
         objects.push_back(object);
         renderData.addObject(object);

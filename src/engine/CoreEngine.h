@@ -28,7 +28,7 @@ public:
         meshLibrary.begin();
         sceneLibrary.begin();
 
-        scene = sceneLibrary.addScene(renderData, meshLibrary, shaderLibrary, "world", SCENE_DIRECTORY + "world.xml");
+        scene = sceneLibrary.addScene(renderData, meshLibrary, shaderLibrary, "world", SCENE_DIRECTORY + "cornell.xml");
         meshLibrary.commitToGL(renderData);
         scene->commitToGL();
         renderData.commitToGL();
