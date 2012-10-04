@@ -61,6 +61,13 @@ public:
         glGenTextures(1, &normalTexture);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA32F, voxelGridLength, voxelGridLength, voxelGridLength);
+        
+        // Store empty data in the voxel texture
+        uint voxelTextureSize = voxelGridLength * voxelGridLength * voxelGridLength;
+        TextureData emptyData;
+        emptyData.colorData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
+        emptyData.normalData.resize(voxelTextureSize);
+        setData(emptyData, voxelGridLength, 0);
     }
 
     // Data is assumed to be in RGBA format

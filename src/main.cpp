@@ -178,10 +178,10 @@ void begin()
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength);
     voxelTextureGenerator->begin(voxelTexture);
-    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    for (uint i = 0; i < numInitialTextures; i++)
-        voxelTextureGenerator->createTexture(voxelTextures[i]);
-    voxelTextureGenerator->setTexture(initialVoxelTexture);
+    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    //for (uint i = 0; i < numInitialTextures; i++)
+    //    voxelTextureGenerator->createTexture(voxelTextures[i]);
+    //voxelTextureGenerator->setTexture(initialVoxelTexture);
     
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
@@ -266,14 +266,14 @@ int main(int argc, char* argv[])
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
 
-    //float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
-    //glClearBufferfv(GL_COLOR, 0, clearColor);
-    //float clearDepth = 1.0f;
-    //glClearBufferfv(GL_DEPTH, 0, &clearDepth);
-    //deferredPipeline->voxelizeScene(perFrameUBO);
-    //voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-    //voxelTextureGenerator->setTexture(sceneFile);
-    //debugDraw->voxelTextureUpdate();
+    float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
+    glClearBufferfv(GL_COLOR, 0, clearColor);
+    float clearDepth = 1.0f;
+    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+    deferredPipeline->voxelizeScene(perFrameUBO);
+    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+    voxelTextureGenerator->setTexture(sceneFile);
+    debugDraw->voxelTextureUpdate();
 
     bool running = true;
     do

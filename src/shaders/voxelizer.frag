@@ -61,8 +61,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 };
 
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) coherent uniform image3D tColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING, rgba32f) coherent uniform image3D tNormal;
+layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) coherent writeonly uniform image3D tColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba32f) coherent writeonly uniform image3D tNormal;
 
 in block
 {
@@ -107,7 +107,7 @@ void main()
     vec4 normal = vec4(normalize(vertexData.normal), 1.0);
     int zPos = int(gl_FragCoord.z * uResolution.x);
     ivec3 voxelPos = ivec3(gl_FragCoord.xy, zPos);
-    imageStore(tColor, voxelPos, vec4(1.0, 0.5, 1.0, 1.0));
-    imageStore(tNormal, voxelPos, vec4(1.0));
+    imageStore(tColor, ivec3(1,1,1), vec4(1.0, 0.5, 1.0, 1.0));
+    imageStore(tNormal, ivec3(1,1,1), vec4(1.0));
     //fragColor = vec4(gl_FragCoord.x / 32, 0.0, 0.0, 1.0);
 }
