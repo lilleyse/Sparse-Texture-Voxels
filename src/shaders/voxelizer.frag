@@ -107,8 +107,7 @@ void main()
     vec4 normal = vec4(normalize(vertexData.normal), 1.0);
     int zPos = int(gl_FragCoord.z * uResolution.x);
     ivec3 voxelPos = ivec3(gl_FragCoord.xy, zPos);
-    color = vec4(1.0);
-    normal = vec4(1.0);
-    imageStore(tColor, ivec3(voxelPos), color);
-    imageStore(tNormal, ivec3(voxelPos), normal);
+    imageStore(tColor, voxelPos, vec4(1.0, 0.5, 1.0, 1.0));
+    imageStore(tNormal, voxelPos, vec4(1.0));
+    //fragColor = vec4(gl_FragCoord.x / 32, 0.0, 0.0, 1.0);
 }

@@ -51,11 +51,13 @@ public:
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 
         // Create a dense 3D color texture
+        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glGenTextures(1, &colorTexture);
         glBindTexture(GL_TEXTURE_3D, colorTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
         
         // Create a dense 3D normals texture
+        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glGenTextures(1, &normalTexture);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA32F, voxelGridLength, voxelGridLength, voxelGridLength);
@@ -64,9 +66,11 @@ public:
     // Data is assumed to be in RGBA format
     void setData(TextureData& textureData, uint sideLength, uint mipMapLevel)
     {
+        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, colorTexture);
         glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.colorData[0]);
    
+        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_FLOAT, &textureData.normalData[0]);
     }

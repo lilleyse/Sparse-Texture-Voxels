@@ -28,8 +28,11 @@ public:
             prevMipData.colorData.resize(prevMipMapSideLength*prevMipMapSideLength*prevMipMapSideLength);
             prevMipData.normalData.resize(prevMipMapSideLength*prevMipMapSideLength*prevMipMapSideLength);
 
+            glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
             glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
             glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_UNSIGNED_BYTE, &prevMipData.colorData[0]);
+            
+            glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
             glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
             glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_FLOAT, &prevMipData.normalData[0]);
            

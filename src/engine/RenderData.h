@@ -226,7 +226,7 @@ public:
             RenderGroup* renderGroup = renderGroups[i];
             if(!renderGroup->disabled)
             {
-                renderGroup->render(false);
+                renderGroup->render(true);
             }
         }
     }

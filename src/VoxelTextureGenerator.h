@@ -158,15 +158,16 @@ public:
         textureData.colorData.resize(voxelTextureSize);
         textureData.normalData.resize(voxelTextureSize);
 
+        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
         glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.colorData[0]);
 
+        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
         glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_FLOAT, &textureData.normalData[0]);
 
         textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
         textures.push_back(textureData);
-
     }
     
     bool setTexture(std::string name)

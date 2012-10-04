@@ -112,14 +112,11 @@ void GLFWCALL key(int k, int action)
         if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
 
         // Changing textures
-        if (currentDemoType != DEFERRED_PIPELINE)
-        {
-            bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
-            bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-            if (setsNextTexture || setsPreviousTexture)
-                if (loadAllDemos || currentDemoType == DEBUGDRAW)
-                    debugDraw->voxelTextureUpdate();
-        }
+        bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
+        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
+        if (setsNextTexture || setsPreviousTexture)
+            if (loadAllDemos || currentDemoType == DEBUGDRAW)
+                debugDraw->voxelTextureUpdate();
     }
 }
 
@@ -174,7 +171,7 @@ void begin()
     initGL();
 
     camera->setFarNearPlanes(.01f, 100.0f);
-    //camera->zoom(0.0f);
+    camera->zoom(3.0f);
     camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
@@ -197,9 +194,6 @@ void begin()
     {
         coreEngine->begin(sceneFile);
         deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
-        deferredPipeline->voxelizeScene(perFrameUBO);
-        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-        voxelTextureGenerator->setTexture(sceneFile);
     }
 
     setMipMapLevel(currentMipMapLevel);
@@ -271,6 +265,15 @@ int main(int argc, char* argv[])
     glfwEnable(GLFW_STICKY_KEYS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
+
+    //float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
+    //glClearBufferfv(GL_COLOR, 0, clearColor);
+    //float clearDepth = 1.0f;
+    //glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+    //deferredPipeline->voxelizeScene(perFrameUBO);
+    //voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+    //voxelTextureGenerator->setTexture(sceneFile);
+    //debugDraw->voxelTextureUpdate();
 
     bool running = true;
     do
