@@ -8,6 +8,7 @@
     <meshes>
         <mesh name="cube" />
         <mesh name="sphere" />
+        <mesh name="cow" />
     </meshes>
     <objects>
         <object>
@@ -63,6 +64,15 @@
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
+        </object>
+        <object>
+          <name>cow</name>
+          <mesh>cow</mesh>
+          <translate>-3.6 -4 0</translate>
+          <scale>1.2 1.2 1.2</scale>
+          <rotate>0 1 0 300</rotate>
+          <culled>true</culled>
+          <shadow>true</shadow>
         </object>
     </objects>
 </Scene>

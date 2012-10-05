@@ -139,7 +139,7 @@ struct Object
 
     void updateModelMatrix()
     {
-        position.modelMatrix = translationMatrix * scaleMatrix;// * rotationMatrix;
+        position.modelMatrix = translationMatrix * scaleMatrix * rotationMatrix;
     }
 
     //-----------------------------
