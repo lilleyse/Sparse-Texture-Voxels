@@ -29,6 +29,7 @@ public:
         sceneLibrary.begin();
 
         scene = sceneLibrary.addScene(renderData, meshLibrary, shaderLibrary, filename, filename);
+
         meshLibrary.commitToGL(renderData);
         scene->commitToGL();
         renderData.commitToGL();

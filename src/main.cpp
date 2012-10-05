@@ -31,7 +31,7 @@ namespace
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
     };
-    std::string sceneFile = SCENE_DIRECTORY + "world.xml";
+    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     std::string initialVoxelTexture = voxelTextures[0];
     uint voxelGridLength = 32;
     uint currentMipMapLevel = 0;

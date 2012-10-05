@@ -108,6 +108,6 @@ void main()
     int zPos = int(gl_FragCoord.z * uResolution.x);
     //ivec3 voxelPos = ivec3(gl_FragCoord.xy, zPos);
     ivec3 voxelPos = ivec3(vertexData.position*uResolution.x);
-    imageStore(tColor, voxelPos, color);
+    imageStore(tColor, voxelPos, normal);
     imageStore(tNormal, voxelPos, normal);
 }
