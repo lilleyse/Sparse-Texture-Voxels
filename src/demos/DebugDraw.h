@@ -41,7 +41,7 @@ public:
         // Create buffer objects and vao
         glm::vec3 vertices[numVerticesCube*2] = {glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, 0.5, -0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, -0.5, 0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, -0.5, -0.5), glm::vec3(1, 0, -0), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, -1, -0), glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 1, -0), glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 1, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 1, -0), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 1, -0)};
         unsigned short elements[numElementsCube] = {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23};
-
+        
         GLuint vertexBuffer;
         glGenBuffers(1, &vertexBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer);
@@ -51,11 +51,12 @@ public:
         glGenBuffers(1, &elementArrayBuffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBuffer);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned short)*numElementsCube, elements, GL_STATIC_DRAW);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         glGenBuffers(1, &voxelBuffer);
         glBindBuffer(GL_ARRAY_BUFFER, voxelBuffer);
         // Don't fill this buffer yet
-
+        
         glGenVertexArrays(1, &vertexArray);
         glBindVertexArray(vertexArray);
 
@@ -74,12 +75,13 @@ public:
         glVertexAttribDivisor(DEBUG_COLOR_ATTR, 1);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementArrayBuffer);
-
+        
         //Unbind everything
         glBindVertexArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+        
         // Create shader program
         GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
         GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
@@ -92,7 +94,7 @@ public:
 
         glLinkProgram(voxelDebugProgram);
         Utils::OpenGL::checkProgram(voxelDebugProgram);
-
+        
         voxelTextureUpdate();
     }
     void voxelTextureUpdate()

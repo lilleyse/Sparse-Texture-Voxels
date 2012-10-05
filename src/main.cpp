@@ -2,6 +2,7 @@
 #include "ShaderConstants.h"
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
+#include "Voxelizer.h"
 #include "engine/CoreEngine.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
@@ -32,10 +33,11 @@ namespace
     };
     std::string sceneFile = SCENE_DIRECTORY + "world.xml";
     std::string initialVoxelTexture = voxelTextures[0];
-    uint voxelGridLength = 128;
+    uint voxelGridLength = 32;
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
+    Voxelizer* voxelizer = new Voxelizer();
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -104,8 +106,6 @@ void GLFWCALL key(int k, int action)
             currentDemoType = (DemoType)((uint)k - '1');
         if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
-        if (currentDemoType == DEFERRED_PIPELINE)
-            voxelTextureGenerator->setTexture(sceneFile);
 
         // Changing mip map level
         if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
@@ -175,14 +175,24 @@ void begin()
     camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
+    coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength);
     voxelTextureGenerator->begin(voxelTexture);
-    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //for (uint i = 0; i < numInitialTextures; i++)
-    //    voxelTextureGenerator->createTexture(voxelTextures[i]);
-    //voxelTextureGenerator->setTexture(initialVoxelTexture);
     
+    // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
+    voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
+    voxelizer->voxelizeScene();
+    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+
+    // create procedural textures
+    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    for (uint i = 0; i < numInitialTextures; i++)
+        voxelTextureGenerator->createTexture(voxelTextures[i]);    
+
+    // set the active texture to the triangle scene
+    voxelTextureGenerator->setTexture(sceneFile);
+
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
         debugDraw->begin(voxelTexture);
@@ -191,10 +201,7 @@ void begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-    {
-        coreEngine->begin(sceneFile);
         deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
-    }
 
     setMipMapLevel(currentMipMapLevel);
 }
@@ -210,7 +217,6 @@ void display()
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
-
     perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
     perFrame.uCamLookAt = camera->lookAt;
     perFrame.uCamPos = camera->position;
@@ -266,15 +272,6 @@ int main(int argc, char* argv[])
     glfwEnable(GLFW_STICKY_KEYS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
-
-    float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
-    glClearBufferfv(GL_COLOR, 0, clearColor);
-    float clearDepth = 1.0f;
-    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
-    deferredPipeline->voxelizeScene(perFrameUBO);
-    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-    voxelTextureGenerator->setTexture(sceneFile);
-    debugDraw->voxelTextureUpdate();
 
     bool running = true;
     do

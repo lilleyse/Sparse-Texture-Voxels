@@ -93,13 +93,4 @@ public:
         glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
         glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
     }
-
-    void display()
-    {
-        // Rebind to the binding points in case binding points were messed up (like in MipMapGenerator)
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, colorTexture);
-        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, normalTexture);
-    }
 };
