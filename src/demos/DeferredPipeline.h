@@ -18,8 +18,8 @@ private:
     GLuint positionsTexture;
     GLuint colorsTexture;
     GLuint normalsTexture;
-
     GLuint deferredReadProgram;
+    GLuint deferredWriteProgram;
 
     VoxelTexture* voxelTexture;
     FullScreenQuad* fullScreenQuad;
@@ -33,24 +33,28 @@ public:
         this->coreEngine = coreEngine;
 
         // Creation positions texture
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_TEXTURE_BINDING);
         glGenTextures(1, &positionsTexture);
         glBindTexture(GL_TEXTURE_2D, positionsTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create colors texture
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_COLORS_TEXTURE_BINDING);
         glGenTextures(1, &colorsTexture);
         glBindTexture(GL_TEXTURE_2D, colorsTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create normals texture
+        glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_TEXTURE_BINDING);
         glGenTextures(1, &normalsTexture);
         glBindTexture(GL_TEXTURE_2D, normalsTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         // Create depth texture
+        glActiveTexture(GL_TEXTURE0 + NON_USED_TEXTURE);
         glGenTextures(1, &depthTexture);
         glBindTexture(GL_TEXTURE_2D, depthTexture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -70,29 +74,30 @@ public:
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_COLORS_FBO_BINDING], GL_TEXTURE_2D, colorsTexture, 0); 
         glFramebufferTexture2D(GL_DRAW_FRAMEBUFFER, fboAttachments[DEFERRED_NORMALS_FBO_BINDING], GL_TEXTURE_2D, normalsTexture, 0);
         glDrawBuffers(FBO_BINDING_POINT_ARRAY_SIZE, &fboAttachments[0]);
-
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        glBindTexture(GL_TEXTURE_2D, 0);
 
-        // Bind all the textures so we can read back from them later in a separate shader
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_POSITIONS_TEXTURE_BINDING);
-        glBindTexture(GL_TEXTURE_2D, positionsTexture);
+        // Create a program that writes the deferred data
+        GLuint vertexShaderObjectWrite = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
+        GLuint fragmentShaderObjectWrite = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainDeferred.frag");
 
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_COLORS_TEXTURE_BINDING);
-        glBindTexture(GL_TEXTURE_2D, colorsTexture);
+        deferredWriteProgram = glCreateProgram();
+        glAttachShader(deferredWriteProgram, vertexShaderObjectWrite);
+        glAttachShader(deferredWriteProgram, fragmentShaderObjectWrite);
+        glDeleteShader(vertexShaderObjectWrite);
+        glDeleteShader(fragmentShaderObjectWrite);
 
-        glActiveTexture(GL_TEXTURE0 + DEFERRED_NORMALS_TEXTURE_BINDING);
-        glBindTexture(GL_TEXTURE_2D, normalsTexture);
+        glLinkProgram(deferredWriteProgram);
+        Utils::OpenGL::checkProgram(deferredWriteProgram);
 
         // Create program that reads the deferred data
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
+        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint fragmentShaderObjectRead = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
 
         deferredReadProgram = glCreateProgram();
-        glAttachShader(deferredReadProgram, vertexShaderObject);
-        glAttachShader(deferredReadProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
+        glAttachShader(deferredReadProgram, vertexShaderObjectRead);
+        glAttachShader(deferredReadProgram, fragmentShaderObjectRead);
+        glDeleteShader(vertexShaderObjectRead);
+        glDeleteShader(fragmentShaderObjectRead);
 
         glLinkProgram(deferredReadProgram);
         Utils::OpenGL::checkProgram(deferredReadProgram);
@@ -125,7 +130,6 @@ public:
     void display()
     {
         voxelTexture->enableLinearSampling();
-        voxelTexture->display();
         
         // Bind custom FBO then draw into it
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, deferredFBO);
@@ -142,6 +146,9 @@ public:
                 glClearBufferfv(GL_COLOR, i, clearColor);
         }
         
+        // Write the scene to the fbo's
+        glUseProgram(deferredWriteProgram);
+
         // Render to the FBO
         coreEngine->display();
 

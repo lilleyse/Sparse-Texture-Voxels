@@ -79,9 +79,9 @@ struct Object
 
     void setScale(glm::vec3 amount)
     {
-        scaleMatrix[0].x *= amount.x;
-        scaleMatrix[1].y *= amount.y;
-        scaleMatrix[2].z *= amount.z;
+        scaleMatrix[0].x = amount.x;
+        scaleMatrix[1].y = amount.y;
+        scaleMatrix[2].z = amount.z;
         updateModelMatrix();
     }
 

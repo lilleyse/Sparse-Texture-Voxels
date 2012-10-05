@@ -25,7 +25,7 @@ struct ShaderLibrary
         glf::checkProgram(mainPassShader);
         */
 
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
+        /*GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
         GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainDeferred.frag");
 
         debugDrawShader = glCreateProgram();
@@ -35,6 +35,6 @@ struct ShaderLibrary
         glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(debugDrawShader);
-        Utils::OpenGL::checkProgram(debugDrawShader);
+        Utils::OpenGL::checkProgram(debugDrawShader);*/
     }
 };
