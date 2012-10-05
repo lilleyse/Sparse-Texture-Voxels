@@ -33,7 +33,7 @@ namespace
     };
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     std::string initialVoxelTexture = voxelTextures[0];
-    uint voxelGridLength = 32;
+    uint voxelGridLength = 64;
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();

@@ -2,8 +2,8 @@
 <Scene>
     <info>
         <name>cornell</name>
-        <bottom_corner>-10 -10 -10</bottom_corner>
-        <top_corner>10 10 10</top_corner>
+        <bottom_corner>-11 -11 -11</bottom_corner>
+        <top_corner>11 11 11</top_corner>
     </info>
     <meshes>
         <mesh name="cube" />
