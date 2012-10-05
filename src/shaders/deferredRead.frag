@@ -269,42 +269,57 @@ void main()
 
 
     //-----------------------------------------------------
-    // GATHER AO
+    // COMPUTE COLORS
     //-----------------------------------------------------
     
-    float ao = 0.0;
+    // if nothing there, don't color
     if ( col.a!=0.0 ) {
-        // setup cones constants   
-        #define NUM_AO_DIRS 6.0
-        #define NUM_RADIAL_DIRS 5.0
-        const float FOV = radians(30.0);
-        const float ANGLE_ROTATE = radians(75.0);
+        
+        /* AMBIENT OCCLUSION */
+        float ao = 0.0;
+        {
+            // setup cones constants   
+            #define NUM_AO_DIRS 6.0
+            #define NUM_RADIAL_DIRS 5.0
+            const float FOV = radians(30.0);
+            const float ANGLE_ROTATE = radians(75.0);
 
-        // radial ring of cones
-        vec3 axis = findPerpendicular(nor); // find a perpendicular vector
-        for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
-            // rotate that vector around normal (to distribute cone around)
-            vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
+            // radial ring of cones
+            vec3 axis = findPerpendicular(nor); // find a perpendicular vector
+            for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
+                // rotate that vector around normal (to distribute cone around)
+                vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
             
-            // ray dir is normal rotated an fov over that vector
-            vec3 rd = rotate(nor, FOV, rotatedAxis);
+                // ray dir is normal rotated an fov over that vector
+                vec3 rd = rotate(nor, FOV, rotatedAxis);
 
-            ao += conetraceVisibility(pos+rd*EPS, rd, FOV);
+                ao += conetraceVisibility(pos+rd*EPS, rd, FOV);
+            }
+
+            // single perpendicular cone (straight up)
+            ao += conetraceVisibility(pos+nor*EPS, nor, FOV);
+
+            // finally, divide
+            ao /= NUM_AO_DIRS;
+
+            #undef NUM_AO_DIRS
+            #undef NUM_RADIAL_DIRS
         }
 
-        // single perpendicular cone (straight up)
-        ao += conetraceVisibility(pos+nor*EPS, nor, FOV);
-
-        // finally, divide
-        ao /= NUM_AO_DIRS;
-
-        #undef NUM_AO_DIRS
-        #undef NUM_RADIAL_DIRS
+        /* SPECULAR */
+        vec4 spec;
+        {            
+            const float FOV = radians(10.0);
+            vec3 rd = normalize(pos-uCamPos);
+            rd = reflect(rd, nor);
+            spec = conetraceAccum(pos+rd*EPS, rd, FOV);
+        }
+        
+        /* COMP PASSES */        
+        //col.rgb = vec3(ao);
+        //col.rgb = mix(col.rgb, spec.rgb*spec.a, 0.6);
+        col.rgb *= ao;
     }
-
-    // multiply AO into color
-    //col.rgb *= ao;
-    col.rgb = vec3(ao);
 
 
     //-----------------------------------------------------
