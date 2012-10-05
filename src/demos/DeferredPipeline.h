@@ -136,21 +136,13 @@ public:
         uint voxelGridLength = voxelTexture->voxelGridLength;
         glViewport(0, 0, voxelGridLength, voxelGridLength);
 
-        // Update the per frame UBO with the orthographic projection
-        PerFrameUBO perFrame;
-        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f);
-        perFrame.uResolution = glm::ivec2(voxelGridLength);
-        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
         // Bind voxelTexture's color and normal textures for writing
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING, voxelTexture->colorTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA8);
+        glBindImageTexture(COLOR_IMAGE_3D_BINDING, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
-        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         
         // Create program that writes the scene to a voxel texture
         GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
@@ -165,15 +157,45 @@ public:
         glUseProgram(voxelizerProgram);
 
         // Disable writing to the framebuffer
+        glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
+
+
         // Render
+
+        // Update the per frame UBO with the orthographic projection
+        PerFrameUBO perFrame;
+        
+        perFrame.uResolution = glm::ivec2(voxelGridLength);
+        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
+
+        
+        // Render down z-axis
+        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
         coreEngine->display();
+        
+
+        // Render down y-axis
+        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,-1,0), glm::vec3(1,0,0));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+        coreEngine->display();
+        
+        
+        // Render down x-axis
+        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(-1,0,0), glm::vec3(0,0,1));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+        coreEngine->display();
+        
+        
         glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
         // return values back to normal
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
+        glEnable(GL_CULL_FACE);
         glEnable(GL_DEPTH_TEST);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }

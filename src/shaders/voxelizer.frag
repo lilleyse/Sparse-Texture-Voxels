@@ -106,8 +106,8 @@ void main()
     vec4 color = getDiffuseColor(getMeshMaterial());
     vec4 normal = vec4(normalize(vertexData.normal), 1.0);
     int zPos = int(gl_FragCoord.z * uResolution.x);
-    ivec3 voxelPos = ivec3(gl_FragCoord.xy, zPos);
-    imageStore(tColor, ivec3(1,1,1), vec4(1.0, 0.5, 1.0, 1.0));
-    imageStore(tNormal, ivec3(1,1,1), vec4(1.0));
-    //fragColor = vec4(gl_FragCoord.x / 32, 0.0, 0.0, 1.0);
+    //ivec3 voxelPos = ivec3(gl_FragCoord.xy, zPos);
+    ivec3 voxelPos = ivec3(vertexData.position*uResolution.x);
+    imageStore(tColor, voxelPos, color);
+    imageStore(tNormal, voxelPos, normal);
 }

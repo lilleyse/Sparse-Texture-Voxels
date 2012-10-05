@@ -32,7 +32,7 @@ namespace
     };
     std::string sceneFile = SCENE_DIRECTORY + "world.xml";
     std::string initialVoxelTexture = voxelTextures[0];
-    uint voxelGridLength = 32;
+    uint voxelGridLength = 128;
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
@@ -210,6 +210,7 @@ void display()
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
+
     perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
     perFrame.uCamLookAt = camera->lookAt;
     perFrame.uCamPos = camera->position;
