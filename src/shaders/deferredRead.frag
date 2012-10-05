@@ -272,7 +272,7 @@ void main()
     // COMPUTE COLORS
     //-----------------------------------------------------
 
-    #define PASS_COL
+    //#define PASS_COL
     #define PASS_AO    
     //#define PASS_INDIR
     //#define PASS_SPEC
@@ -290,7 +290,7 @@ void main()
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
             const float FOV = radians(30.0);
-            const float ANGLE_ROTATE = radians(75.0);
+            const float ANGLE_ROTATE = radians(72.0);
 
             // radial ring of cones
             vec3 axis = findPerpendicular(nor); // find a perpendicular vector
@@ -323,7 +323,7 @@ void main()
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
             const float FOV = radians(30.0);
-            const float ANGLE_ROTATE = radians(75.0);
+            const float ANGLE_ROTATE = radians(72.0);
 
             vec3 axis = findPerpendicular(nor);
             for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
