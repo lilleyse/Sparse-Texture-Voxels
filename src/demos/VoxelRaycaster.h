@@ -38,8 +38,6 @@ public:
     void display()
     {
         voxelTexture->enableNearestSampling();
-        voxelTexture->display();
-
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();
     }

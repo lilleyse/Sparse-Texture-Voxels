@@ -1,0 +1,78 @@
+<?xml version="1.0" ?>
+<Scene>
+    <info>
+        <name>cornell</name>
+        <bottom_corner>-11 -11 -11</bottom_corner>
+        <top_corner>11 11 11</top_corner>
+    </info>
+    <meshes>
+        <mesh name="cube" />
+        <mesh name="sphere" />
+        <mesh name="cow" />
+    </meshes>
+    <objects>
+        <object>
+            <name>cube_004</name>
+            <mesh>cube</mesh>
+            <translate>0 0 9</translate>
+            <scale>10 10 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>cube_003</name>
+            <mesh>cube</mesh>
+            <translate>-9 0 -0</translate>
+            <scale>1 10 10</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>cube_002</name>
+            <mesh>cube</mesh>
+            <translate>9 0 -0</translate>
+            <scale>1 10 10</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>cube_001</name>
+            <mesh>cube</mesh>
+            <translate>0 9 -0</translate>
+            <scale>10 1 10</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>cube</name>
+            <mesh>cube</mesh>
+            <translate>0 -9 -0</translate>
+            <scale>10 1 10</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>sphere</name>
+            <mesh>sphere</mesh>
+            <translate>4 -4 4</translate>
+            <scale>4 4 4</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+          <name>cow</name>
+          <mesh>cow</mesh>
+          <translate>-3.6 -4 0</translate>
+          <scale>1.2 1.2 1.2</scale>
+          <rotate>0 1 0 300</rotate>
+          <culled>true</culled>
+          <shadow>true</shadow>
+        </object>
+    </objects>
+</Scene>

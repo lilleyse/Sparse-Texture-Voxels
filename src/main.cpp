@@ -2,6 +2,7 @@
 #include "ShaderConstants.h"
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
+#include "Voxelizer.h"
 #include "engine/CoreEngine.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
@@ -14,9 +15,9 @@ namespace
     std::string applicationName("Sparse Texture Voxels");
     glm::ivec2 windowSize(600, 400);
     glm::ivec2 openGLVersion(4, 2);
-    ThirdPersonCamera camera;
+    ThirdPersonCamera* camera = new ThirdPersonCamera();
     glm::ivec2 currentMousePos;
-    bool showDebugOutput = false;
+    bool showDebugOutput = true;
     bool showFPS = true;
     bool vsync = false;
     int frameCount = 0;
@@ -28,13 +29,15 @@ namespace
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
-        "data/Bucky.raw",
+        DATA_DIRECTORY + "Bucky.raw",
     };
+    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     std::string initialVoxelTexture = voxelTextures[0];
-    uint voxelGridLength = 32;
+    uint voxelGridLength = 64;
     uint currentMipMapLevel = 0;
-    VoxelTextureGenerator voxelTextureGenerator;
+    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
+    Voxelizer* voxelizer = new Voxelizer();
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -75,21 +78,21 @@ void GLFWCALL mouseMove(int x, int y)
     bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     if (leftPress || rightPress || middlePress)
     {
-        float cameraDistanceFromCenter = glm::length(camera.position);
+        float cameraDistanceFromCenter = glm::length(camera->position);
         if (leftPress)
         {
             float rotateAmount = cameraDistanceFromCenter / 200.0f;
-            camera.rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
+            camera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
         }
         else if (rightPress)
         {
             float zoomAmount = cameraDistanceFromCenter / 200.0f;
-            camera.zoom(mouseDelta.y * zoomAmount);
+            camera->zoom(mouseDelta.y * zoomAmount);
         }
         else if (middlePress)
         {
             float panAmount = cameraDistanceFromCenter / 500.0f;
-            camera.pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
+            camera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
         }
     }
 }
@@ -103,14 +106,14 @@ void GLFWCALL key(int k, int action)
             currentDemoType = (DemoType)((uint)k - '1');
         if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
-            
+
         // Changing mip map level
         if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
         if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
 
         // Changing textures
-        bool setsNextTexture = k == ';' && voxelTextureGenerator.setNextTexture();
-        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator.setPreviousTexture();
+        bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
+        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
         if (setsNextTexture || setsPreviousTexture)
             if (loadAllDemos || currentDemoType == DEBUGDRAW)
                 debugDraw->voxelTextureUpdate();
@@ -120,7 +123,7 @@ void GLFWCALL key(int k, int action)
 void GLFWCALL resize(int w, int h)
 {
     glViewport(0, 0, w, h);
-    camera.setAspectRatio(w, h);
+    camera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
 
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
@@ -167,20 +170,29 @@ void begin()
 {
     initGL();
 
-    camera.setFarNearPlanes(.01f, 100.0f);
-    camera.zoom(3);
-    camera.lookAt = glm::vec3(0.5f);
+    camera->setFarNearPlanes(.01f, 100.0f);
+    camera->zoom(3.0f);
+    camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
-    coreEngine->begin();
+    coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength);
-    voxelTextureGenerator.begin(voxelTexture);
+    voxelTextureGenerator->begin(voxelTexture);
+    
+    // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
+    voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
+    voxelizer->voxelizeScene();
+    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+
+    // create procedural textures
     uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
     for (uint i = 0; i < numInitialTextures; i++)
-        voxelTextureGenerator.createTexture(voxelTextures[i]);
-    voxelTextureGenerator.setTexture(initialVoxelTexture);
-    
+        voxelTextureGenerator->createTexture(voxelTextures[i]);    
+
+    // set the active texture to the triangle scene
+    voxelTextureGenerator->setTexture(sceneFile);
+
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
         debugDraw->begin(voxelTexture);
@@ -205,14 +217,14 @@ void display()
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
-    perFrame.viewProjection = camera.createProjectionMatrix() * camera.createViewMatrix();    
-    perFrame.uCamLookAt = camera.lookAt;
-    perFrame.uCamPos = camera.position;
-    perFrame.uCamUp = camera.upDir;
+    perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
+    perFrame.uCamLookAt = camera->lookAt;
+    perFrame.uCamPos = camera->position;
+    perFrame.uCamUp = camera->upDir;
     perFrame.uResolution = glm::vec2(windowSize);
     perFrame.uAspect = (float)windowSize.x/windowSize.y;
     perFrame.uTime = frameTime;
-    perFrame.uFOV = camera.fieldOfView;
+    perFrame.uFOV = camera->fieldOfView;
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);

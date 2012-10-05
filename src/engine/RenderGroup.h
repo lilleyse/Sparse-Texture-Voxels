@@ -180,6 +180,8 @@ struct RenderGroup
             DrawCommand& drawCommand = drawCommands[i];
             glDrawElementsInstancedBaseVertexBaseInstance(drawPrimitive, drawCommand.count, elementType, (void*)(drawCommand.firstIndex*elementSize), drawCommand.primCount, drawCommand.baseVertex, drawCommand.baseInstance);
         }
+
+        glBindVertexArray(0);
     }
         
     bool isMeshCompatible(Object* object, Mesh* mesh)

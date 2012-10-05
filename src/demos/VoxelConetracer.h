@@ -43,7 +43,6 @@ public:
     void display()
     {
         voxelTexture->enableLinearSampling();
-        voxelTexture->display();
 
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();

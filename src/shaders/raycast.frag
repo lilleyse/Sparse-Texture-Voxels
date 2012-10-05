@@ -25,7 +25,12 @@
 #define DEFERRED_POSITIONS_TEXTURE_BINDING       3
 #define DEFERRED_COLORS_TEXTURE_BINDING          4
 #define DEFERRED_NORMALS_TEXTURE_BINDING         5
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6               
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6       
+
+// Image binding points
+#define NON_USED_IMAGE                           0
+#define COLOR_IMAGE_3D_BINDING                   1
+#define NORMAL_IMAGE_3D_BINDING                  2           
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -46,7 +51,7 @@
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
-    mat4 viewProjection;
+    mat4 uViewProjection;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;

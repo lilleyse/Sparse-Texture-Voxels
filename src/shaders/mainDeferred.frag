@@ -27,6 +27,11 @@
 #define DEFERRED_NORMALS_TEXTURE_BINDING         5
 #define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6               
 
+// Image binding points
+#define NON_USED_IMAGE                           0
+#define COLOR_IMAGE_3D_BINDING                   1
+#define NORMAL_IMAGE_3D_BINDING                  2   
+
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
 #define DEFERRED_COLORS_FBO_BINDING          1
