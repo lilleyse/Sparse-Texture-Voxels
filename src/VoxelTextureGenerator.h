@@ -62,7 +62,7 @@ public:
             else if (name == SPHERE)
             {
                 uint textureIndex = 0;
-                glm::vec3 center = glm::vec3(voxelGridLength/2);
+                glm::vec3 center = glm::vec3(voxelGridLength/2-0.5);
                 float radius = voxelGridLength/2.0f;
                 for(uint k = 0; k < voxelGridLength; k++)
                 for(uint j = 0; j < voxelGridLength; j++)                
