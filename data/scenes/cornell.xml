@@ -11,6 +11,7 @@
         <mesh name="redCube" />
         <mesh name="whiteCube" />
         <mesh name="cow" />
+		<!--<mesh name="alien_static" />-->
     </meshes>
     <objects>
         <object>
@@ -76,5 +77,14 @@
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
+        <!--<object>
+            <name>alien</name>
+            <mesh>alien_static</mesh>
+            <translate>-3.6 -4 -0</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 0</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>-->
     </objects>
 </Scene>
