@@ -1,0 +1,20 @@
+<?xml version="1.0" ?>
+<Mesh>
+    <info>
+        <name />
+        <type>static</type>
+        <width>2</width>
+        <height>2</height>
+        <depth>2</depth>
+        <positions>true</positions>
+        <normals>true</normals>
+        <UVs>false</UVs>
+    </info>
+    <material name="white">
+        <diffuse color="1 1 1 1" />
+    </material>
+    <geometry lod="0">
+        <vertex_data count="24">-1 -1 -1 -1 0 -0 -1 -1 1 -1 0 -0 -1 1 1 -1 0 -0 -1 1 -1 -1 0 -0 -1 1 -1 0 0 -1 1 1 -1 0 0 -1 1 -1 -1 0 0 -1 -1 -1 -1 0 0 -1 1 1 -1 1 0 -0 1 1 1 1 0 -0 1 -1 1 1 0 -0 1 -1 -1 1 0 -0 -1 -1 1 0 0 1 1 -1 1 0 0 1 1 1 1 0 0 1 -1 1 1 0 0 1 -1 -1 1 0 -1 -0 -1 -1 -1 0 -1 -0 1 -1 -1 0 -1 -0 1 -1 1 0 -1 -0 1 1 1 0 1 -0 1 1 -1 0 1 -0 -1 1 -1 0 1 -0 -1 1 1 0 1 -0</vertex_data>
+        <element_array count="36" material="white">0 1 2 0 2 3 4 5 6 4 6 7 8 9 10 8 10 11 12 13 14 12 14 15 16 17 18 16 18 19 20 21 22 20 22 23</element_array>
+    </geometry>
+</Mesh>

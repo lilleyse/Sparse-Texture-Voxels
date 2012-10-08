@@ -106,6 +106,6 @@ void main()
     vec4 color = getDiffuseColor(getMeshMaterial());
     vec4 normal = vec4(normalize(vertexData.normal), 1.0);
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tColor, voxelPos, vec4(vertexData.position, 1.0));
+    imageStore(tColor, voxelPos, color);
     imageStore(tNormal, voxelPos, normal);
 }
