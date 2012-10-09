@@ -100,10 +100,11 @@ void main()
 {    
     mat4 modelMatrix = getObjectPosition().modelMatrix; 
     vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+    vec3 worldNormal = normalize(mat3(modelMatrix) * normal);
     gl_Position = uViewProjection * worldPosition;
     
     vertexData.position = vec3(worldPosition);
-    vertexData.normal = normal;
+    vertexData.normal = worldNormal;
     vertexData.uv = uv;
     vertexData.propertyIndex = indexes;
 }

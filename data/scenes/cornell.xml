@@ -25,8 +25,8 @@
         <object>
             <name>greenCube</name>
             <mesh>greenCube</mesh>
-            <translate>9.5 0 1</translate>
-            <scale>0.5 9 9</scale>
+            <translate>9.5 0 0.5</translate>
+            <scale>0.5 9 9.5</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
@@ -34,8 +34,8 @@
         <object>
             <name>redCube</name>
             <mesh>redCube</mesh>
-            <translate>-9.5 0 0.999996</translate>
-            <scale>0.5 9 9</scale>
+            <translate>-9.5 0 0.5</translate>
+            <scale>0.5 9 9.5</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
@@ -43,7 +43,7 @@
         <object>
             <name>whiteCube_002</name>
             <mesh>whiteCube</mesh>
-            <translate>2.65044e-006 0 -8.5</translate>
+            <translate>0 0 -9.5</translate>
             <scale>10 9 0.5</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
@@ -52,8 +52,8 @@
         <object>
             <name>whiteCube_001</name>
             <mesh>whiteCube</mesh>
-            <translate>-1.62921e-007 -9.5 0.5</translate>
-            <scale>10 0.5 9.5</scale>
+            <translate>-1.62921e-007 -9.5 -0</translate>
+            <scale>10 0.5 10</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
@@ -61,8 +61,8 @@
         <object>
             <name>whiteCube</name>
             <mesh>whiteCube</mesh>
-            <translate>-1.62921e-007 9.5 0.5</translate>
-            <scale>10 0.5 9.5</scale>
+            <translate>-1.62921e-007 9.5 -0</translate>
+            <scale>10 0.5 10</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>

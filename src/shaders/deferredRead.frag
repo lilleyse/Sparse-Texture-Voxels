@@ -307,8 +307,8 @@ void main()
 
     #define PASS_COL
     #define PASS_AO    
-    //#define PASS_INDIR
-    //#define PASS_SPEC
+    #define PASS_INDIR
+    #define PASS_SPEC
 
     vec4 cout = vec4(vec3(1.0), col.a);
 
