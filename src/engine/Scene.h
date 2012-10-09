@@ -65,7 +65,7 @@ struct Scene
     void setBounds(glm::vec3& minBounds, glm::vec3& maxBounds)    
     {
         // Offset so that no clipping occurs if the bounding box is tight
-        glm::vec3 offset(.01);
+        glm::vec3 offset(.1);
         this->minBounds = minBounds - offset;
         this->maxBounds = maxBounds + offset;
     }

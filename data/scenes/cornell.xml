@@ -16,63 +16,63 @@
         <object>
             <name>sphere</name>
             <mesh>sphere</mesh>
-            <translate>4.9 -4.9 4.9</translate>
+            <translate>-4.9 -4.9 -4.9</translate>
             <scale>4 4 4</scale>
-            <rotate>0 -1 0 180</rotate>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
             <name>greenCube</name>
             <mesh>greenCube</mesh>
-            <translate>-9.5 0 -1</translate>
+            <translate>9.5 0 1</translate>
             <scale>0.5 9 9</scale>
-            <rotate>0 -1 0 180</rotate>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
             <name>redCube</name>
             <mesh>redCube</mesh>
-            <translate>9.5 0 -0.999997</translate>
+            <translate>-9.5 0 0.999996</translate>
             <scale>0.5 9 9</scale>
-            <rotate>0 -1 0 180</rotate>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
             <name>whiteCube_002</name>
             <mesh>whiteCube</mesh>
-            <translate>-1.90735e-006 0 8.5</translate>
+            <translate>2.65044e-006 0 -8.5</translate>
             <scale>10 9 0.5</scale>
-            <rotate>0 -1 0 180</rotate>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
             <name>whiteCube_001</name>
             <mesh>whiteCube</mesh>
-            <translate>1.19209e-007 -9.5 -0.5</translate>
+            <translate>-1.62921e-007 -9.5 0.5</translate>
             <scale>10 0.5 9.5</scale>
-            <rotate>0 -1 0 180</rotate>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
             <name>whiteCube</name>
             <mesh>whiteCube</mesh>
-            <translate>1.19209e-007 9.5 -0.5</translate>
+            <translate>-1.62921e-007 9.5 0.5</translate>
             <scale>10 0.5 9.5</scale>
-            <rotate>0 -1 0 180</rotate>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
             <name>cow</name>
             <mesh>cow</mesh>
-            <translate>-3.98616 -4.75075 -9.53674e-007</translate>
+            <translate>3.98616 -4.75075 1.30216e-006</translate>
             <scale>1.2 1.2 1.2</scale>
-            <rotate>0 -1 0 59.9999</rotate>
+            <rotate>0 -1 0 240</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
