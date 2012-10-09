@@ -50,8 +50,7 @@ struct SceneLibrary
         topCorner.y = (float)std::atof(topCornerPieces[1].c_str());
         topCorner.z = (float)std::atof(topCornerPieces[2].c_str());
 
-        scene->minBounds = bottomCorner;
-        scene->maxBounds = topCorner;
+        scene->setBounds(bottomCorner, topCorner);
 
         // Loop over meshes and load them
         XMLElement* meshesElement = header->FirstChildElement("meshes");

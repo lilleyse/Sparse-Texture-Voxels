@@ -32,7 +32,6 @@ struct Scene
         glm::vec3 translation = object->getTranslation();
         glm::vec3 scale = object->getScale();
 
-
         // Adjust object for a unit cube scene
         glm::vec3 worldSize = maxBounds - minBounds;
         glm::vec3 normalizedPosition = (translation - minBounds)/worldSize;
@@ -61,5 +60,13 @@ struct Scene
     void commitToGL()
     {
         //lightingHandler.commitToGL();
+    }
+
+    void setBounds(glm::vec3& minBounds, glm::vec3& maxBounds)    
+    {
+        // Offset so that no clipping occurs if the bounding box is tight
+        glm::vec3 offset(.01);
+        this->minBounds = minBounds - offset;
+        this->maxBounds = maxBounds + offset;
     }
 };
