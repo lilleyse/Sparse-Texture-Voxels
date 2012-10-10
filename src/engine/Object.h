@@ -28,8 +28,9 @@ struct Object
     glm::mat4 translationMatrix;
     glm::quat rotationQuat;
 
-    int renderGroupID;
-    int drawCommandID;
+    uint renderGroupID;
+    uint drawCommandID;
+    uint globalIndex;
 
 
     Object(Mesh* mesh, GLuint shader)
@@ -139,6 +140,7 @@ struct Object
 
     void updateModelMatrix()
     {
+        dirtyPosition = true;
         position.modelMatrix = translationMatrix * scaleMatrix * rotationMatrix;
     }
 

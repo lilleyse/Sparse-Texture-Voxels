@@ -17,9 +17,11 @@ private:
     ShaderLibrary shaderLibrary;
     RenderData renderData;
     SceneLibrary sceneLibrary;
-    Scene* scene;
+    
 
 public:
+
+    Scene* scene;
 
     void begin(std::string filename)
     {
@@ -35,6 +37,10 @@ public:
         renderData.commitToGL();
     }
 
+    void updateScene()
+    {
+        scene->display(renderData);
+    }
     void display()
     {
         renderData.display();
