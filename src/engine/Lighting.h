@@ -56,6 +56,6 @@ struct LightingHandler
 
     void commitToGL()
     {
-        lightUBO->commitToGL(&lighting, sizeof(Lighting));
+        lightUBO->commitToGL(&lighting, sizeof(Lighting), 0);
     }
 };

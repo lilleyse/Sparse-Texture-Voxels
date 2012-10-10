@@ -34,6 +34,7 @@ public:
 
     void voxelizeScene()
     {
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
         // Update the viewport to be the size of the voxel grid
         int oldViewport[4];
         glGetIntegerv(GL_VIEWPORT, oldViewport);
