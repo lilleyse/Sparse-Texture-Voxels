@@ -45,6 +45,74 @@ const std::string MESH_DIRECTORY = std::string(DATA_DIRECTORY + "meshes/");
 
 namespace Utils
 {
+    namespace Math
+    {
+        struct Ray
+        {
+            glm::vec3 position;
+            glm::vec3 direction;
+            Ray transform(glm::mat4 transformationMatrix)
+            {
+                Ray transformed;
+                transformed.position = glm::vec3(transformationMatrix * glm::vec4(position, 1.0f));
+                transformed.direction = glm::normalize(glm::vec3(transformationMatrix * glm::vec4(direction, 0.0)));                
+                return transformed;
+            }
+        };
+        Ray getPickingRay(int x, int y, int width, int height, float nearPlane, float farPlane, glm::mat4 viewMatrix, glm::mat4 projectionMatrix)
+        {
+	        float winWidth = (float)width;
+	        float winHeight = (float)height;
+	        float winX = (float)x;
+	        float winY = (float)y;
+	        float winZClose = 0.0f;
+	        float winZFar = 1.0f;
+
+	        //Window to NDC
+	        glm::vec4 closePoint;
+	        closePoint.x = 2.0f*(winX/winWidth) - 1.0f;
+	        closePoint.y = 2.0f*((winHeight - winY)/winHeight) - 1.0f;
+	        closePoint.z = 2.0f*(winZClose) - 1.0f;
+	        closePoint.w = 1.0f;
+
+	        glm::vec4 farPoint;
+	        farPoint.x = 2.0f*(winX/winWidth) - 1.0f;
+	        farPoint.y = 2.0f*((winHeight - winY)/winHeight) - 1.0f;
+	        farPoint.z = 2.0f*(winZFar) - 1.0f;
+	        farPoint.w = 1.0f;
+
+	        //NDC to clip
+	        closePoint *= nearPlane;
+	        farPoint *= farPlane;
+	        glm::mat4 invProjectionMatrix = glm::inverse(projectionMatrix);
+
+	        closePoint = invProjectionMatrix * closePoint;
+	        farPoint = invProjectionMatrix * farPoint;
+
+	        glm::mat4 invViewMatrix = glm::inverse(viewMatrix);
+	        closePoint = invViewMatrix * closePoint;
+	        farPoint = invViewMatrix * farPoint;
+
+	        Ray r;
+            r.position = glm::vec3(closePoint);
+            r.direction = glm::normalize(glm::vec3(farPoint-closePoint));
+	        return r;
+        }
+        float rayBoundingBoxIntersect(Ray &r, glm::vec3 min, glm::vec3 max)
+        {
+            glm::vec3 tMin = (min-r.position) / r.direction;
+            glm::vec3 tMax = (max-r.position) / r.direction;
+            glm::vec3 t1 = glm::min(tMin, tMax);
+            glm::vec3 t2 = glm::max(tMin, tMax);
+            float tNear = glm::max(glm::max(t1.x, t1.y), t1.z);
+            float tFar = glm::min(glm::min(t2.x, t2.y), t2.z);
+            float t = -1.0f;
+            if (tNear<tFar && tFar>0.0)
+                t = tNear > 0.0 ? tNear : tFar;
+            return t;
+        }
+    }
+
     std::string loadFile(std::string const & Filename)
     {
         std::ifstream stream(Filename.c_str(), std::ios::in);
@@ -157,7 +225,7 @@ namespace Utils
             {
                 std::vector<char> Buffer(std::max(InfoLogLength, int(1)));
                 glGetProgramInfoLog(ProgramName, InfoLogLength, NULL, &Buffer[0]);
-                //fprintf(stdout, "%s\n", &Buffer[0]);
+                fprintf(stdout, "%s\n", &Buffer[0]);
             }
 
             return Result == GL_TRUE;
@@ -171,14 +239,15 @@ namespace Utils
             GLint Result = GL_FALSE;
             glGetShaderiv(ShaderName, GL_COMPILE_STATUS, &Result);
 
-            fprintf(stdout, "Compiling shader\n%s...\n", Source);
+            fprintf(stdout, "Compiling shader\n");
+            //fprintf(stdout, "Compiling shader\n%s...\n", Source);
             int InfoLogLength;
             glGetShaderiv(ShaderName, GL_INFO_LOG_LENGTH, &InfoLogLength);
             if(InfoLogLength > 0)
             {
                 std::vector<char> Buffer(InfoLogLength);
                 glGetShaderInfoLog(ShaderName, InfoLogLength, NULL, &Buffer[0]);
-                //fprintf(stdout, "%s\n", &Buffer[0]);
+                fprintf(stdout, "%s\n", &Buffer[0]);
             }
 
             return Result == GL_TRUE;
@@ -272,7 +341,7 @@ namespace Utils
             for(GLint i = 0; i < ExtensionCount; ++i)
             {
                 std::string extensionName = std::string((char const*)glGetStringi(GL_EXTENSIONS, i));
-                //printf((extensionName + "\n").c_str());
+                printf((extensionName + "\n").c_str());
                 if(extensionName == std::string(String))
                     return true;
             }
