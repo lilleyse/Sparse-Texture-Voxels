@@ -243,7 +243,7 @@ namespace Utils
             for(GLint i = 0; i < ExtensionCount; ++i)
             {
                 std::string extensionName = std::string((char const*)glGetStringi(GL_EXTENSIONS, i));
-                printf((extensionName + "\n").c_str());
+                //printf((extensionName + "\n").c_str());
                 if(extensionName == std::string(String))
                     return true;
             }
