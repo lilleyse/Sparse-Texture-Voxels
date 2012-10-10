@@ -113,6 +113,35 @@ namespace Utils
 
     namespace OpenGL
     {
+        struct OpenGLTimer
+        {
+            // To use:
+            // 1) timer.begin() to initialize
+            // 2) timer.startTimer() before GL command
+            // 3) timer.stopTimer() after GL command
+            // 4) uint total = getElapsedTime()
+
+            GLuint queryObject;
+            uint totalTime;
+            void begin()
+            {
+                glGenQueries(1, &queryObject);  
+            }
+            void startTimer()
+            {
+                glBeginQuery(GL_TIME_ELAPSED, queryObject);
+            }
+            void stopTimer()
+            {
+                glEndQuery(GL_TIME_ELAPSED);
+                glGetQueryObjectuiv(queryObject, GL_QUERY_RESULT, &totalTime);
+            }
+            uint getElapsedTime()
+            {
+                return totalTime;
+            }
+        };
+
         bool checkProgram(GLuint ProgramName)
         {
             if(!ProgramName)

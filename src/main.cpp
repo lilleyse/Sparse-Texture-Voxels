@@ -17,20 +17,22 @@ namespace
     glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera* camera = new ThirdPersonCamera();
     glm::ivec2 currentMousePos;
-    bool showDebugOutput = true;
+    bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
     int frameCount = 0;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
+    Utils::OpenGL::OpenGLTimer timer;
     
     // Texture settings
-    /*const std::string voxelTextures[] = {
+    const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
-    };*/
+    };
+    bool loadTextures = false;
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     uint voxelGridLength = 128;
     uint currentMipMapLevel = 0;
@@ -45,7 +47,7 @@ namespace
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = true;
+    bool loadAllDemos = false;
 
     // OpenGL stuff
     CoreEngine* coreEngine = new CoreEngine();
@@ -174,6 +176,7 @@ void begin()
     camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
+    timer.begin();
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength);
@@ -185,10 +188,13 @@ void begin()
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
     // create procedural textures
-    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //for (uint i = 0; i < numInitialTextures; i++)
-    //    voxelTextureGenerator->createTexture(voxelTextures[i]);    
-
+    if (loadTextures)
+    {
+        uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+        for (uint i = 0; i < numInitialTextures; i++)
+            voxelTextureGenerator->createTexture(voxelTextures[i]);  
+    }
+      
     // set the active texture to the triangle scene
     voxelTextureGenerator->setTexture(sceneFile);
 
