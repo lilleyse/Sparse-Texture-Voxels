@@ -60,6 +60,11 @@ public:
         // Nothing
     }
 
+    void updateObject(Object* object)
+    {
+        positionBuffer->commitToGL(&object->position.modelMatrix, sizeof(ObjectPosition), sizeof(ObjectPosition)*object->globalIndex);
+    }
+
     void addObject(Object* object)
     {
         // Push the object into the objects list
@@ -126,7 +131,7 @@ public:
     void commitMaterials(void* materialData, uint subBufferSize, uint bufferSize)
     {
         materialBuffer = new UniformBuffer(MESH_MATERIAL_ARRAY_BINDING, 0, bufferSize, GL_STATIC_DRAW);
-        materialBuffer->commitToGL(materialData, subBufferSize);
+        materialBuffer->commitToGL(materialData, subBufferSize, 0);
     }
    
     void comitMeshBuffer(uint vertexBufferSize, uint elementArraySize)
@@ -177,6 +182,7 @@ public:
             Object* object = objects[i];
             
             int objectIndex = i;
+            object->globalIndex = objectIndex;
             positionArray[objectIndex] = object->position;
 
             // Loop over all the mesh groups of the first LOD
@@ -204,7 +210,7 @@ public:
 
         // Create more buffers now that all objects have been processed
         positionBuffer = new UniformBuffer(POSITION_ARRAY_BINDING, 0, sizeof(ObjectPosition)*NUM_OBJECTS_MAX, GL_STATIC_DRAW); // TO-DO: change to stream once things start moving
-        positionBuffer->commitToGL(&positionArray[0], sizeof(ObjectPosition)*positionArray.size());
+        positionBuffer->commitToGL(&positionArray[0], sizeof(ObjectPosition)*positionArray.size(), 0);
         
         perObjectBufferDynamic = new PerObjectBufferDynamic(&perObjectArrayDynamic[0], sizeof(glm::ivec2)*perObjectArrayDynamic.size());
 

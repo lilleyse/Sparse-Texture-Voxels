@@ -207,6 +207,11 @@ void begin()
 
 void display()
 {
+    // Update the scene
+    //coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
+    //coreEngine->updateScene();
+    //voxelizer->voxelizeScene();
+
     // Basic GL stuff
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};

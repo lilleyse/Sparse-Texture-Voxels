@@ -69,4 +69,19 @@ struct Scene
         this->minBounds = minBounds - offset;
         this->maxBounds = maxBounds + offset;
     }
+
+    void display(RenderData& renderData)
+    {
+        for(uint i = 0; i < objects.size(); i++)
+        {
+            Object* object = objects[i];
+            if(object->dirtyPosition)
+            {
+                // No longer dirty
+                object->dirtyPosition = false;
+                renderData.updateObject(object);
+            }
+        }
+
+    }
 };

@@ -41,10 +41,10 @@ struct UniformBuffer
         glDeleteBuffers(1, &bufferObject);
     }
 
-    void commitToGL(void* data, int size)
+    void commitToGL(void* data, int size, int offset)
     {
         glBindBuffer(GL_UNIFORM_BUFFER, bufferObject);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, size, data);
+        glBufferSubData(GL_UNIFORM_BUFFER, offset, size, data);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 };
