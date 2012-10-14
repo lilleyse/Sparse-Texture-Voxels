@@ -94,8 +94,7 @@ in vec2 vUV;
 
 uniform float uTextureRes;
 
-#define MAX_STEPS 128
-#define STEPSIZE_WRT_TEXEL 0.3333  // Cyrill uses 1/3
+#define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K 1.0
 #define AO_DIST_K 0.5
@@ -190,41 +189,64 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   float dist = 0.0;
   float pixSizeAtDist = tan(fov);
 
+  //float alpha = 1.0;
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
+  float dtm;
+  float mipLevel;
+  float pixSize;
+  float stepSize;
+  vec4 texel;
 
-  for (int i=0; i<MAX_STEPS; ++i) {
-    // size of texel cube we want
-    float pixSize = dist * pixSizeAtDist;
-
+  int counter = 0;
+  int emptyCount = 0;
+  while(true) {
     // calc mip size, clamp min to texelsize
     // if pixSize smaller than texel, clamp. that's the smallest we can go
-    float mipLevel;
-    if (pixSize > gTexelSize) {
-        // solve: pixSize = texelSize*2^mipLevel
-        mipLevel = log2(pixSize/gTexelSize);
-    }
-    else {
-        mipLevel = 0.0;
-        pixSize = gTexelSize;
-    }
+    // solve: pixSize = texelSize*2^mipLevel
+    pixSize = max(dist * pixSizeAtDist, gTexelSize);
+    mipLevel = max(log2(pixSize/gTexelSize), 0); 
 
-    float timeStamp = textureLod(tVoxNormal, pos, 0).w;
-    if (timeStamp > uTime - EPS)
+    texel = textureLod(tVoxColor, pos, mipLevel);
+    if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0).w == uTime)
     {
         // sample texture
-        vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-        // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-        // delta transmittance
-        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-        tm *= dtm;
-
-        col += (1.0-dtm)*texel.rgb*tm;
+        //float ratio = fract(mipLevel);
+        //float currentMipLevel = floor(mipLevel); 
+        //float nextMipLevel = ceil(mipLevel);
+        //
+        //vec4 currentTexel = textureLod(tVoxColor, pos, currentMipLevel);
+        //vec4 nextTexel = textureLod(tVoxColor, pos, nextMipLevel);
+        //vec4 texel = mix(currentTexel, nextTexel, ratio);
+        
+            // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
+            // delta transmittance
+            dtm = exp( -TRANSMIT_K * texel.a );
+            tm *= dtm;
+            col += (1.0 - dtm)*texel.rgb*tm;
+            break;
+            //col += (1.0-dtm)*texel.rgb*tm;
+            //if(emptyCount >= 0)
+            //{
+                //col = texel.rgb;
+                //break;
+            //}
+            //emptyCount = 0;
+            
+            //tm = .9;
+            //if(!hitEmpty && counter == 4)
+            //{
+            //    col = vec3(0);
+            //    alpha = 0;
+            //    break;
+            //}
+            
+        
     }
+    
 
     // take step relative to the interpolated size
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // increment
     dist += stepSize;
@@ -234,12 +256,16 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
         pos.x > 1.0 || pos.x < 0.0 ||
         pos.y > 1.0 || pos.y < 0.0 ||
         pos.z > 1.0 || pos.z < 0.0)
-        break;
+        {
+            //col = vec3(1.0, 0.0, 0.0);
+            break;
+        }
   }
 
   float alpha = 1.0-tm;
   alpha /= (1.0+AO_DIST_K*dist);
   return vec4( alpha==0 ? col : col/alpha , alpha);
+  // return vec4(col, 1.0);
 }
 
 
@@ -251,7 +277,7 @@ float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
 
   float tm = 1.0;         // accumulated transmittance
 
-  for (int i=0; i<MAX_STEPS; ++i) {
+  while(true) {
     // size of texel cube
     float pixSize =  dist * pixSizeAtDist;
 
@@ -331,7 +357,7 @@ void main()
             // 6 cones 30 fov, 5 cones around 1 cone straight up
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
-            const float FOV = radians(30.0);
+            const float FOV = radians(10.0);
             const float NORMAL_ROTATE = radians(60.0);
             const float ANGLE_ROTATE = radians(72.0);
 
@@ -373,10 +399,10 @@ void main()
             for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
                 vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-                indir += conetraceAccum(pos+rd*0.01, rd, FOV);
+                indir += conetraceAccum(pos+rd*0.05, rd, FOV);
             }
 
-            indir += conetraceAccum(pos+nor*0.01, nor, FOV);
+            indir += conetraceAccum(pos+nor*0.05, nor, FOV);
 
             indir /= NUM_DIRS;
 
@@ -389,10 +415,10 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(1.0);
+            const float FOV = radians(.1);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*EPS, rd, FOV);
+            spec = conetraceAccum(pos + rd*0.05, rd, FOV);
         }
         #endif
         
