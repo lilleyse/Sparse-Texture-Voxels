@@ -8,8 +8,16 @@ struct TextureData
     std::vector<glm::vec4> normalData;
 };
 
+struct MipMapInfo
+{
+    uint offset;
+    uint numVoxels;
+    uint gridLength;
+};
+
 class VoxelTexture
 {
+
 
 public:
 
@@ -20,6 +28,9 @@ public:
 
     uint voxelGridLength;
     uint numMipMapLevels;
+
+    uint totalVoxels;
+    std::vector<MipMapInfo> mipMapInfoArray;
 
     void begin(uint voxelGridLength)
     {
@@ -68,6 +79,22 @@ public:
         emptyData.colorData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
         emptyData.normalData.resize(voxelTextureSize);
         setData(emptyData, voxelGridLength, 0);
+
+        int numVoxels = 0;
+        int mipMapSideLength = voxelGridLength;
+        while(mipMapSideLength > 0)
+        {
+            MipMapInfo mipMapInfo;
+            mipMapInfo.offset = numVoxels;
+            mipMapInfo.numVoxels = mipMapSideLength*mipMapSideLength*mipMapSideLength;
+            mipMapInfo.gridLength = mipMapSideLength;
+
+            mipMapInfoArray.push_back(mipMapInfo);
+            mipMapSideLength /= 2;
+            numVoxels += mipMapInfo.numVoxels;
+        }
+
+        totalVoxels = numVoxels;
     }
 
     // Data is assumed to be in RGBA format

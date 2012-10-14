@@ -8,6 +8,7 @@
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
+#include "OpenCLState.h"
 
 namespace
 {
@@ -37,6 +38,7 @@ namespace
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
+    OpenCLState* openClMipmapper = new OpenCLState();
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -191,6 +193,8 @@ void begin()
 
     // set the active texture to the triangle scene
     voxelTextureGenerator->setTexture(sceneFile);
+
+    openClMipmapper->begin(voxelTexture);
 
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 

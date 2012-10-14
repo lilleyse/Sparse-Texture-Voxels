@@ -18,11 +18,11 @@ public:
     // This code is not super efficient since it is a short term solution that will be replaced by GPU-based mipmap generation
     void generateMipMapCPU(VoxelTexture* voxelTexture)
     {
-        int mipMapSideLength = voxelTexture->voxelGridLength;
+        int mipMapSideLength = voxelTexture->mipMapInfoArray[0].gridLength;
         for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
             int prevMipMapSideLength = mipMapSideLength;
-            mipMapSideLength /=2;
+            mipMapSideLength = voxelTexture->mipMapInfoArray[i].gridLength;
 
             TextureData prevMipData;
             prevMipData.colorData.resize(prevMipMapSideLength*prevMipMapSideLength*prevMipMapSideLength);
