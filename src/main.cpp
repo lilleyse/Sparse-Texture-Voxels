@@ -34,6 +34,7 @@ namespace
     };*/
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     uint voxelGridLength = 128;
+    uint numMipMapLevels = 6; //starts at 0
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
@@ -178,7 +179,7 @@ void begin()
     // set up miscellaneous things
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
-    voxelTexture->begin(voxelGridLength);
+    voxelTexture->begin(voxelGridLength, numMipMapLevels);
     voxelTextureGenerator->begin(voxelTexture);
     
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty

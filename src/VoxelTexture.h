@@ -32,11 +32,14 @@ public:
     uint totalVoxels;
     std::vector<MipMapInfo> mipMapInfoArray;
 
-    void begin(uint voxelGridLength)
+    void begin(uint voxelGridLength, uint numMipMapLevels)
     {
         //Create a default empty vector for each texture data
         this->voxelGridLength = voxelGridLength;
-        this->numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
+        this->numMipMapLevels = numMipMapLevels;//(uint)(glm::log2(float(voxelGridLength)) + 1.5);
+
+        int baseLevel = 0;
+        int maxLevel = numMipMapLevels-1;
 
         // Create a nearest sampler to sample from any of the 3D textures
         glGenSamplers(1, &textureNearestSampler);
@@ -44,6 +47,8 @@ public:
 
         float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
         glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -55,6 +60,8 @@ public:
         glBindSampler(0, textureLinearSampler);
 
         glSamplerParameterfv(textureLinearSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
+        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -66,13 +73,17 @@ public:
         glGenTextures(1, &colorTexture);
         glBindTexture(GL_TEXTURE_3D, colorTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
-        
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, baseLevel); 
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, maxLevel);
+
         // Create a dense 3D normals texture
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glGenTextures(1, &normalTexture);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
         glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA32F, voxelGridLength, voxelGridLength, voxelGridLength);
-        
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, baseLevel); 
+        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, maxLevel);
+
         // Store empty data in the voxel texture
         uint voxelTextureSize = voxelGridLength * voxelGridLength * voxelGridLength;
         TextureData emptyData;
@@ -82,7 +93,7 @@ public:
 
         int numVoxels = 0;
         int mipMapSideLength = voxelGridLength;
-        while(mipMapSideLength > 0)
+        for(int i = 0; i < numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = numVoxels;
