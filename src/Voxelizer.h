@@ -32,7 +32,7 @@ public:
     }
 
 
-    void voxelizeScene()
+    void voxelizeScene(float frameTime)
     {
         // Update the viewport to be the size of the voxel grid
         int oldViewport[4];
@@ -55,6 +55,7 @@ public:
         // Update the per frame UBO with the orthographic projection
         PerFrameUBO perFrame;
         perFrame.uResolution = glm::ivec2(voxelGridLength);
+        perFrame.uTime = frameTime;
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
 
         // Render down z-axis
@@ -73,7 +74,6 @@ public:
         coreEngine->display();
         
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage
-        // change to texture, not all
         glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         // return values back to normal
@@ -83,5 +83,4 @@ public:
         glEnable(GL_DEPTH_TEST);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-
 };

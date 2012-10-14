@@ -88,6 +88,7 @@ layout(binding = DEFERRED_COLORS_TEXTURE_BINDING) uniform sampler2D tColor;
 layout(binding = DEFERRED_NORMALS_TEXTURE_BINDING) uniform sampler2D tNormal;
 
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
+layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 in vec2 vUV;
 
@@ -208,28 +209,32 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
         pixSize = gTexelSize;
     }
 
+    float timeStamp = textureLod(tVoxNormal, pos, 0).w;
+    if (timeStamp > uTime - EPS)
+    {
+        // sample texture
+        vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+
+        // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
+        // delta transmittance
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+        tm *= dtm;
+
+        col += (1.0-dtm)*texel.rgb*tm;
+    }
+
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
-    // sample texture
-    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-    // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-    // delta transmittance
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-    tm *= dtm;
-
-    col += (1.0-dtm)*texel.rgb*tm;
 
     // increment
     dist += stepSize;
     pos += stepSize*rd;
 
     if (tm < TRANSMIT_MIN ||
-      pos.x > 1.0 || pos.x < 0.0 ||
-      pos.y > 1.0 || pos.y < 0.0 ||
-      pos.z > 1.0 || pos.z < 0.0)
-      break;
+        pos.x > 1.0 || pos.x < 0.0 ||
+        pos.y > 1.0 || pos.y < 0.0 ||
+        pos.z > 1.0 || pos.z < 0.0)
+        break;
   }
 
   float alpha = 1.0-tm;
@@ -260,14 +265,18 @@ float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
         pixSize = gTexelSize;
     }
 
+    float timeStamp = textureLod(tVoxNormal, pos, 0).w;
+    if (timeStamp > uTime - EPS)
+    {
+        // sample texture
+        vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+
+        // update transmittance
+        tm *= exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    }
+
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
-    // sample texture
-    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-    // update transmittance
-    tm *= exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
 
     // increment
     dist += stepSize;
@@ -306,8 +315,8 @@ void main()
     //-----------------------------------------------------
 
     #define PASS_COL
-    #define PASS_AO    
-    #define PASS_INDIR
+    //#define PASS_AO    
+    //#define PASS_INDIR
     #define PASS_SPEC
 
     vec4 cout = vec4(vec3(1.0), col.a);
@@ -380,7 +389,7 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(10.0);
+            const float FOV = radians(1.0);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
             spec = conetraceAccum(pos+rd*EPS, rd, FOV);
@@ -423,6 +432,4 @@ void main()
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
     fragColor = bg;
-
-    //fragColor = vec4(nor, 1.0);
 }

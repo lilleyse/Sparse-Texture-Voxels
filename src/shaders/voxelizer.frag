@@ -104,7 +104,7 @@ layout (location = 0, index = 0) out vec4 fragColor;
 void main()
 {    
     vec4 color = getDiffuseColor(getMeshMaterial());
-    vec4 normal = vec4(normalize(vertexData.normal), 1.0);
+    vec4 normal = vec4(normalize(vertexData.normal), uTime);
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
     imageStore(tColor, voxelPos, color);
     imageStore(tNormal, voxelPos, normal);

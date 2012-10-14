@@ -170,16 +170,17 @@ void checkKeyDown()
         float rotationAmount = 0.5f;
         float scaleAmount = 0.01f;
         bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
-        if(glfwGetKey('W') == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
-        if(glfwGetKey('S') == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
-        if(glfwGetKey('A') == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
-        if(glfwGetKey('D') == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
-        if(glfwGetKey('Q') == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
-        if(glfwGetKey('E') == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
-        if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
+        if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
+        if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
+        if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
+        if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
         if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
-        if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(glm::vec3(1.0f - scaleAmount, 1.0f - scaleAmount, 1.0f - scaleAmount));
-        if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(glm::vec3(1.0f + scaleAmount, 1.0f + scaleAmount, 1.0f + scaleAmount));
+        else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
+        if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
+        else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
+        
     }
 }
 
@@ -246,7 +247,7 @@ void begin()
     
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
-    voxelizer->voxelizeScene();
+    voxelizer->voxelizeScene(frameTime);
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
     // create procedural textures
@@ -275,10 +276,6 @@ void begin()
 
 void display()
 {
-    // Update the scene
-    coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
-    coreEngine->updateScene();
-    voxelizer->voxelizeScene();
 
     // Basic GL stuff
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -286,6 +283,10 @@ void display()
     glClearBufferfv(GL_COLOR, 0, clearColor);
     float clearDepth = 1.0f;
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+
+    // Update the scene
+    coreEngine->updateScene();
+    voxelizer->voxelizeScene(frameTime);
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
@@ -350,9 +351,9 @@ int main(int argc, char* argv[])
     {
         checkKeyDown();
         display();
-        glfwSwapBuffers();
         frameTime += FRAME_TIME_DELTA;
         if (showFPS) displayFPS();
+        glfwSwapBuffers();
         running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
     }
     while(running);
