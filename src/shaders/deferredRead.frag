@@ -67,7 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 #define EPS       0.0001
-#define EPS2      0.01
+#define EPS2      0.05
 #define EPS8      0.00000001
 #define PI        3.14159265
 #define HALFPI    1.57079633
@@ -101,6 +101,7 @@ uniform float uTextureRes;
 #define AO_DIST_K 0.5
 
 float gTexelSize;
+float gNumMipMaps;
 
 
 //---------------------------------------------------------
@@ -160,6 +161,11 @@ vec3 findPerpendicular(vec3 v) {
     //return normalize( vec3(1.0, 0.0, -v.x/(v.z+EPS8)) );
 }
 
+
+//---------------------------------------------------------
+// PROGRAM
+//---------------------------------------------------------
+
 // special case, optimized for 0.0 to 1.0
 bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     vec3 tMin = -ro / rd;
@@ -179,12 +185,36 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
+// assumption, current pos is empty (alpha = 0.0)
+float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
+    float level = ceil(mipLevel);
+    float alpha = 0.0;
 
-//---------------------------------------------------------
-// PROGRAM
-//---------------------------------------------------------
+    while(level < gNumMipMaps && alpha == 0.0) {
+        alpha = textureLod(tVoxColor, pos, ++level).a;
+    }
 
-// transmittance accumulation
+    return level;
+}
+
+// params: origin and ray within texture space
+// intersect outside bound of the enclosing texel of given mip level
+float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
+    float texelSize = pow(2, mipLevel) / uTextureRes;
+
+    vec3 texelIdx = ro/texelSize;
+
+    vec3 bMin = floor(texelIdx)*texelSize;
+    vec3 bMax = ceil(texelIdx)*texelSize;
+
+    // calc for tFar, outgoing of box
+    vec3 tMin = (bMin-ro) / rd;
+    vec3 tMax = (bMax-ro) / rd;
+    vec3 t2 = max(tMin, tMax);
+    return min(min(t2.x, t2.y), t2.z);    
+}
+
+#define SKIP_EMPTY
 vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
   float dist = 0.0;
@@ -203,17 +233,34 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
     vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+
+    #ifdef SKIP_EMPTY
+    float stepSize;
+    if (texel.a == 0.0) {
+        float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
+        stepSize = texelIntersect(pos, rd, lvl) + EPS;
+
+        // skip color computation
+    }
+    else {
+        if (textureLod(tVoxNormal, pos, 0.0).w == uTime) {
+            // delta transmittance
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+            tm *= dtm;
+            col += (1.0-dtm)*texel.rgb*tm;
+
+            stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        }
+    }
+    #else
     if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0.0).w == uTime)
     {
-        // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-        // delta transmittance
         float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
         tm *= dtm;
         col += (1.0 - dtm)*texel.rgb*tm;
     }
-
-    // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    #endif
 
     // increment
     dist += stepSize;
@@ -285,6 +332,8 @@ void main()
 
     // size of one texel in normalized texture coords
     gTexelSize = 1.0/uTextureRes;
+
+    gNumMipMaps = log2(uTextureRes)+1.0; 
 
     vec3 pos = texture(tPosition, vUV).rgb;
     vec3 nor = texture(tNormal, vUV).rgb;
