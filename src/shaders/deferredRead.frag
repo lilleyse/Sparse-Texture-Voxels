@@ -104,7 +104,6 @@ in vec2 vUV;
 #define AO_DIST_K 0.5
 
 float gTexelSize;
-float gNumMipMaps;
 
 
 //---------------------------------------------------------
@@ -193,7 +192,7 @@ float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
     float level = ceil(mipLevel);
     float alpha = 0.0;
 
-    while(level < gNumMipMaps && alpha == 0.0) {
+    while(level < uNumMips && alpha == 0.0) {
         alpha = textureLod(tVoxColor, pos, ++level).a;
     }
 
@@ -331,8 +330,6 @@ void main()
 
     // size of one texel in normalized texture coords
     gTexelSize = 1.0/uTextureRes;
-
-    gNumMipMaps = log2(uTextureRes)+1.0; 
 
     vec3 pos = texture(tPosition, vUV).rgb;
     vec3 nor = texture(tNormal, vUV).rgb;
