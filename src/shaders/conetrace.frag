@@ -94,7 +94,7 @@ const float TRANSMIT_K = 1.0;
 
 float gTexelSize;
 float gPixSizeAtDist;
-int gNumMipMaps;
+float gNumMipMaps;
 
 
 //---------------------------------------------------------
@@ -120,26 +120,26 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
+// assumption, current pos is empty (alpha = 0.0)
 float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
-    float startLevel = floor(mipLevel);
-    float level = startLevel;
-
+    float level;
     float alpha;
-    for (float i=0.0; i<7.0; i++) {
-        if (i < startLevel)
+    for (float i=0.0; i<10.0; i++) {    // fix max loop 10. doesn't matter.
+        if (i < mipLevel)
             continue;
 
         alpha = textureLod(colorTexture, pos, i).a;
 
-        if (alpha > 0.0) {
+        if (alpha > 0.0 || i >= gNumMipMaps) {
             level = i;
             break;
         }
     }
-
     return level;
 }
 
+// params: origin and ray within texture space
+// intersect outside bound of the enclosing texel of given mip level
 float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
     float texelSize = pow(2, mipLevel) / uTextureRes;
 
@@ -148,18 +148,11 @@ float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
     vec3 bMin = floor(texelIdx)*texelSize;
     vec3 bMax = ceil(texelIdx)*texelSize;
 
+    // calc for tFar, outgoing of box
     vec3 tMin = (bMin-ro) / rd;
     vec3 tMax = (bMax-ro) / rd;
-    vec3 t1 = min(tMin, tMax);
     vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-        
-    if (tNear<tFar && tFar>0.0) {
-        return tNear>0.0 ? tNear : tFar;
-    }
-    
-    return 0.0;
+    return min(min(t2.x, t2.y), t2.z);    
 }
 
 // simple alpha blending
@@ -241,9 +234,10 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     }
 
     vec4 texel = textureLod(colorTexture, pos, mipLevel);
+        
+    float stepSize;
 
     #ifdef SKIP_EMPTY
-    float stepSize;
     if (texel.a == 0.0) {
         float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
         stepSize = texelIntersect(pos, rd, lvl) + EPS;
@@ -251,6 +245,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
         // skip color computation
     }
     else {
+    #endif
         stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
         // delta transmittance
@@ -258,15 +253,8 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
         tm *= dtm;
 
         col += (1.0-dtm)*texel.rgb*tm;
+    #ifdef SKIP_EMPTY
     }
-    #else
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    
-    // delta transmittance
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-    tm *= dtm;
-
-    col += (1.0-dtm)*texel.rgb*tm;
     #endif
 
     pos += stepSize*rd;
@@ -317,6 +305,9 @@ void main()
     
     // size of pixel at dist d=1.0
     gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
+
+    // number of mipmaps
+    gNumMipMaps = log2(uTextureRes)+1.0;
     
     //-----------------------------------------------------
     // DO CONE TRACE
