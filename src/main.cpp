@@ -25,12 +25,12 @@ namespace
     const float FRAME_TIME_DELTA = 0.01f;
     
     // Texture settings
-    //const std::string voxelTextures[] = {
-    //    VoxelTextureGenerator::CORNELL_BOX,
-    //    VoxelTextureGenerator::SPHERE,
-    //    VoxelTextureGenerator::CUBE,
-    //    DATA_DIRECTORY + "Bucky.raw",
-    //};
+    const std::string voxelTextures[] = {
+        VoxelTextureGenerator::CORNELL_BOX,
+        VoxelTextureGenerator::SPHERE,
+        VoxelTextureGenerator::CUBE,
+        DATA_DIRECTORY + "Bucky.raw",
+    };
 
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     uint voxelGridLength = 64;
@@ -187,9 +187,9 @@ void begin()
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
     // create procedural textures
-    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //for (uint i = 0; i < numInitialTextures; i++)
-    //    voxelTextureGenerator->createTexture(voxelTextures[i]);    
+    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    for (uint i = 0; i < numInitialTextures; i++)
+        voxelTextureGenerator->createTexture(voxelTextures[i]);    
 
     // set the active texture to the triangle scene
     voxelTextureGenerator->setTexture(sceneFile);

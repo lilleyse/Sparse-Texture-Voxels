@@ -56,7 +56,7 @@ public:
         // Bind voxelTexture's color and normal textures for writing
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+        glBindImageTexture(COLOR_IMAGE_3D_BINDING, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA8);
         for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
             glBindImageTexture(COLOR_IMAGE_3D_BINDING+i, voxelTexture->colorTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);

@@ -80,6 +80,22 @@ void main()
     ivec3 indexNext = ivec3(ivec2(gl_FragCoord.xy), slice);
     ivec3 indexCurr = indexNext*2;
 
-    vec4 color = vec4(1.0, 1.0, 0.0, 1.0);
-    imageStore(tColorMips[1], indexNext, color);
+
+    vec4 avgColor = vec4(0.0);
+
+    for(int i = 0; i < 2; i++)
+    for(int j = 0; j < 2; j++)
+    for(int k = 0; k < 2; k++)
+    {
+        ivec3 neighbor = indexCurr + ivec3(i,j,k);
+                   
+        vec4 neighborColor = imageLoad(tColorMips[0], neighbor);
+        neighborColor.rgb *= neighborColor.a;
+        avgColor += neighborColor;
+    }
+
+    avgColor.xyz /= avgColor.a;
+    avgColor.a /= 8.0;
+
+    imageStore(tColorMips[1], indexNext, avgColor);
 }
