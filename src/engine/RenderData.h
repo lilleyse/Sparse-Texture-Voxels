@@ -1,7 +1,5 @@
 #pragma once
 
-#include <CL/opencl.h>
-
 #include "../Utils.h"
 #include "../ShaderConstants.h"
 #include "Buffer.h"

@@ -25,18 +25,22 @@ namespace
     const float FRAME_TIME_DELTA = 0.01f;
     
     // Texture settings
-    /*const std::string voxelTextures[] = {
+    const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
-    };*/
+    };
+
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 128;
+    uint voxelGridLength = 64;
+    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
+    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
+
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -176,8 +180,9 @@ void begin()
     // set up miscellaneous things
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
-    voxelTexture->begin(voxelGridLength);
-    voxelTextureGenerator->begin(voxelTexture);
+    voxelTexture->begin(voxelGridLength, numMipMapLevels);
+    mipMapGenerator->begin(voxelTexture, fullScreenQuad);
+    voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
@@ -185,12 +190,14 @@ void begin()
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
     // create procedural textures
-    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //for (uint i = 0; i < numInitialTextures; i++)
-    //    voxelTextureGenerator->createTexture(voxelTextures[i]);    
+    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    for (uint i = 0; i < numInitialTextures; i++)
+        voxelTextureGenerator->createTexture(voxelTextures[i]);    
 
     // set the active texture to the triangle scene
     voxelTextureGenerator->setTexture(sceneFile);
+
+    
 
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
@@ -229,9 +236,14 @@ void display()
     perFrame.uAspect = (float)windowSize.x/windowSize.y;
     perFrame.uTime = frameTime;
     perFrame.uFOV = camera->fieldOfView;
+    perFrame.uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame.uNumMips = (float)voxelTexture->numMipMapLevels;
+
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    //mipMapGenerator->generateMipMapGPU();
 
     // Display demo
     if (currentDemoType == DEBUGDRAW)
@@ -242,6 +254,7 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->display();
+
 }
 
 void displayFPS()
