@@ -211,41 +211,41 @@ void begin()
 
 void display()
 {
-    //// Update the scene
-    ////coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
-    ////coreEngine->updateScene();
-    ////voxelizer->voxelizeScene();
+    // Update the scene
+    //coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
+    //coreEngine->updateScene();
+    //voxelizer->voxelizeScene();
 
-    //// Basic GL stuff
-    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    //float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
-    //glClearBufferfv(GL_COLOR, 0, clearColor);
-    //float clearDepth = 1.0f;
-    //glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+    // Basic GL stuff
+    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
+    glClearBufferfv(GL_COLOR, 0, clearColor);
+    float clearDepth = 1.0f;
+    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 
-    //// Update the per frame UBO
-    //PerFrameUBO perFrame;
-    //perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
-    //perFrame.uCamLookAt = camera->lookAt;
-    //perFrame.uCamPos = camera->position;
-    //perFrame.uCamUp = camera->upDir;
-    //perFrame.uResolution = glm::vec2(windowSize);
-    //perFrame.uAspect = (float)windowSize.x/windowSize.y;
-    //perFrame.uTime = frameTime;
-    //perFrame.uFOV = camera->fieldOfView;
-    //glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
-    //glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    // Update the per frame UBO
+    PerFrameUBO perFrame;
+    perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
+    perFrame.uCamLookAt = camera->lookAt;
+    perFrame.uCamPos = camera->position;
+    perFrame.uCamUp = camera->upDir;
+    perFrame.uResolution = glm::vec2(windowSize);
+    perFrame.uAspect = (float)windowSize.x/windowSize.y;
+    perFrame.uTime = frameTime;
+    perFrame.uFOV = camera->fieldOfView;
+    glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //// Display demo
-    //if (currentDemoType == DEBUGDRAW)
-    //    debugDraw->display();
-    //else if (currentDemoType == VOXELRAYCASTER)
-    //    voxelRaycaster->display(); 
-    //else if (currentDemoType == VOXELCONETRACER)  
-    //    voxelConetracer->display();
-    //else if (currentDemoType == DEFERRED_PIPELINE)
-    //    deferredPipeline->display();
+    // Display demo
+    if (currentDemoType == DEBUGDRAW)
+        debugDraw->display();
+    else if (currentDemoType == VOXELRAYCASTER)
+        voxelRaycaster->display(); 
+    else if (currentDemoType == VOXELCONETRACER)  
+        voxelConetracer->display();
+    else if (currentDemoType == DEFERRED_PIPELINE)
+        deferredPipeline->display();
 }
 
 void displayFPS()

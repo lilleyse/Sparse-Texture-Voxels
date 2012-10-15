@@ -188,7 +188,7 @@ public:
             
         // Fill entire texture (first mipmap level) then create mipmaps
         voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
-        //mipMapGenerator.generateMipMapCPU(voxelTexture);
+        mipMapGenerator.generateMipMapCPU();
         mipMapGenerator.generateMipMapGPU();
         
         return true;

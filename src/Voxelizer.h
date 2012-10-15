@@ -78,8 +78,7 @@ public:
         coreEngine->display();
         
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage
-        // change to texture, not all
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         // return values back to normal
         glBindBuffer(GL_UNIFORM_BUFFER, 0);

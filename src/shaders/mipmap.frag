@@ -69,11 +69,17 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) uniform image3D tColor[MAX_3D_MIPMAP_LEVELS];
+layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) uniform image3D tColorMips[MAX_3D_MIPMAP_LEVELS];
 
 flat in int slice;
 
 void main()
 {
-    fragColor = vec4(float(slice)/32.0);
+    //fragColor = vec4(float(slice)/32.0);
+
+    ivec3 indexNext = ivec3(ivec2(gl_FragCoord.xy), slice);
+    ivec3 indexCurr = indexNext*2;
+
+    vec4 color = vec4(1.0, 1.0, 0.0, 1.0);
+    imageStore(tColorMips[1], indexNext, color);
 }
