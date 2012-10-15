@@ -16,7 +16,7 @@
         <object>
             <name>sphere</name>
             <mesh>sphere</mesh>
-            <translate>-4.9 -4.9 -4.9</translate>
+            <translate>-4.5 -4.5 -4.5</translate>
             <scale>4 4 4</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>

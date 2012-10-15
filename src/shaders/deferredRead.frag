@@ -67,6 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 #define EPS       0.0001
+#define EPS2      0.01
 #define EPS8      0.00000001
 #define PI        3.14159265
 #define HALFPI    1.57079633
@@ -177,7 +178,6 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
 
     return false;
 }
-
 
 //---------------------------------------------------------
 // PROGRAM
@@ -305,10 +305,10 @@ void main()
     // COMPUTE COLORS
     //-----------------------------------------------------
 
-    #define PASS_COL
-    #define PASS_AO    
+    //#define PASS_COL
+    //#define PASS_AO    
     #define PASS_INDIR
-    #define PASS_SPEC
+    //#define PASS_SPEC
 
     vec4 cout = vec4(vec3(1.0), col.a);
 
@@ -323,7 +323,7 @@ void main()
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
             const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(60.0);
+            const float NORMAL_ROTATE = radians(50.0);
             const float ANGLE_ROTATE = radians(72.0);
 
             // radial ring of cones
@@ -335,11 +335,11 @@ void main()
                 // ray dir is normal rotated an fov over that vector
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
 
-                ao += conetraceVisibility(pos+rd*EPS, rd, FOV);
+                ao += conetraceVisibility(pos+rd*(gTexelSize*ROOTTHREE), rd, FOV);
             }
 
             // single perpendicular cone (straight up)
-            ao += conetraceVisibility(pos+nor*EPS, nor, FOV);
+            ao += conetraceVisibility(pos+nor*(gTexelSize*ROOTTHREE), nor, FOV);
 
             // finally, divide
             ao /= NUM_DIRS;
@@ -357,17 +357,18 @@ void main()
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
             const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(60.0);
+            const float NORMAL_ROTATE = radians(50.0);
             const float ANGLE_ROTATE = radians(72.0);
 
             vec3 axis = findPerpendicular(nor);
             for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
                 vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-                indir += conetraceAccum(pos+rd*0.01, rd, FOV);
+
+                indir += conetraceAccum(pos+rd*(gTexelSize*ROOTTHREE), rd, FOV);
             }
 
-            indir += conetraceAccum(pos+nor*0.01, nor, FOV);
+            indir += conetraceAccum(pos+nor*(gTexelSize*ROOTTHREE), nor, FOV);
 
             indir /= NUM_DIRS;
 
@@ -380,10 +381,10 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(10.0);
+            const float FOV = radians(1.0);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*EPS, rd, FOV);
+            spec = conetraceAccum(pos+rd*gTexelSize*ROOTTHREE*2.0, rd, FOV);
         }
         #endif
         
