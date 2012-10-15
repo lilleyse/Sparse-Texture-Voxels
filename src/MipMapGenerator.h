@@ -40,9 +40,6 @@ public:
 
         glLinkProgram(mipmapProgram);
         Utils::OpenGL::checkProgram(mipmapProgram);
-
-        glUseProgram(mipmapProgram);
-        uCurrentMip = glGetUniformLocation(mipmapProgram, "uCurrentMip");
     }
 
 
@@ -60,22 +57,20 @@ public:
         // Bind voxelTexture's color and normal textures for writing
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
-        for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
-        {
-            glBindImageTexture(COLOR_IMAGE_3D_BINDING+i, voxelTexture->colorTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
-        }
+
 
         glUseProgram(mipmapProgram);
         for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
+            glBindImageTexture(COLOR_IMAGE_3D_BINDING_CURR, voxelTexture->colorTexture, i-1, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
+            glBindImageTexture(COLOR_IMAGE_3D_BINDING_NEXT, voxelTexture->colorTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
+
             // Call the program for each mip map level.
             // I attempted a similar loop in a single program call with memoryBarrier() but it didn't work
             int voxelGridLength = voxelTexture->mipMapInfoArray[i].gridLength;
             glViewport(0, 0, voxelGridLength, voxelGridLength);
-            glUniform1i(uCurrentMip, i);
             fullScreenQuad->displayInstanced(voxelGridLength);
-            glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+            glMemoryBarrier(GL_ALL_BARRIER_BITS);//GL_TEXTURE_UPDATE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
 
         // Turn back on

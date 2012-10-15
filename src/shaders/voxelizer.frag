@@ -28,8 +28,11 @@
 #define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
 
 // Image binding points
-#define NORMAL_IMAGE_3D_BINDING                  1
-#define COLOR_IMAGE_3D_BINDING                   0         
+
+#define COLOR_IMAGE_3D_BINDING_BASE              0
+#define COLOR_IMAGE_3D_BINDING_CURR              1
+#define COLOR_IMAGE_3D_BINDING_NEXT              2
+#define NORMAL_IMAGE_3D_BINDING                  3      
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -46,7 +49,6 @@
 #define NUM_OBJECTS_MAX                 500
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
-#define MAX_3D_MIPMAP_LEVELS            7
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -63,7 +65,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 };
 
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) writeonly uniform image3D tColor;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tColor;
 layout(binding = NORMAL_IMAGE_3D_BINDING, rgba32f) writeonly uniform image3D tNormal;
 
 in block

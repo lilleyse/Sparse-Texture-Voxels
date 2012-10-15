@@ -35,14 +35,10 @@ const uint RESERVED_TEXTURE_ARRAY_8                 = 14;
 const uint RESERVED_TEXTURE_ARRAY_9                 = 15;
 
 // Image binding points
-const uint NORMAL_IMAGE_3D_BINDING                  = 1; // share for now
-const uint COLOR_IMAGE_3D_BINDING                   = 0;
-const uint RESERVED_COLOR_IMAGE_3D_1                = 1;
-const uint RESERVED_COLOR_IMAGE_3D_2                = 2;
-const uint RESERVED_COLOR_IMAGE_3D_3                = 3;
-const uint RESERVED_COLOR_IMAGE_3D_4                = 4;
-const uint RESERVED_COLOR_IMAGE_3D_5                = 5;
-const uint RESERVED_COLOR_IMAGE_3D_6                = 6;
+const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;
+const uint COLOR_IMAGE_3D_BINDING_CURR              = 1;
+const uint COLOR_IMAGE_3D_BINDING_NEXT              = 2;
+const uint NORMAL_IMAGE_3D_BINDING                  = 3;
 
 // Framebuffer object outputs
 const uint DEFERRED_POSITIONS_FBO_BINDING       = 0;
@@ -59,7 +55,6 @@ const uint FBO_BINDING_POINT_ARRAY_SIZE     = 4;
 const uint NUM_OBJECTS_MAX                  = 500;
 const uint NUM_MESHES_MAX                   = 500;
 const uint MAX_POINT_LIGHTS                 = 8;
-const uint MAX_3D_MIPMAP_LEVELS             = 7;
 
 struct PerFrameUBO
 {
