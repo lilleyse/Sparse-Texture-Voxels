@@ -20,10 +20,11 @@ public:
     static std::string SPHERE;
     static std::string CORNELL_BOX;
 
-    void begin(VoxelTexture* voxelTexture) 
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad) 
     {
         currentTexture = UINT_MAX;
         this->voxelTexture = voxelTexture;
+        mipMapGenerator.begin(voxelTexture, fullScreenQuad);
     }
     void createTexture(std::string name)
     {
@@ -187,7 +188,8 @@ public:
             
         // Fill entire texture (first mipmap level) then create mipmaps
         voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
-        mipMapGenerator.generateMipMapCPU(voxelTexture);
+        //mipMapGenerator.generateMipMapCPU(voxelTexture);
+        mipMapGenerator.generateMipMapGPU();
         
         return true;
     }

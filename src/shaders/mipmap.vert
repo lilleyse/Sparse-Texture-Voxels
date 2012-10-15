@@ -49,7 +49,6 @@
 #define MAX_POINT_LIGHTS                8
 #define MAX_3D_MIPMAP_LEVELS            10
 
-
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
@@ -62,19 +61,27 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
 };
 
-/***************************************************/
 
-layout (location = 0, index = 0) out vec4 fragColor;
+//---------------------------------------------------------
+// SHADER VARS
+//---------------------------------------------------------
 
-in block
+layout(location = POSITION_ATTR) in vec2 position;
+
+out gl_PerVertex
 {
-    vec3 position;
-    vec4 color;
-    vec3 normal;
+    vec4 gl_Position;
+};
 
-} vertexData;
+flat out int slice;
+
+
+//---------------------------------------------------------
+// PROGRAM
+//---------------------------------------------------------
 
 void main()
 {
-    fragColor = vertexData.color;
+    slice = gl_InstanceID;
+    gl_Position = vec4(position, 0.0, 1.0);
 }

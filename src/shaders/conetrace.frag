@@ -29,8 +29,8 @@
 
 // Image binding points
 #define NON_USED_IMAGE                           0
-#define COLOR_IMAGE_3D_BINDING                   1
-#define NORMAL_IMAGE_3D_BINDING                  2         
+#define NORMAL_IMAGE_3D_BINDING                  1
+#define COLOR_IMAGE_3D_BINDING                   2         
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -47,7 +47,7 @@
 #define NUM_OBJECTS_MAX                 500
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
-
+#define MAX_3D_MIPMAP_LEVELS            10
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {

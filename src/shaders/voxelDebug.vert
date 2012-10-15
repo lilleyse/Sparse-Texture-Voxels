@@ -25,12 +25,12 @@
 #define DEFERRED_POSITIONS_TEXTURE_BINDING       3
 #define DEFERRED_COLORS_TEXTURE_BINDING          4
 #define DEFERRED_NORMALS_TEXTURE_BINDING         5
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
 
 // Image binding points
 #define NON_USED_IMAGE                           0
-#define COLOR_IMAGE_3D_BINDING                   1
-#define NORMAL_IMAGE_3D_BINDING                  2                  
+#define NORMAL_IMAGE_3D_BINDING                  1
+#define COLOR_IMAGE_3D_BINDING                   2         
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -47,6 +47,7 @@
 #define NUM_OBJECTS_MAX                 500
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
+#define MAX_3D_MIPMAP_LEVELS            10
 
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO

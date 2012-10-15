@@ -62,19 +62,18 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
 };
 
-/***************************************************/
 
-layout (location = 0, index = 0) out vec4 fragColor;
+//---------------------------------------------------------
+// SHADER VARS
+//---------------------------------------------------------
 
-in block
-{
-    vec3 position;
-    vec4 color;
-    vec3 normal;
+layout(location = 0) out vec4 fragColor;
 
-} vertexData;
+layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) uniform image3D tColor[MAX_3D_MIPMAP_LEVELS];
+
+flat in int slice;
 
 void main()
 {
-    fragColor = vertexData.color;
+    fragColor = vec4(float(slice)/32.0);
 }

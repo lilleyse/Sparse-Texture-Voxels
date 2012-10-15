@@ -53,4 +53,10 @@ public:
         glBindVertexArray(fullScreenVertexArray);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
+
+    void displayInstanced(uint numInstances)
+    {
+        glBindVertexArray(fullScreenVertexArray);
+        glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0, numInstances);
+    }
 };

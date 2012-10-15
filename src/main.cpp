@@ -8,7 +8,6 @@
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
-#include "OpenCLState.h"
 
 namespace
 {
@@ -26,12 +25,12 @@ namespace
     const float FRAME_TIME_DELTA = 0.01f;
     
     // Texture settings
-    const std::string voxelTextures[] = {
-        VoxelTextureGenerator::CORNELL_BOX,
-        VoxelTextureGenerator::SPHERE,
-        VoxelTextureGenerator::CUBE,
-        DATA_DIRECTORY + "Bucky.raw",
-    };
+    //const std::string voxelTextures[] = {
+    //    VoxelTextureGenerator::CORNELL_BOX,
+    //    VoxelTextureGenerator::SPHERE,
+    //    VoxelTextureGenerator::CUBE,
+    //    DATA_DIRECTORY + "Bucky.raw",
+    //};
 
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     uint voxelGridLength = 64;
@@ -40,7 +39,6 @@ namespace
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
-    OpenCLState* openClMipmapper = new OpenCLState();
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -181,24 +179,22 @@ void begin()
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
-    voxelTextureGenerator->begin(voxelTexture);
+    voxelTextureGenerator->begin(voxelTexture, fullScreenQuad);
     
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
     voxelizer->voxelizeScene();
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
-    openClMipmapper->begin(voxelTexture);
-
     // create procedural textures
-    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    for (uint i = 0; i < numInitialTextures; i++)
-        voxelTextureGenerator->createTexture(voxelTextures[i]);    
+    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    //for (uint i = 0; i < numInitialTextures; i++)
+    //    voxelTextureGenerator->createTexture(voxelTextures[i]);    
 
     // set the active texture to the triangle scene
-    voxelTextureGenerator->setTexture(3);//(sceneFile);
+    voxelTextureGenerator->setTexture(sceneFile);
 
-    openClMipmapper->generateMipmapsCL();
+    
 
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
@@ -215,41 +211,41 @@ void begin()
 
 void display()
 {
-    // Update the scene
-    //coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
-    //coreEngine->updateScene();
-    //voxelizer->voxelizeScene();
+    //// Update the scene
+    ////coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
+    ////coreEngine->updateScene();
+    ////voxelizer->voxelizeScene();
 
-    // Basic GL stuff
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
-    glClearBufferfv(GL_COLOR, 0, clearColor);
-    float clearDepth = 1.0f;
-    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+    //// Basic GL stuff
+    //glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+    //float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
+    //glClearBufferfv(GL_COLOR, 0, clearColor);
+    //float clearDepth = 1.0f;
+    //glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 
-    // Update the per frame UBO
-    PerFrameUBO perFrame;
-    perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
-    perFrame.uCamLookAt = camera->lookAt;
-    perFrame.uCamPos = camera->position;
-    perFrame.uCamUp = camera->upDir;
-    perFrame.uResolution = glm::vec2(windowSize);
-    perFrame.uAspect = (float)windowSize.x/windowSize.y;
-    perFrame.uTime = frameTime;
-    perFrame.uFOV = camera->fieldOfView;
-    glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    //// Update the per frame UBO
+    //PerFrameUBO perFrame;
+    //perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
+    //perFrame.uCamLookAt = camera->lookAt;
+    //perFrame.uCamPos = camera->position;
+    //perFrame.uCamUp = camera->upDir;
+    //perFrame.uResolution = glm::vec2(windowSize);
+    //perFrame.uAspect = (float)windowSize.x/windowSize.y;
+    //perFrame.uTime = frameTime;
+    //perFrame.uFOV = camera->fieldOfView;
+    //glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
+    //glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+    //glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    // Display demo
-    if (currentDemoType == DEBUGDRAW)
-        debugDraw->display();
-    else if (currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster->display(); 
-    else if (currentDemoType == VOXELCONETRACER)  
-        voxelConetracer->display();
-    else if (currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->display();
+    //// Display demo
+    //if (currentDemoType == DEBUGDRAW)
+    //    debugDraw->display();
+    //else if (currentDemoType == VOXELRAYCASTER)
+    //    voxelRaycaster->display(); 
+    //else if (currentDemoType == VOXELCONETRACER)  
+    //    voxelConetracer->display();
+    //else if (currentDemoType == DEFERRED_PIPELINE)
+    //    deferredPipeline->display();
 }
 
 void displayFPS()
