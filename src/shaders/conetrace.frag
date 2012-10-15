@@ -86,7 +86,6 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 in vec2 vUV;
 uniform float uTextureRes;
 
-const int MAX_STEPS = 512;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
@@ -122,19 +121,13 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
 
 // assumption, current pos is empty (alpha = 0.0)
 float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
-    float level;
-    float alpha;
-    for (float i=0.0; i<10.0; i++) {    // fix max loop 10. doesn't matter.
-        if (i < mipLevel)
-            continue;
+    float level = ceil(mipLevel);
+    float alpha = 0.0;
 
-        alpha = textureLod(colorTexture, pos, i).a;
-
-        if (alpha > 0.0 || i >= gNumMipMaps) {
-            level = i;
-            break;
-        }
+    while(level < gNumMipMaps && alpha == 0.0) {
+        alpha = textureLod(colorTexture, pos, ++level).a;
     }
+
     return level;
 }
 
@@ -161,7 +154,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   
   vec4 color = vec4(0.0);
   
-  for (int i=0; i<MAX_STEPS; ++i) {
+  while (true) {
     float dist = distance(pos, uCamPos);
 
     // size of texel cube we want to be looking into
@@ -218,7 +211,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
   
-  for (int i=0; i<MAX_STEPS; ++i) {
+  while (true) {
     float dist = distance(pos, uCamPos);
 
     float pixSize = gPixSizeAtDist * dist;

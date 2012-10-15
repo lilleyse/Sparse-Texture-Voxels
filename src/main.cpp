@@ -32,7 +32,7 @@ namespace
         DATA_DIRECTORY + "Bucky.raw",
     };*/
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 64;
+    uint voxelGridLength = 128;
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
