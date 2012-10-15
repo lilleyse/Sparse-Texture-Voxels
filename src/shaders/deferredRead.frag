@@ -192,80 +192,38 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   //float alpha = 1.0;
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
-  float dtm;
-  float mipLevel;
-  float pixSize;
-  float stepSize;
-  vec4 texel;
 
-  int counter = 0;
-  int emptyCount = 0;
-  while(true) {
+  while(tm > TRANSMIT_MIN &&
+        pos.x < 1.0 && pos.x > 0.0 &&
+        pos.y < 1.0 && pos.y > 0.0 &&
+        pos.z < 1.0 && pos.z > 0.0) {
     // calc mip size, clamp min to texelsize
     // if pixSize smaller than texel, clamp. that's the smallest we can go
     // solve: pixSize = texelSize*2^mipLevel
-    pixSize = max(dist * pixSizeAtDist, gTexelSize);
-    mipLevel = max(log2(pixSize/gTexelSize), 0); 
-
-    texel = textureLod(tVoxColor, pos, mipLevel);
+    float pixSize = max(dist * pixSizeAtDist, gTexelSize);
+    float mipLevel = max(log2(pixSize/gTexelSize), 0); 
+    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
     if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0).w == uTime)
     {
-        // sample texture
-        //float ratio = fract(mipLevel);
-        //float currentMipLevel = floor(mipLevel); 
-        //float nextMipLevel = ceil(mipLevel);
-        //
-        //vec4 currentTexel = textureLod(tVoxColor, pos, currentMipLevel);
-        //vec4 nextTexel = textureLod(tVoxColor, pos, nextMipLevel);
-        //vec4 texel = mix(currentTexel, nextTexel, ratio);
-        
-            // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-            // delta transmittance
-            dtm = exp( -TRANSMIT_K * texel.a );
-            tm *= dtm;
-            col += (1.0 - dtm)*texel.rgb*tm;
-            break;
-            //col += (1.0-dtm)*texel.rgb*tm;
-            //if(emptyCount >= 0)
-            //{
-                //col = texel.rgb;
-                //break;
-            //}
-            //emptyCount = 0;
-            
-            //tm = .9;
-            //if(!hitEmpty && counter == 4)
-            //{
-            //    col = vec3(0);
-            //    alpha = 0;
-            //    break;
-            //}
-            
-        
+        // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
+        // delta transmittance
+        float dtm = exp( -TRANSMIT_K * texel.a );
+        tm *= dtm;
+        col += (1.0 - dtm)*texel.rgb*tm;
+        //break;
     }
-    
 
     // take step relative to the interpolated size
-    stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // increment
     dist += stepSize;
     pos += stepSize*rd;
-
-    if (tm < TRANSMIT_MIN ||
-        pos.x > 1.0 || pos.x < 0.0 ||
-        pos.y > 1.0 || pos.y < 0.0 ||
-        pos.z > 1.0 || pos.z < 0.0)
-        {
-            //col = vec3(1.0, 0.0, 0.0);
-            break;
-        }
   }
 
   float alpha = 1.0-tm;
   alpha /= (1.0+AO_DIST_K*dist);
   return vec4( alpha==0 ? col : col/alpha , alpha);
-  // return vec4(col, 1.0);
 }
 
 
