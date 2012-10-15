@@ -207,7 +207,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     {
         // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
         // delta transmittance
-        float dtm = exp( -TRANSMIT_K * texel.a );
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
         tm *= dtm;
         col += (1.0 - dtm)*texel.rgb*tm;
     }
