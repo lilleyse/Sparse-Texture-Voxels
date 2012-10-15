@@ -29,7 +29,7 @@ public:
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
-        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mipmap.vert");
+        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
         GLuint fragmentShaderObjectRead = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
 
         mipmapProgram = glCreateProgram();

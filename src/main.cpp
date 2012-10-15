@@ -39,6 +39,8 @@ namespace
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
+    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
+
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -179,7 +181,8 @@ void begin()
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
-    voxelTextureGenerator->begin(voxelTexture, fullScreenQuad);
+    mipMapGenerator->begin(voxelTexture, fullScreenQuad);
+    voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
@@ -239,6 +242,8 @@ void display()
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+    //mipMapGenerator->generateMipMapGPU();
 
     // Display demo
     if (currentDemoType == DEBUGDRAW)
