@@ -214,7 +214,7 @@ float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
     return min(min(t2.x, t2.y), t2.z);    
 }
 
-#define SKIP_EMPTY
+//#define SKIP_EMPTY
 vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
   float dist = 0.0;
@@ -238,7 +238,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float stepSize;
     if (texel.a == 0.0) {
         float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
-        stepSize = texelIntersect(pos, rd, lvl) + EPS;
+        stepSize = texelIntersect(pos+EPS, rd, lvl) + EPS;
 
         // skip color computation
     }
@@ -419,10 +419,10 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(.1);
+            const float FOV = radians(10.0);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*EPS2, rd, FOV);
+            spec = conetraceAccum(pos+rd*EPS, rd, FOV);
         }
         #endif
         

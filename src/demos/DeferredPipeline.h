@@ -129,7 +129,8 @@ public:
 
     void display()
     {
-        voxelTexture->enableNearestSampling();
+        //voxelTexture->enableNearestSampling();
+        voxelTexture->enableLinearSampling();
         
         // Bind custom FBO then draw into it
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, deferredFBO);

@@ -85,7 +85,8 @@ public:
     void enableLinearSampling()
     {
         glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
-        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
+        //glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
+        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
     }
 
     void enableNearestSampling()
