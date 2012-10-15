@@ -10,6 +10,7 @@ class MipMapGenerator
 private:
 
     GLuint mipmapProgram;
+    GLuint voxelCleanProgram;
     VoxelTexture* voxelTexture;
     FullScreenQuad* fullScreenQuad;
     GLuint uCurrentMip;
@@ -29,17 +30,29 @@ public:
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
-        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
-        GLuint fragmentShaderObjectRead = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
 
         mipmapProgram = glCreateProgram();
-        glAttachShader(mipmapProgram, vertexShaderObjectRead);
-        glAttachShader(mipmapProgram, fragmentShaderObjectRead);
-        glDeleteShader(vertexShaderObjectRead);
-        glDeleteShader(fragmentShaderObjectRead);
+        glAttachShader(mipmapProgram, vertexShaderObject);
+        glAttachShader(mipmapProgram, fragmentShaderObject);
+        glDeleteShader(vertexShaderObject);
+        glDeleteShader(fragmentShaderObject);
 
         glLinkProgram(mipmapProgram);
         Utils::OpenGL::checkProgram(mipmapProgram);
+
+        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
+        fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelClean.frag");
+
+        voxelCleanProgram = glCreateProgram();
+        glAttachShader(voxelCleanProgram, vertexShaderObject);
+        glAttachShader(voxelCleanProgram, fragmentShaderObject);
+        glDeleteShader(vertexShaderObject);
+        glDeleteShader(fragmentShaderObject);
+
+        glLinkProgram(voxelCleanProgram);
+        Utils::OpenGL::checkProgram(voxelCleanProgram);
     }
 
 
@@ -54,11 +67,24 @@ public:
         glDisable(GL_DEPTH_TEST);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
+
+        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
+
         // Bind voxelTexture's color and normal textures for writing
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
+        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
 
+        // First clean the base mip map
+        int voxelGridLength = voxelTexture->voxelGridLength;
+        glViewport(0, 0, voxelGridLength, voxelGridLength);
+        glUseProgram(voxelCleanProgram);
+        fullScreenQuad->displayInstanced(voxelGridLength);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);//GL_TEXTURE_UPDATE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 
+        // Now do mipmapping
         glUseProgram(mipmapProgram);
         for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {

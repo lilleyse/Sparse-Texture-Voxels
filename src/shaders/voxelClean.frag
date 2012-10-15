@@ -72,8 +72,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_IMAGE_3D_BINDING_CURR, rgba8) coherent uniform image3D tColorMipCurr;
-layout(binding = COLOR_IMAGE_3D_BINDING_NEXT, rgba8) coherent uniform image3D tColorMipNext;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba32f) readonly uniform image3D tNormal;
 
 flat in int slice;
 
@@ -81,20 +81,6 @@ flat in int slice;
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-
-    vec4 avgColor = vec4(0.0);
-    for(int i = 0; i < 2; i++)
-    for(int j = 0; j < 2; j++)
-    for(int k = 0; k < 2; k++)
-    {
-        ivec3 neighbor = globalId*2 + ivec3(i,j,k);
-                
-        vec4 neighborColor = imageLoad(tColorMipCurr, neighbor);
-        neighborColor.rgb *= neighborColor.a;
-        avgColor += neighborColor;
-    }
-    avgColor.xyz /= avgColor.a;
-    avgColor.a /= 8.0;
-    //vec4 avgColor = vec4(vec3(globalId)/32.0, 1.0);
-    imageStore(tColorMipNext, globalId, avgColor);
+    vec4 color = imageLoad(tColor, globalId);
+    imageStore(tColor, globalId, color);
 }
