@@ -253,7 +253,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
         //}
     }
     #else
-    if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0.0).w > 2)
+    if (texel.a > 0.0 )//&& textureLod(tVoxNormal, pos, 0.0).w > 2)
     {
         float dtm = exp( -TRANSMIT_K * texel.a );
         tm *= dtm;
