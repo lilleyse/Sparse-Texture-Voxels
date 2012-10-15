@@ -67,6 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 #define EPS       0.0001
+#define EPS2      0.01
 #define EPS8      0.00000001
 #define PI        3.14159265
 #define HALFPI    1.57079633
@@ -189,7 +190,6 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   float dist = 0.0;
   float pixSizeAtDist = tan(fov);
 
-  //float alpha = 1.0;
   vec3 col = vec3(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
 
@@ -197,20 +197,19 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
         pos.x < 1.0 && pos.x > 0.0 &&
         pos.y < 1.0 && pos.y > 0.0 &&
         pos.z < 1.0 && pos.z > 0.0) {
+
     // calc mip size, clamp min to texelsize
-    // if pixSize smaller than texel, clamp. that's the smallest we can go
-    // solve: pixSize = texelSize*2^mipLevel
-    float pixSize = max(dist * pixSizeAtDist, gTexelSize);
-    float mipLevel = max(log2(pixSize/gTexelSize), 0); 
+    float pixSize = max(dist*pixSizeAtDist, gTexelSize);
+    float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+
     vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-    if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0).w == uTime)
+    if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0.0).w == uTime)
     {
         // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
         // delta transmittance
         float dtm = exp( -TRANSMIT_K * texel.a );
         tm *= dtm;
         col += (1.0 - dtm)*texel.rgb*tm;
-        //break;
     }
 
     // take step relative to the interpolated size
@@ -223,7 +222,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 
   float alpha = 1.0-tm;
   alpha /= (1.0+AO_DIST_K*dist);
-  return vec4( alpha==0 ? col : col/alpha , alpha);
+  return vec4(alpha==0 ? col : col/alpha , alpha);
 }
 
 
@@ -235,7 +234,11 @@ float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
 
   float tm = 1.0;         // accumulated transmittance
 
-  while(true) {
+  while(tm > TRANSMIT_MIN &&
+        pos.x < 1.0 && pos.x > 0.0 &&
+        pos.y < 1.0 && pos.y > 0.0 &&
+        pos.z < 1.0 && pos.z > 0.0) {
+
     // size of texel cube
     float pixSize =  dist * pixSizeAtDist;
 
@@ -265,12 +268,6 @@ float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
     // increment
     dist += stepSize;
     pos += stepSize*rd;
-
-    if (tm < TRANSMIT_MIN ||
-      pos.x > 1.0 || pos.x < 0.0 ||
-      pos.y > 1.0 || pos.y < 0.0 ||
-      pos.z > 1.0 || pos.z < 0.0)
-      break;
   }
 
   // weight by distance f(r) = 1/(1+K*r)
@@ -315,7 +312,7 @@ void main()
             // 6 cones 30 fov, 5 cones around 1 cone straight up
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
-            const float FOV = radians(10.0);
+            const float FOV = radians(30.0);
             const float NORMAL_ROTATE = radians(60.0);
             const float ANGLE_ROTATE = radians(72.0);
 
@@ -357,10 +354,10 @@ void main()
             for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
                 vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-                indir += conetraceAccum(pos+rd*0.05, rd, FOV);
+                indir += conetraceAccum(pos+rd*EPS2, rd, FOV);
             }
 
-            indir += conetraceAccum(pos+nor*0.05, nor, FOV);
+            indir += conetraceAccum(pos+nor*EPS2, nor, FOV);
 
             indir /= NUM_DIRS;
 
@@ -376,7 +373,7 @@ void main()
             const float FOV = radians(.1);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
-            spec = conetraceAccum(pos + rd*0.05, rd, FOV);
+            spec = conetraceAccum(pos+rd*EPS2, rd, FOV);
         }
         #endif
         
