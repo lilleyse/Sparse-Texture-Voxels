@@ -67,6 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 #define EPS       0.0001
+#define EPS8      0.00000001
 #define PI        3.14159265
 #define HALFPI    1.57079633
 #define ROOTTHREE 1.73205081
@@ -233,7 +234,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     #ifdef SKIP_EMPTY
     if (texel.a == 0.0) {
         float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
-        stepSize = texelIntersect(pos, rd, lvl) + EPS;
+        stepSize = texelIntersect(pos+EPS, rd, lvl) + EPS;
 
         // skip color computation
     }
