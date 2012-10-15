@@ -86,7 +86,7 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 in vec2 vUV;
 uniform float uTextureRes;
 
-const int MAX_STEPS = 256;
+const int MAX_STEPS = 512;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
@@ -94,6 +94,7 @@ const float TRANSMIT_K = 1.0;
 
 float gTexelSize;
 float gPixSizeAtDist;
+int gNumMipMaps;
 
 
 //---------------------------------------------------------
@@ -117,6 +118,46 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     }
     
     return false;
+}
+
+void sampleHighestNonEmpty(vec3 pos, float mipLevel, 
+    out vec4 texel, out float level) {
+
+    float startLevel = floor(mipLevel);
+    
+    for (float i=0.0; i<7.0; i++) {
+        if (i < startLevel)
+            continue;
+
+        texel = textureLod(colorTexture, pos, i);
+
+        if (texel.a > 0.0) {
+            level = i;
+            break;
+        }
+    }
+}
+
+float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
+    float texelSize = pow(2, mipLevel) / uTextureRes;
+
+    vec3 texelIdx = ro/texelSize;
+
+    vec3 bMin = floor(texelIdx)*texelSize;
+    vec3 bMax = ceil(texelIdx)*texelSize;
+
+    vec3 tMin = (bMin-ro) / rd;
+    vec3 tMax = (bMax-ro) / rd;
+    vec3 t1 = min(tMin, tMax);
+    vec3 t2 = max(tMin, tMax);
+    float tNear = max(max(t1.x, t1.y), t1.z);
+    float tFar = min(min(t2.x, t2.y), t2.z);
+        
+    if (tNear<tFar && tFar>0.0) {        
+        return tNear>0.0 ? tNear : tFar;
+    }
+    
+    return 0.0;
 }
 
 // simple alpha blending
@@ -201,17 +242,17 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
         pixSize = gTexelSize;
     }
 
-    // take step relative to the interpolated size
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
     // sample texture
     vec4 texel = textureLod(colorTexture, pos, mipLevel);
-    
-    // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-    // no need weight by "stepSize" since "pixSize" is size of an imaginary 
-    // texel cube exactly the size of a mip cube we want, if it existed, 
-    // but it doesn't so we interpolate between two mips to approximate it
-    // but need to weight by stepsize within texel
+
+    float stepSize;
+    if (texel.a == 0.0) {
+        sampleHighestNonEmpty(pos, mipLevel, texel, mipLevel);
+        stepSize = texelIntersect(pos, rd, mipLevel) + EPS;
+    }
+    else {
+        stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    }
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
@@ -267,7 +308,6 @@ void main()
     
     // size of pixel at dist d=1.0
     gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
-
     
     //-----------------------------------------------------
     // DO CONE TRACE

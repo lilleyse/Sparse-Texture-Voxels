@@ -128,7 +128,7 @@ namespace Utils
             {
                 std::vector<char> Buffer(std::max(InfoLogLength, int(1)));
                 glGetProgramInfoLog(ProgramName, InfoLogLength, NULL, &Buffer[0]);
-                //fprintf(stdout, "%s\n", &Buffer[0]);
+                fprintf(stdout, "%s\n", &Buffer[0]);
             }
 
             return Result == GL_TRUE;
@@ -149,7 +149,7 @@ namespace Utils
             {
                 std::vector<char> Buffer(InfoLogLength);
                 glGetShaderInfoLog(ShaderName, InfoLogLength, NULL, &Buffer[0]);
-                //fprintf(stdout, "%s\n", &Buffer[0]);
+                fprintf(stdout, "%s\n", &Buffer[0]);
             }
 
             return Result == GL_TRUE;
@@ -243,7 +243,7 @@ namespace Utils
             for(GLint i = 0; i < ExtensionCount; ++i)
             {
                 std::string extensionName = std::string((char const*)glGetStringi(GL_EXTENSIONS, i));
-                //printf((extensionName + "\n").c_str());
+                printf((extensionName + "\n").c_str());
                 if(extensionName == std::string(String))
                     return true;
             }

@@ -93,7 +93,7 @@ in vec2 vUV;
 
 uniform float uTextureRes;
 
-#define MAX_STEPS 128
+#define MAX_STEPS 512
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyrill uses 1/3
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K 1.0
