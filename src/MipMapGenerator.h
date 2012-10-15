@@ -68,8 +68,10 @@ public:
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         // Bind voxelTexture's color and normal textures for writing
-        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32F);
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
+        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
+
 
         // First clean the base mip map
         int voxelGridLength = voxelTexture->voxelGridLength;

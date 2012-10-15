@@ -35,10 +35,10 @@ namespace
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
     };
-    bool loadTextures = true;
+    bool loadTextures = false;
 
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 64;
+    uint voxelGridLength = 128;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
@@ -54,7 +54,7 @@ namespace
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = true;
+    bool loadAllDemos = false;
 
     // OpenGL stuff
     CoreEngine* coreEngine = new CoreEngine();
@@ -294,6 +294,7 @@ void display()
     // Update the scene
     coreEngine->updateScene();
     voxelizer->voxelizeScene(frameTime);
+    mipMapGenerator->generateMipMapGPU();
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
@@ -311,8 +312,6 @@ void display()
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
-    //mipMapGenerator->generateMipMapGPU();
 
     // Display demo
     if (currentDemoType == DEBUGDRAW)

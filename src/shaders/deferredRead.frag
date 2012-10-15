@@ -240,23 +240,19 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     #ifdef SKIP_EMPTY
     float stepSize;
     if (texel.a == 0.0) {
+        // skip color computation
         float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
         stepSize = texelIntersect(pos+EPS, rd, lvl) + EPS;
-
-        // skip color computation
     }
     else {
-        //if (textureLod(tVoxNormal, pos, 0.0).w == uTime) {
-            // delta transmittance
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-            tm *= dtm;
-            col += (1.0-dtm)*texel.rgb*tm;
-
-            stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-        //}
+        // delta transmittance
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+        tm *= dtm;
+        col += (1.0-dtm)*texel.rgb*tm;
+        stepSize = pixSize * STEPSIZE_WRT_TEXEL;
     }
     #else
-    if (texel.a > 0.0 )//&& textureLod(tVoxNormal, pos, 0.0).w > 2)
+    if (texel.a > 0.0 )
     {
         float dtm = exp( -TRANSMIT_K * texel.a );
         tm *= dtm;
@@ -422,7 +418,7 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(10.0);
+            const float FOV = radians(5.0);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
             spec = conetraceAccum(pos+rd*EPS2, rd, FOV);
