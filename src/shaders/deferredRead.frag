@@ -273,52 +273,36 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 
 // for AO, dist weighted transmittance accumulation
 float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
-  vec3 pos = ro;
-  float dist = 0.0;
-  float pixSizeAtDist = tan(fov);
+    vec3 pos = ro;
+    float dist = 0.0;
+    float pixSizeAtDist = tan(fov);
 
-  float tm = 1.0;         // accumulated transmittance
+    float tm = 1.0;         // accumulated transmittance
 
-  while(tm > TRANSMIT_MIN &&
+    while(tm > TRANSMIT_MIN &&
         pos.x < 1.0 && pos.x > 0.0 &&
         pos.y < 1.0 && pos.y > 0.0 &&
         pos.z < 1.0 && pos.z > 0.0) {
 
-    // size of texel cube
-    float pixSize =  dist * pixSizeAtDist;
+        // calc mip size, clamp min to texelsize
+        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
+        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-    // calc mip size
-    float mipLevel;
-    if (pixSize > gTexelSize) {
-        mipLevel = log2(pixSize/gTexelSize);
-    }
-    else {
-        mipLevel = 0.0;
-        pixSize = gTexelSize;
-    }
-
-    float timeStamp = textureLod(tVoxNormal, pos, 0).w;
-    if (timeStamp > uTime - EPS)
-    {
         // sample texture
         vec4 texel = textureLod(tVoxColor, pos, mipLevel);
 
         // update transmittance
         tm *= exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+
+        // increment
+        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        dist += stepSize;
+        pos += stepSize*rd;
     }
 
-    // take step relative to the interpolated size
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
-    // increment
-    dist += stepSize;
-    pos += stepSize*rd;
-  }
-
-  // weight by distance f(r) = 1/(1+K*r)
-  float weight = (1.0+AO_DIST_K*dist);
-
-  return tm * weight;
+    // weight by distance f(r) = 1/(1+K*r)
+    float weight = (1.0+AO_DIST_K*dist);
+    return tm * weight;
 }
 
 void main()
@@ -340,12 +324,13 @@ void main()
     // COMPUTE COLORS
     //-----------------------------------------------------
 
-    //#define PASS_COL
+    #define PASS_COL
     //#define PASS_AO    
-    //#define PASS_INDIR
+    #define PASS_INDIR
     #define PASS_SPEC
 
     vec4 cout = vec4(vec3(1.0), col.a);
+    float voxelDirectionOffset = gTexelSize*ROOTTHREE;
 
     // if nothing there, don't color
     if ( col.a!=0.0 ) {
@@ -358,7 +343,7 @@ void main()
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
             const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(60.0);
+            const float NORMAL_ROTATE = radians(50.0);
             const float ANGLE_ROTATE = radians(72.0);
 
             // radial ring of cones
@@ -370,11 +355,11 @@ void main()
                 // ray dir is normal rotated an fov over that vector
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
 
-                ao += conetraceVisibility(pos+rd*EPS, rd, FOV);
+                ao += conetraceVisibility(pos+rd*voxelDirectionOffset, rd, FOV);
             }
 
             // single perpendicular cone (straight up)
-            ao += conetraceVisibility(pos+nor*EPS, nor, FOV);
+            ao += conetraceVisibility(pos+nor*voxelDirectionOffset, nor, FOV);
 
             // finally, divide
             ao /= NUM_DIRS;
@@ -392,17 +377,17 @@ void main()
             #define NUM_DIRS 6.0
             #define NUM_RADIAL_DIRS 5.0
             const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(60.0);
+            const float NORMAL_ROTATE = radians(50.0);
             const float ANGLE_ROTATE = radians(72.0);
 
             vec3 axis = findPerpendicular(nor);
             for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
                 vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-                indir += conetraceAccum(pos+rd*EPS2, rd, FOV);
+                indir += conetraceAccum(pos+rd*voxelDirectionOffset, rd, FOV);
             }
 
-            indir += conetraceAccum(pos+nor*EPS2, nor, FOV);
+            indir += conetraceAccum(pos+nor*voxelDirectionOffset, nor, FOV);
 
             indir /= NUM_DIRS;
 
@@ -418,7 +403,7 @@ void main()
             const float FOV = radians(5.0);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*EPS2, rd, FOV);
+            spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
         }
         #endif
         
@@ -437,7 +422,7 @@ void main()
         #endif
         #ifdef PASS_SPEC
             #ifdef PASS_COL
-            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, 0.6);
+            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, 0.4);
             #else
             cout = spec;    // just write spec
             #endif
