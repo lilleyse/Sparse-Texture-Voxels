@@ -233,6 +233,9 @@ void display()
     perFrame.uAspect = (float)windowSize.x/windowSize.y;
     perFrame.uTime = frameTime;
     perFrame.uFOV = camera->fieldOfView;
+    perFrame.uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame.uNumMips = (float)voxelTexture->numMipMapLevels;
+
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -246,6 +249,7 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->display();
+
 }
 
 void displayFPS()

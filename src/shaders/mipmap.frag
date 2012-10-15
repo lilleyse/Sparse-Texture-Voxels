@@ -1,7 +1,6 @@
 //---------------------------------------------------------
 // GLOBALS
 //---------------------------------------------------------
-
 #version 420 core
 
 // Vertex attribute indexes
@@ -28,9 +27,8 @@
 #define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
 
 // Image binding points
-#define NON_USED_IMAGE                           0
 #define NORMAL_IMAGE_3D_BINDING                  1
-#define COLOR_IMAGE_3D_BINDING                   2         
+#define COLOR_IMAGE_3D_BINDING                   0         
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -47,7 +45,7 @@
 #define NUM_OBJECTS_MAX                 500
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
-#define MAX_3D_MIPMAP_LEVELS            10
+#define MAX_3D_MIPMAP_LEVELS            7
 
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
@@ -60,6 +58,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uAspect;
     float uTime;
     float uFOV;
+    float uTextureRes;
+    float uNumMips;
 };
 
 
@@ -69,33 +69,51 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) uniform image3D tColorMips[MAX_3D_MIPMAP_LEVELS];
+layout(binding = COLOR_IMAGE_3D_BINDING, rgba8) coherent uniform image3D tColorMips[MAX_3D_MIPMAP_LEVELS];
 
 flat in int slice;
 
+uniform int uCurrentMip; 
+
+// typically use memoryBarrier to do all mipmaps at once, but it's not working right now
 void main()
 {
-    //fragColor = vec4(float(slice)/32.0);
+    ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
 
-    ivec3 indexNext = ivec3(ivec2(gl_FragCoord.xy), slice);
-    ivec3 indexCurr = indexNext*2;
-
-
-    vec4 avgColor = vec4(0.0);
-
-    for(int i = 0; i < 2; i++)
-    for(int j = 0; j < 2; j++)
-    for(int k = 0; k < 2; k++)
+    if(all(lessThan(globalId, ivec3(32))))
     {
-        ivec3 neighbor = indexCurr + ivec3(i,j,k);
-                   
-        vec4 neighborColor = imageLoad(tColorMips[0], neighbor);
-        neighborColor.rgb *= neighborColor.a;
-        avgColor += neighborColor;
+        vec4 avgColor = vec4(0.0);
+        for(int i = 0; i < 2; i++)
+        for(int j = 0; j < 2; j++)
+        for(int k = 0; k < 2; k++)
+        {
+            ivec3 neighbor = globalId*2 + ivec3(i,j,k);
+                
+            vec4 neighborColor = imageLoad(tColorMips[uCurrentMip-1], neighbor);
+            neighborColor.rgb *= neighborColor.a;
+            avgColor += neighborColor;
+        }
+        avgColor.xyz /= avgColor.a;
+        avgColor.a /= 8.0;
+        //vec4 avgColor = vec4(vec3(globalId)/32.0, 1.0);
+        imageStore(tColorMips[uCurrentMip], globalId, avgColor);
     }
-
-    avgColor.xyz /= avgColor.a;
-    avgColor.a /= 8.0;
-
-    imageStore(tColorMips[1], indexNext, avgColor);
 }
+
+
+
+
+
+//vec4 avgColor = vec4(0.0);
+//for(int i = 0; i < 2; i++)
+//for(int j = 0; j < 2; j++)
+//for(int k = 0; k < 2; k++)
+//{
+    //ivec3 neighbor = globalId*2 + ivec3(i,j,k);
+        //
+    //vec4 neighborColor = imageLoad(tColorMips[currMip-1], neighbor);
+    //neighborColor.rgb *= neighborColor.a;
+    //avgColor += neighborColor;
+//}
+//avgColor.xyz /= avgColor.a;
+//avgColor.a /= 8.0;
