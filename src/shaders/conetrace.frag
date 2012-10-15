@@ -120,22 +120,24 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
-void sampleHighestNonEmpty(vec3 pos, float mipLevel, 
-    out vec4 texel, out float level) {
-
+float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
     float startLevel = floor(mipLevel);
-    
+    float level = startLevel;
+
+    float alpha;
     for (float i=0.0; i<7.0; i++) {
         if (i < startLevel)
             continue;
 
-        texel = textureLod(colorTexture, pos, i);
+        alpha = textureLod(colorTexture, pos, i).a;
 
-        if (texel.a > 0.0) {
+        if (alpha > 0.0) {
             level = i;
             break;
         }
     }
+
+    return level;
 }
 
 float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
@@ -153,7 +155,7 @@ float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
     float tNear = max(max(t1.x, t1.y), t1.z);
     float tFar = min(min(t2.x, t2.y), t2.z);
         
-    if (tNear<tFar && tFar>0.0) {        
+    if (tNear<tFar && tFar>0.0) {
         return tNear>0.0 ? tNear : tFar;
     }
     
@@ -216,7 +218,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
   return color;
 }
 
-// transmittance accumulation
+#define SKIP_EMPTY
 vec4 conetraceAccum(vec3 ro, vec3 rd) {
   vec3 pos = ro;
   
@@ -226,15 +228,11 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
   for (int i=0; i<MAX_STEPS; ++i) {
     float dist = distance(pos, uCamPos);
 
-    // size of texel cube we want to be looking into
-    // correctly interpolated texel size, automatic
     float pixSize = gPixSizeAtDist * dist;
     
     // calc mip size
-    // if pixSize smaller than texel, clamp. that's the smallest we can go
     float mipLevel;
     if (pixSize > gTexelSize) {
-        // solve: pixSize = texelSize*2^mipLevel
         mipLevel = log2(pixSize/gTexelSize);
     }
     else {
@@ -242,23 +240,34 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
         pixSize = gTexelSize;
     }
 
-    // sample texture
     vec4 texel = textureLod(colorTexture, pos, mipLevel);
 
+    #ifdef SKIP_EMPTY
     float stepSize;
     if (texel.a == 0.0) {
-        sampleHighestNonEmpty(pos, mipLevel, texel, mipLevel);
-        stepSize = texelIntersect(pos, rd, mipLevel) + EPS;
+        float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
+        stepSize = texelIntersect(pos, rd, lvl) + EPS;
+
+        // skip color computation
     }
     else {
         stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    }
 
+        // delta transmittance
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+        tm *= dtm;
+
+        col += (1.0-dtm)*texel.rgb*tm;
+    }
+    #else
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    
     // delta transmittance
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
 
     col += (1.0-dtm)*texel.rgb*tm;
+    #endif
 
     pos += stepSize*rd;
     
