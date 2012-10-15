@@ -243,19 +243,19 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
         // skip color computation
     }
     else {
-        if (textureLod(tVoxNormal, pos, 0.0).w == uTime) {
+        //if (textureLod(tVoxNormal, pos, 0.0).w == uTime) {
             // delta transmittance
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
             tm *= dtm;
             col += (1.0-dtm)*texel.rgb*tm;
 
             stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-        }
+        //}
     }
     #else
-    if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0.0).w == uTime)
+    if (texel.a > 0.0 && textureLod(tVoxNormal, pos, 0.0).w > 2)
     {
-        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+        float dtm = exp( -TRANSMIT_K * texel.a );
         tm *= dtm;
         col += (1.0 - dtm)*texel.rgb*tm;
     }
@@ -344,7 +344,7 @@ void main()
     // COMPUTE COLORS
     //-----------------------------------------------------
 
-    #define PASS_COL
+    //#define PASS_COL
     //#define PASS_AO    
     //#define PASS_INDIR
     #define PASS_SPEC
@@ -422,7 +422,7 @@ void main()
             const float FOV = radians(10.0);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*EPS, rd, FOV);
+            spec = conetraceAccum(pos+rd*EPS2, rd, FOV);
         }
         #endif
         
