@@ -55,20 +55,20 @@ public:
                     glm::uvec3 neighbor = index3d + glm::uvec3(m,n,o);
                     uint neighborIndex1d = indexConverter(prevMipMapSideLength, neighbor);
                    
-                    glm::vec4 neighborColor(prevMipData.colorData[neighborIndex1d]);
-                    summedColor += glm::vec4(glm::vec3(neighborColor)*(neighborColor.a/255.0f), neighborColor.a/255.0f);
+                    glm::vec4 neighborColor = glm::vec4(prevMipData.colorData[neighborIndex1d])/255.0f;
+                    summedColor += glm::vec4(glm::vec3(neighborColor)*neighborColor.a, neighborColor.a);
                 
                     glm::vec3 neighborNormal = glm::vec3(prevMipData.normalData[neighborIndex1d]);
                     summedNormal += neighborNormal;
                 }
 
                 glm::vec3 averageColor = glm::vec3(summedColor)/summedColor.a;
-                glm::vec4 finalColor(averageColor, summedColor.a/8*255);
+                glm::vec4 finalColor(averageColor, summedColor.a/8);
 
                 glm::vec3 finalNormal = glm::normalize(summedNormal);
 
                 uint index1d = indexConverter(mipMapSideLength, glm::uvec3(j,k,l));
-                currMipData.colorData[index1d] = glm::u8vec4(finalColor);
+                currMipData.colorData[index1d] = glm::u8vec4(finalColor*255.0f);
                 currMipData.normalData[index1d] = glm::vec4(finalNormal, 0.0f);
             }
 

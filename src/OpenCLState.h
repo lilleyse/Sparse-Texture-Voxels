@@ -3,6 +3,7 @@
 #include <CL/opencl.h>
 #include "Utils.h"
 #include "VoxelTexture.h"
+#include "ShaderConstants.h"
 
 
 struct ColorMipmapperKernel
@@ -10,6 +11,7 @@ struct ColorMipmapperKernel
     enum params
     {
         TEXTURE_BASE,
+        SIDE_LENGTH,
         TEXTURE_MIPS_PBO
     };
 
@@ -184,9 +186,10 @@ public:
         // Create Pixel Buffer Object for the other mip levels
         //-----------------------------------------------------
         
+        uint pboSize = (voxelTexture->totalVoxels - voxelTexture->mipMapInfoArray[0].numVoxels)*sizeof(glm::u8vec4);
         glGenBuffers(1, &textureMipsPBO);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, textureMipsPBO);
-        glBufferData(GL_PIXEL_UNPACK_BUFFER, voxelTexture->totalVoxels, 0, GL_STREAM_COPY);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER, pboSize, 0, GL_STREAM_COPY);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         clTextureMipsPBO = clCreateFromGLBuffer(clGPUContext, CL_MEM_READ_WRITE, textureMipsPBO, &clError);
@@ -197,7 +200,9 @@ public:
         // Set kernel parameters
         //-----------------------------------------------------
 
+        int gridLength = voxelTexture->mipMapInfoArray[1].gridLength;
         clError  = clSetKernelArg(clColorMipmapperKernel, ColorMipmapperKernel::TEXTURE_BASE, sizeof(cl_mem), &clTextureBase);
+        clError |= clSetKernelArg(clColorMipmapperKernel, ColorMipmapperKernel::SIDE_LENGTH, sizeof(cl_int), &gridLength);
         clError |= clSetKernelArg(clColorMipmapperKernel, ColorMipmapperKernel::TEXTURE_MIPS_PBO, sizeof(cl_mem), &clTextureMipsPBO);
         if (clError != CL_SUCCESS)
             printf("could not set kernel arguments");
@@ -206,19 +211,27 @@ public:
         // Set kernel work sizes
         //-----------------------------------------------------
 
-        colorMipmapperKernel.globalWorkSize = glm::uvec3(voxelTexture->mipMapInfoArray[0].numVoxels/8);
-        colorMipmapperKernel.localWorkSize = glm::uvec3(4,4,4);
+        colorMipmapperKernel.globalWorkSize = glm::uvec3(gridLength);
+        colorMipmapperKernel.localWorkSize = glm::uvec3(4,4,4);        
 
         return true;
     }
 
-    void display()
+    void generateMipmapsCL()
     {
+
+        glFinish();
         // Acquire GL memory
         clError  = clEnqueueAcquireGLObjects(clCommandQueue, 1, &clTextureBase, 0,0,0);
         clError |= clEnqueueAcquireGLObjects(clCommandQueue, 1, &clTextureMipsPBO, 0,0,0);
         if (clError != CL_SUCCESS)
             printf("could not acquire OpenGL memory objects");
+
+        //int textureLength = voxelTexture->mipMapInfoArray[0].gridLength;
+        //std::vector<glm::u8vec4> data(textureLength*textureLength*textureLength, glm::u8vec4(255));
+        //uint origin[3] = {0,0,0};
+        //uint region[3] = {textureLength, textureLength, textureLength};
+        //clError = clEnqueueReadImage(clCommandQueue, clTextureBase, CL_TRUE, origin, region, 0, 0, &data[0], 0, 0, 0);
 
         // Call the kernel
         clError = clEnqueueNDRangeKernel(clCommandQueue, clColorMipmapperKernel, 3, &glm::uvec3(0)[0], &colorMipmapperKernel.globalWorkSize[0], &colorMipmapperKernel.localWorkSize[0], 0,0,0);
@@ -232,6 +245,20 @@ public:
             printf("could not release OpenGL memory objects");
 
         clFinish(clCommandQueue);
+
+
+        // bind PBO first
+        int gridLength = voxelTexture->mipMapInfoArray[1].gridLength;        
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, textureMipsPBO);
+
+        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
+
+        int mipmapLevel = 1;
+        glTexSubImage3D(GL_TEXTURE_3D, mipmapLevel, 0, 0, 0, gridLength, gridLength, gridLength, GL_RGBA, GL_UNSIGNED_BYTE, 0); 
+
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        
     }
 };
 

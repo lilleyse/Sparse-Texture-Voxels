@@ -26,15 +26,16 @@ namespace
     const float FRAME_TIME_DELTA = 0.01f;
     
     // Texture settings
-    /*const std::string voxelTextures[] = {
+    const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
-    };*/
+    };
+
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 128;
-    uint numMipMapLevels = 6; //starts at 0
+    uint voxelGridLength = 64;
+    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
@@ -187,15 +188,17 @@ void begin()
     voxelizer->voxelizeScene();
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
+    openClMipmapper->begin(voxelTexture);
+
     // create procedural textures
-    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //for (uint i = 0; i < numInitialTextures; i++)
-    //    voxelTextureGenerator->createTexture(voxelTextures[i]);    
+    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    for (uint i = 0; i < numInitialTextures; i++)
+        voxelTextureGenerator->createTexture(voxelTextures[i]);    
 
     // set the active texture to the triangle scene
-    voxelTextureGenerator->setTexture(sceneFile);
+    voxelTextureGenerator->setTexture(3);//(sceneFile);
 
-    openClMipmapper->begin(voxelTexture);
+    openClMipmapper->generateMipmapsCL();
 
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 

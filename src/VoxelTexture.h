@@ -36,7 +36,14 @@ public:
     {
         //Create a default empty vector for each texture data
         this->voxelGridLength = voxelGridLength;
-        this->numMipMapLevels = numMipMapLevels;//(uint)(glm::log2(float(voxelGridLength)) + 1.5);
+
+        // Set num mipmaps based on the grid length
+        if(numMipMapLevels == 0)
+        {
+            numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
+        }
+
+        this->numMipMapLevels = numMipMapLevels;
 
         int baseLevel = 0;
         int maxLevel = numMipMapLevels-1;
@@ -47,8 +54,8 @@ public:
 
         float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
         glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
-        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
-        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
+        glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
+        glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -60,8 +67,8 @@ public:
         glBindSampler(0, textureLinearSampler);
 
         glSamplerParameterfv(textureLinearSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
-        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
-        glSamplerParameteri(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
+        glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
+        glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -93,7 +100,7 @@ public:
 
         int numVoxels = 0;
         int mipMapSideLength = voxelGridLength;
-        for(int i = 0; i < numMipMapLevels; i++)
+        for(uint i = 0; i < numMipMapLevels; i++)
         {
             MipMapInfo mipMapInfo;
             mipMapInfo.offset = numVoxels;
