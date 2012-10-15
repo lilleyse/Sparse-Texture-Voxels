@@ -4,7 +4,6 @@
 #include <GL/glew.h>
 #include <GL/wglew.h>
 #include <GL/glfw.h>
-#include <CL/opencl.h>
 
 // GLM libraries
 #include <glm/glm.hpp>

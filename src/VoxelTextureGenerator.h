@@ -8,22 +8,22 @@ class VoxelTextureGenerator
 {
 private:
 
-    MipMapGenerator mipMapGenerator;
+    MipMapGenerator* mipMapGenerator;
     VoxelTexture* voxelTexture;
     std::map<std::string, uint> textureNamesToIndexes;
     std::vector<TextureData> textures;
     uint currentTexture;
 
 public:
-
     static std::string CUBE;
     static std::string SPHERE;
     static std::string CORNELL_BOX;
 
-    void begin(VoxelTexture* voxelTexture) 
+    void begin(VoxelTexture* voxelTexture, MipMapGenerator* mipMapGenerator) 
     {
         currentTexture = UINT_MAX;
         this->voxelTexture = voxelTexture;
+        this->mipMapGenerator = mipMapGenerator;
     }
     void createTexture(std::string name)
     {
@@ -187,7 +187,9 @@ public:
             
         // Fill entire texture (first mipmap level) then create mipmaps
         voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
-        mipMapGenerator.generateMipMapCPU(voxelTexture);
+        //mipMapGenerator->generateMipMapCPU();
+        mipMapGenerator->generateMipMapGPU();
+        
         return true;
     }
 

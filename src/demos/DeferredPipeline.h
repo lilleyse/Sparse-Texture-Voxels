@@ -101,10 +101,6 @@ public:
 
         glLinkProgram(deferredReadProgram);
         Utils::OpenGL::checkProgram(deferredReadProgram);
-
-        glUseProgram(deferredReadProgram);
-        GLuint textureResUniform = glGetUniformLocation(deferredReadProgram, "uTextureRes");
-        glUniform1f(textureResUniform, (float)voxelTexture->voxelGridLength);
     }
 
     void resize(int w, int h)
