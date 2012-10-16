@@ -88,7 +88,6 @@ void main()
     for(int k = 0; k < 2; k++)
     {
         ivec3 neighbor = globalId*2 + ivec3(i,j,k);
-                
         vec4 neighborColor = imageLoad(tColorMipCurr, neighbor);
         neighborColor.rgb *= neighborColor.a;
         avgColor += neighborColor;

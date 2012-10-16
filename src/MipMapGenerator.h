@@ -68,7 +68,7 @@ public:
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         // Bind voxelTexture's color and normal textures for writing
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
+        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
 

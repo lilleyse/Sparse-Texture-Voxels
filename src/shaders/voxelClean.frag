@@ -72,7 +72,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tColor;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 flat in int slice;
@@ -81,8 +81,9 @@ flat in int slice;
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-    vec4 color = imageLoad(tColor, globalId);
     float timestamp = texelFetch(tVoxNormal, globalId, 0).a;
-    bool current = uTime == timestamp;
-    imageStore(tColor, globalId, color*float(current));
+    if (uTime > timestamp)
+    {
+        imageStore(tColor, globalId, vec4(0.0));
+    }
 }

@@ -325,7 +325,7 @@ void main()
     //-----------------------------------------------------
 
     #define PASS_COL
-    //#define PASS_AO    
+    #define PASS_AO    
     #define PASS_INDIR
     #define PASS_SPEC
 
