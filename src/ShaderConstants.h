@@ -35,9 +35,10 @@ const uint RESERVED_TEXTURE_ARRAY_8                 = 14;
 const uint RESERVED_TEXTURE_ARRAY_9                 = 15;
 
 // Image binding points
-const uint NON_USED_IMAGE                           = 0;
-const uint COLOR_IMAGE_3D_BINDING                   = 1;
-const uint NORMAL_IMAGE_3D_BINDING                  = 2;
+const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;
+const uint COLOR_IMAGE_3D_BINDING_CURR              = 1;
+const uint COLOR_IMAGE_3D_BINDING_NEXT              = 2;
+const uint NORMAL_IMAGE_3D_BINDING                  = 3;
 
 // Framebuffer object outputs
 const uint DEFERRED_POSITIONS_FBO_BINDING       = 0;
@@ -68,4 +69,6 @@ struct PerFrameUBO
     float uAspect;
     float uTime;
     float uFOV;
+    float uTextureRes;
+    float uNumMips;
 };

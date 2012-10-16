@@ -32,7 +32,7 @@
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3   
+#define NORMAL_IMAGE_3D_BINDING                  3 
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -64,19 +64,27 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
 };
 
-/***************************************************/
 
-layout (location = 0, index = 0) out vec4 fragColor;
+//---------------------------------------------------------
+// SHADER VARS
+//---------------------------------------------------------
 
-in block
+layout(location = POSITION_ATTR) in vec2 position;
+
+out gl_PerVertex
 {
-    vec3 position;
-    vec4 color;
-    vec3 normal;
+    vec4 gl_Position;
+};
 
-} vertexData;
+flat out int slice;
+
+
+//---------------------------------------------------------
+// PROGRAM
+//---------------------------------------------------------
 
 void main()
 {
-    fragColor = vertexData.color;
+    slice = gl_InstanceID;
+    gl_Position = vec4(position, 0.0, 1.0);
 }

@@ -11,8 +11,8 @@ local source_location =     project_location .. "src/"                  --Source
 local data_location =       project_location .. "data/"                 --Data
 local externals_location =  project_location .. "external/"             --External libraries and headers
 
-local lib_locations = {"glew-1.9.0/lib/", "glfw-2.7.6/lib/", "OpenCL/lib/"}
-local header_locations = {"glew-1.9.0/include/", "glfw-2.7.6/include/", "OpenCL/", "glm-0.9.3.4/", "gli-0.3.0.3/", "tinyxml2-78d450b/"}
+local lib_locations = {"glew-1.9.0/lib/", "glfw-2.7.6/lib/"}
+local header_locations = {"glew-1.9.0/include/", "glfw-2.7.6/include/", "glm-0.9.3.4/", "gli-0.3.0.3/", "tinyxml2-78d450b/"}
 local tinyxmlcpp = externals_location .. "tinyxml2-78d450b/tinyxml2.cpp"
 
 --Collects the lib names within a certain folder

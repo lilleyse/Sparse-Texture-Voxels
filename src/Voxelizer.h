@@ -32,9 +32,8 @@ public:
     }
 
 
-    void voxelizeScene()
+    void voxelizeScene(float frameTime)
     {
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
         // Update the viewport to be the size of the voxel grid
         int oldViewport[4];
         glGetIntegerv(GL_VIEWPORT, oldViewport);
@@ -47,12 +46,7 @@ public:
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
         // Bind voxelTexture's color and normal textures for writing
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-        
-        glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
+        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
         glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
         
         // Use the voxelizer program
@@ -61,6 +55,7 @@ public:
         // Update the per frame UBO with the orthographic projection
         PerFrameUBO perFrame;
         perFrame.uResolution = glm::ivec2(voxelGridLength);
+        perFrame.uTime = frameTime;
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
 
         // Render down z-axis
@@ -79,8 +74,7 @@ public:
         coreEngine->display();
         
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage
-        // change to texture, not all
-        glMemoryBarrier(GL_ALL_BARRIER_BITS);
+        glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         // return values back to normal
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -89,5 +83,4 @@ public:
         glEnable(GL_DEPTH_TEST);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-
 };

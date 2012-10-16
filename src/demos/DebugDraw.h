@@ -14,13 +14,8 @@ private:
     static const uint numElementsCube = 36; 
     VoxelTexture* voxelTexture;
 
-    struct MipMapInfo
-    {
-        uint offset;
-        uint numVoxels;
-    };
+    std::vector<MipMapInfo> debugMipMapInfoArray;
 
-    std::vector<MipMapInfo> mipMapInfoArray;
 
     struct Voxel
     {
@@ -99,29 +94,29 @@ public:
     }
     void voxelTextureUpdate()
     {
-        mipMapInfoArray.clear();
+        debugMipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
         
-        int mipMapVoxelGridLength = voxelTexture->voxelGridLength;
-        float voxelScale = 1.0f / mipMapVoxelGridLength;
+        float voxelScale = 1.0f / voxelTexture->mipMapInfoArray[0].gridLength;
         for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)
         {
-            MipMapInfo mipMapInfo;
-            mipMapInfo.offset = voxelArray.size();
+            MipMapInfo debugMipMapInfo;
+            debugMipMapInfo.offset = voxelArray.size();
 
-            std::vector<glm::u8vec4> imageData(mipMapVoxelGridLength*mipMapVoxelGridLength*mipMapVoxelGridLength);
+            uint mipMapGridLength = voxelTexture->mipMapInfoArray[i].gridLength;
+            std::vector<glm::u8vec4> imageData(mipMapGridLength*mipMapGridLength*mipMapGridLength);
             glGetTexImage(GL_TEXTURE_3D, i, GL_RGBA, GL_UNSIGNED_BYTE, &imageData[0]);
 
             // apply an offset to the position because the origin of the cube model is in its center rather than a corner
             glm::vec3 offset = glm::vec3(voxelScale/2);
 
             uint textureIndex = 0;
-            for(int j = 0; j < mipMapVoxelGridLength; j++)
-            for(int k = 0; k < mipMapVoxelGridLength; k++)
-            for(int l = 0; l < mipMapVoxelGridLength; l++)
+            for(uint j = 0; j < mipMapGridLength; j++)
+            for(uint k = 0; k < mipMapGridLength; k++)
+            for(uint l = 0; l < mipMapGridLength; l++)
             {
                 glm::vec3 position = glm::vec3(l*voxelScale,k*voxelScale,j*voxelScale) + offset;
                 glm::u8vec4 color = imageData[textureIndex];
@@ -134,10 +129,9 @@ public:
                 }
                 textureIndex++;
             }
-            mipMapInfo.numVoxels = voxelArray.size() - mipMapInfo.offset;
-            mipMapInfoArray.push_back(mipMapInfo);
+            debugMipMapInfo.numVoxels = voxelArray.size() - debugMipMapInfo.offset;
+            debugMipMapInfoArray.push_back(debugMipMapInfo);
             voxelScale *= 2;
-            mipMapVoxelGridLength /= 2;
         }
 
         glBindBuffer(GL_ARRAY_BUFFER, voxelBuffer);
@@ -147,8 +141,8 @@ public:
 
     void display()
     {
-        uint baseInstance = mipMapInfoArray[this->currentMipMapLevel].offset;
-        uint primCount = mipMapInfoArray[this->currentMipMapLevel].numVoxels;
+        uint baseInstance = debugMipMapInfoArray[this->currentMipMapLevel].offset;
+        uint primCount = debugMipMapInfoArray[this->currentMipMapLevel].numVoxels;
 
         glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
