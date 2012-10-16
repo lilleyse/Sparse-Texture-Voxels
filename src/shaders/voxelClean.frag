@@ -32,7 +32,7 @@
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3   
+#define NORMAL_IMAGE_3D_BINDING                  3  
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -50,6 +50,7 @@
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
 
+
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
@@ -64,19 +65,24 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
 };
 
-/***************************************************/
 
-layout (location = 0, index = 0) out vec4 fragColor;
+//---------------------------------------------------------
+// SHADER VARS
+//---------------------------------------------------------
 
-in block
-{
-    vec3 position;
-    vec4 color;
-    vec3 normal;
+layout(location = 0) out vec4 fragColor;
 
-} vertexData;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tColor;
+layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
+flat in int slice;
+
+// typically use memoryBarrier to do all mipmaps at once, but it's not working right now
 void main()
 {
-    fragColor = vertexData.color;
+    ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
+    vec4 color = imageLoad(tColor, globalId);
+    float timestamp = texelFetch(tVoxNormal, globalId, 0).a;
+    bool current = uTime == timestamp;
+    imageStore(tColor, globalId, color*float(current));
 }

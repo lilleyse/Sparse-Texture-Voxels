@@ -16,27 +16,36 @@ namespace
     glm::ivec2 windowSize(600, 400);
     glm::ivec2 openGLVersion(4, 2);
     ThirdPersonCamera* camera = new ThirdPersonCamera();
+    glm::ivec2 mouseClickPos;
     glm::ivec2 currentMousePos;
-    bool showDebugOutput = true;
+    Object* currentSelectedObject;
+    bool enableMousePicking = true;
+    bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
     int frameCount = 0;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;
+    Utils::OpenGL::OpenGLTimer timer;
     
     // Texture settings
-    /*const std::string voxelTextures[] = {
+    const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
-    };*/
+    };
+    bool loadTextures = false;
+
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     uint voxelGridLength = 128;
+    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
+    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
+
     
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -45,7 +54,7 @@ namespace
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = true;
+    bool loadAllDemos = false;
 
     // OpenGL stuff
     CoreEngine* coreEngine = new CoreEngine();
@@ -96,6 +105,42 @@ void GLFWCALL mouseMove(int x, int y)
     }
 }
 
+void GLFWCALL mouseClick(int button, int action)
+{
+    if (button == GLFW_MOUSE_BUTTON_LEFT)
+    {
+        if (action == GLFW_PRESS)
+        {
+            mouseClickPos = currentMousePos;
+        }
+        else if (action == GLFW_RELEASE)
+        {
+            if (mouseClickPos == currentMousePos && enableMousePicking)
+            {
+                Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, camera->nearPlane, camera->farPlane,  camera->viewMatrix, camera->projectionMatrix);    
+                std::vector<Object*> objects = coreEngine->scene->objects;
+                Object* selectedObject = 0;
+                float closestIntersection = FLT_MAX;
+                for (uint i = 0; i < objects.size(); i++)
+                {
+                    Object* object = objects.at(i);
+                    glm::mat4 transformationMatrix = object->position.modelMatrix;
+                    glm::mat4 invTransformationMatrix = glm::inverse(transformationMatrix);
+                    Utils::Math::Ray transformedRay = ray.transform(invTransformationMatrix);
+                    glm::vec3 boundingBoxMin = -object->mesh->extents;
+                    glm::vec3 boundingBoxMax = object->mesh->extents;
+                    float boundingBoxIntersection = Utils::Math::rayBoundingBoxIntersect(transformedRay, boundingBoxMin, boundingBoxMax); 
+                    if (boundingBoxIntersection > 0.0f && boundingBoxIntersection < closestIntersection)
+                    {
+                        currentSelectedObject = object;
+                        closestIntersection = boundingBoxIntersection;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void GLFWCALL key(int k, int action)
 {
     if (action == GLFW_RELEASE)
@@ -116,6 +161,30 @@ void GLFWCALL key(int k, int action)
         if (setsNextTexture || setsPreviousTexture)
             if (loadAllDemos || currentDemoType == DEBUGDRAW)
                 debugDraw->voxelTextureUpdate();
+    }
+}
+
+void checkKeyDown()
+{
+    // This method checks if keys are down every frame
+    // Transforming selected objects
+    if (enableMousePicking && currentSelectedObject != 0)
+    {
+        float translationAmount = 0.01f;
+        float rotationAmount = 0.5f;
+        float scaleAmount = 0.01f;
+        bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
+        if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
+        if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
+        if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
+        if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
+        if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
+        else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
+        if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
+        else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
+        
     }
 }
 
@@ -144,7 +213,7 @@ void initGL()
         glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
         glDebugMessageCallbackARB(&Utils::OpenGL::debugOutput, NULL);
     }
-    else printf("debug output extension not found");
+    else printf("debug output extension not found or disabled\n");
     
     // Create per frame uniform buffer object
     glGenBuffers(1, &perFrameUBO);
@@ -174,23 +243,30 @@ void begin()
     camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
+    timer.begin();
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
-    voxelTexture->begin(voxelGridLength);
-    voxelTextureGenerator->begin(voxelTexture);
+    voxelTexture->begin(voxelGridLength, numMipMapLevels);
+    mipMapGenerator->begin(voxelTexture, fullScreenQuad);
+    voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
-    voxelizer->voxelizeScene();
+    voxelizer->voxelizeScene(frameTime);
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
     // create procedural textures
-    //uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //for (uint i = 0; i < numInitialTextures; i++)
-    //    voxelTextureGenerator->createTexture(voxelTextures[i]);    
+    if (loadTextures)
+    {
+        uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+        for (uint i = 0; i < numInitialTextures; i++)
+            voxelTextureGenerator->createTexture(voxelTextures[i]);  
+    }
 
     // set the active texture to the triangle scene
     voxelTextureGenerator->setTexture(sceneFile);
+
+    
 
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
@@ -207,10 +283,6 @@ void begin()
 
 void display()
 {
-    // Update the scene
-    //coreEngine->scene->objects[0]->translate(glm::vec3(0,.001,0));
-    //coreEngine->updateScene();
-    //voxelizer->voxelizeScene();
 
     // Basic GL stuff
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
@@ -218,6 +290,11 @@ void display()
     glClearBufferfv(GL_COLOR, 0, clearColor);
     float clearDepth = 1.0f;
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+
+    // Update the scene
+    coreEngine->updateScene();
+    voxelizer->voxelizeScene(frameTime);
+    mipMapGenerator->generateMipMapGPU();
 
     // Update the per frame UBO
     PerFrameUBO perFrame;
@@ -229,6 +306,9 @@ void display()
     perFrame.uAspect = (float)windowSize.x/windowSize.y;
     perFrame.uTime = frameTime;
     perFrame.uFOV = camera->fieldOfView;
+    perFrame.uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame.uNumMips = (float)voxelTexture->numMipMapLevels;
+
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -242,6 +322,7 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->display();
+
 }
 
 void displayFPS()
@@ -271,19 +352,20 @@ int main(int argc, char* argv[])
     glfwSetWindowTitle(applicationName.c_str());
     glfwSetWindowSizeCallback(resize);
     glfwSetMousePosCallback(mouseMove);
+    glfwSetMouseButtonCallback(mouseClick);
     glfwSetKeyCallback(key);
-    glfwEnable(GLFW_KEY_REPEAT);
-    glfwEnable(GLFW_STICKY_KEYS);
+    glfwEnable(GLFW_AUTO_POLL_EVENTS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
 
     bool running = true;
     do
     {
+        checkKeyDown();
         display();
-        glfwSwapBuffers();
         frameTime += FRAME_TIME_DELTA;
         if (showFPS) displayFPS();
+        glfwSwapBuffers();
         running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
     }
     while(running);
