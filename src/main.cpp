@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
+#include "DeferredWrite.h"
 #include "engine/CoreEngine.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
@@ -45,8 +46,8 @@ namespace
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
     MipMapGenerator* mipMapGenerator = new MipMapGenerator();
+    DeferredWrite* deferredWrite = new DeferredWrite();
 
-    
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
     DebugDraw* debugDraw = new DebugDraw();
@@ -195,7 +196,7 @@ void GLFWCALL resize(int w, int h)
     windowSize = glm::ivec2(w, h);
 
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->resize(w, h);
+        deferredWrite->resize(w, h);
 }
 
 void initGL()
@@ -245,6 +246,7 @@ void begin()
     // set up miscellaneous things
     timer.begin();
     coreEngine->begin(sceneFile);
+    deferredWrite->begin(coreEngine);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
@@ -266,8 +268,6 @@ void begin()
     // set the active texture to the triangle scene
     voxelTextureGenerator->setTexture(sceneFile);
 
-    
-
     // init demos
     if (loadAllDemos || currentDemoType == DEBUGDRAW) 
         debugDraw->begin(voxelTexture);
@@ -276,14 +276,13 @@ void begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
+        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine, deferredWrite);
 
     setMipMapLevel(currentMipMapLevel);
 }
 
 void display()
 {
-
     // Basic GL stuff
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};

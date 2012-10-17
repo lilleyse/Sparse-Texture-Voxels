@@ -51,7 +51,7 @@ const int MATERIAL_INDEX        = 1;
 
 // Max values
 const uint MAX_TEXTURE_ARRAYS               = 10;
-const uint FBO_BINDING_POINT_ARRAY_SIZE     = 4;
+const uint FBO_BINDING_POINT_ARRAY_SIZE     = 3;
 const uint NUM_OBJECTS_MAX                  = 500;
 const uint NUM_MESHES_MAX                   = 500;
 const uint MAX_POINT_LIGHTS                 = 8;
