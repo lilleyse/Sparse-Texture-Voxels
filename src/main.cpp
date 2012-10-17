@@ -4,7 +4,7 @@
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
 #include "engine/CoreEngine.h"
-#include "demos/DebugDraw.h"
+#include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
@@ -48,13 +48,13 @@ namespace
 
     
     // Demo settings
-    enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
-    DebugDraw* debugDraw = new DebugDraw();
+    enum DemoType {VOXEL_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
+    VoxelDebug* voxelDebug = new VoxelDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = false;
+    bool loadAllDemos = true;
 
     // OpenGL stuff
     CoreEngine* coreEngine = new CoreEngine();
@@ -69,8 +69,8 @@ void setMipMapLevel(int level)
     if (level >= numMipMapLevels) level = numMipMapLevels - 1;
     currentMipMapLevel = level;
     
-    if (loadAllDemos || currentDemoType == DEBUGDRAW)
-        debugDraw->setMipMapLevel(currentMipMapLevel);
+    if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+        voxelDebug->setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->setMipMapLevel(currentMipMapLevel);
 }
@@ -159,8 +159,8 @@ void GLFWCALL key(int k, int action)
         bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
         bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
         if (setsNextTexture || setsPreviousTexture)
-            if (loadAllDemos || currentDemoType == DEBUGDRAW)
-                debugDraw->voxelTextureUpdate();
+            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                voxelDebug->voxelTextureUpdate();
     }
 }
 
@@ -269,8 +269,8 @@ void begin()
     
 
     // init demos
-    if (loadAllDemos || currentDemoType == DEBUGDRAW) 
-        debugDraw->begin(voxelTexture);
+    if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
+        voxelDebug->begin(voxelTexture);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
@@ -314,8 +314,8 @@ void display()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Display demo
-    if (currentDemoType == DEBUGDRAW)
-        debugDraw->display();
+    if (currentDemoType == VOXEL_DEBUG)
+        voxelDebug->display();
     else if (currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
