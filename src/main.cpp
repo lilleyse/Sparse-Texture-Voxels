@@ -8,6 +8,7 @@
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/DeferredPipeline.h"
+#include "demos/TriangleDebug.h"
 
 namespace
 {
@@ -48,8 +49,9 @@ namespace
 
     
     // Demo settings
-    enum DemoType {VOXEL_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
+    enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
     VoxelDebug* voxelDebug = new VoxelDebug();
+    TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
@@ -249,7 +251,7 @@ void begin()
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
-    
+
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
     voxelizer->voxelizeScene(frameTime);
@@ -271,12 +273,15 @@ void begin()
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
         voxelDebug->begin(voxelTexture);
+    if (loadAllDemos || currentDemoType == TRIANGLE_DEBUG)
+        triangleDebug->begin(coreEngine);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
+    
 
     setMipMapLevel(currentMipMapLevel);
 }
@@ -316,6 +321,8 @@ void display()
     // Display demo
     if (currentDemoType == VOXEL_DEBUG)
         voxelDebug->display();
+    else if (currentDemoType == TRIANGLE_DEBUG)
+        triangleDebug->display();
     else if (currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
