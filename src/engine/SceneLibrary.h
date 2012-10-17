@@ -16,6 +16,47 @@ struct SceneLibrary
         // Nothing
     }
 
+    glm::vec3 getVec3FromString(std::string& vecString)
+    {
+        glm::vec3 result;
+        std::vector<std::string> pieces = Utils::parseSpaceSeparatedString(vecString);
+        result.x = (float)std::atof(pieces[0].c_str());
+        result.y = (float)std::atof(pieces[1].c_str());
+        result.z = (float)std::atof(pieces[2].c_str());
+        return result;
+    }
+
+    glm::vec4 getVec4FromString(std::string& vecString)
+    {
+        glm::vec4 result;
+        std::vector<std::string> pieces = Utils::parseSpaceSeparatedString(vecString);
+        result.x = (float)std::atof(pieces[0].c_str());
+        result.y = (float)std::atof(pieces[1].c_str());
+        result.z = (float)std::atof(pieces[2].c_str());
+        result.w = (float)std::atof(pieces[3].c_str());
+        return result;
+    }
+
+    glm::vec3 getTranslation(XMLElement* translateElement)
+    {
+        std::string translateString = translateElement->FirstChild()->Value();
+        return getVec3FromString(translateString);
+    }
+
+    glm::vec3 getScale(XMLElement* scaleElement)
+    {
+        std::string scaleString = scaleElement->FirstChild()->Value();
+        return getVec3FromString(scaleString);
+    }
+
+    // returns axis followed by angle
+    glm::vec4 getRotation(XMLElement* rotateElement) 
+    {
+        std::string rotateString = rotateElement->FirstChild()->Value();
+        return getVec4FromString(rotateString);
+    }
+
+
     Scene* addScene(RenderData& renderData, MeshLibrary& meshLibrary, ShaderLibrary& shaderLibrary, std::string name, std::string filename)
     {
         // Open XML document
@@ -35,20 +76,12 @@ struct SceneLibrary
         std::string sceneName = infoElement->FirstChildElement("name")->FirstChild()->Value();
        
         // Get bottom corner bounds
-        glm::vec3 bottomCorner;
         std::string bottomCornerString = infoElement->FirstChildElement("bottom_corner")->FirstChild()->Value();
-        std::vector<std::string> bottomCornerPieces = Utils::parseSpaceSeparatedString(bottomCornerString);
-        bottomCorner.x = (float)std::atof(bottomCornerPieces[0].c_str());
-        bottomCorner.y = (float)std::atof(bottomCornerPieces[1].c_str());
-        bottomCorner.z = (float)std::atof(bottomCornerPieces[2].c_str());
+        glm::vec3 bottomCorner = getVec3FromString(bottomCornerString);
 
         // Get top corner bounds
-        glm::vec3 topCorner;
         std::string topCornerString = infoElement->FirstChildElement("top_corner")->FirstChild()->Value();
-        std::vector<std::string> topCornerPieces = Utils::parseSpaceSeparatedString(topCornerString);
-        topCorner.x = (float)std::atof(topCornerPieces[0].c_str());
-        topCorner.y = (float)std::atof(topCornerPieces[1].c_str());
-        topCorner.z = (float)std::atof(topCornerPieces[2].c_str());
+        glm::vec3 topCorner = getVec3FromString(topCornerString);
 
         scene->setBounds(bottomCorner, topCorner);
 
@@ -75,46 +108,20 @@ struct SceneLibrary
             // Create object
             Object* object = new Object(mesh, shaderLibrary.debugDrawShader);   
 
-            // Get translation and apply it (if applicable)
+            // Get translation and apply it
             XMLElement* translateElement = objectElement->FirstChildElement("translate");
-            if(translateElement)
-            {
-                glm::vec3 translate(0.0);
-                std::string translateString = translateElement->FirstChild()->Value();
-                std::vector<std::string> translatePieces = Utils::parseSpaceSeparatedString(translateString);
-                translate.x = (float)std::atof(translatePieces[0].c_str());
-                translate.y = (float)std::atof(translatePieces[1].c_str());
-                translate.z = (float)std::atof(translatePieces[2].c_str());
-                object->translate(translate);
-            }
+            glm::vec3 translate = getTranslation(translateElement);
+            object->translate(translate);
            
-            // Get scale and apply it (if applicable)   
+            // Get scale and apply it
             XMLElement* scaleElement = objectElement->FirstChildElement("scale");
-            if(scaleElement)
-            {
-                glm::vec3 scale(1.0);
-                std::string scaleString = scaleElement->FirstChild()->Value();
-                std::vector<std::string> scalePieces = Utils::parseSpaceSeparatedString(scaleString);
-                scale.x = (float)std::atof(scalePieces[0].c_str());
-                scale.y = (float)std::atof(scalePieces[1].c_str());
-                scale.z = (float)std::atof(scalePieces[2].c_str());
-                object->scale(scale);
-            }
+            glm::vec3 scale = getScale(scaleElement);
+            object->scale(scale);
 
-            // Get rotation and apply it (if applicable)   
+            // Get rotation and apply it 
             XMLElement* rotateElement = objectElement->FirstChildElement("rotate");
-            if(rotateElement)
-            {
-                glm::vec3 rotateAxis(0.0, 1.0, 0.0);
-                float rotateAngle = 0;
-                std::string rotateString = rotateElement->FirstChild()->Value();
-                std::vector<std::string> rotatePieces = Utils::parseSpaceSeparatedString(rotateString);
-                rotateAxis.x = (float)std::atof(rotatePieces[0].c_str());
-                rotateAxis.y = (float)std::atof(rotatePieces[1].c_str());
-                rotateAxis.z = (float)std::atof(rotatePieces[2].c_str());
-                rotateAngle  = (float)std::atof(rotatePieces[3].c_str());
-                object->rotate(rotateAxis, rotateAngle); 
-            }
+            glm::vec4 rotation = getRotation(rotateElement);
+            object->rotate(glm::vec3(rotation), rotation.w); 
 
             scene->addObject(renderData, object);
         }
@@ -127,50 +134,57 @@ struct SceneLibrary
         {
             for(XMLElement* lightElement = lightsElement->FirstChildElement("light"); lightElement != 0; lightElement = lightElement->NextSiblingElement("light"))
             {
-                glm::vec3 color;
+                // Get color (all light types have a color)
                 std::string colorString = lightElement->FirstChildElement("color")->FirstChild()->Value();
-                std::vector<std::string> colorPieces = Utils::parseSpaceSeparatedString(colorString);
-                color.x = (float)std::atof(colorPieces[0].c_str());
-                color.y = (float)std::atof(colorPieces[1].c_str());
-                color.z = (float)std::atof(colorPieces[2].c_str());
+                glm::vec3 color = getVec3FromString(colorString);
 
-                glm::vec3 ambient;
-                std::string ambientString = lightElement->FirstChildElement("ambient")->FirstChild()->Value();
-                std::vector<std::string> ambientPieces = Utils::parseSpaceSeparatedString(ambientString);
-                ambient.x = (float)std::atof(ambientPieces[0].c_str());
-                ambient.y = (float)std::atof(ambientPieces[1].c_str());
-                ambient.z = (float)std::atof(ambientPieces[2].c_str());
-
+                // Get the light type
                 std::string lightType = lightElement->Attribute("type");
-                if(lightType == "directional")
+
+                // Loop over light types
+                if(lightType == "Sun")
                 {
-                    glm::vec3 direction;
+                    // Get direction
                     std::string directionString = lightElement->FirstChildElement("direction")->FirstChild()->Value();
-                    std::vector<std::string> directionPieces = Utils::parseSpaceSeparatedString(directionString);
-                    direction.x = (float)std::atof(directionPieces[0].c_str());
-                    direction.y = (float)std::atof(directionPieces[1].c_str());
-                    direction.z = (float)std::atof(directionPieces[2].c_str());
+                    glm::vec3 direction = getVec3FromString(directionString);
 
                     DirectionalLight dirLight;
-                    dirLight.base.color = color;
-                    dirLight.base.ambient = ambient;
+                    dirLight.color = color;
                     dirLight.direction = direction;
                     scene->addDirectionalLight(dirLight);
                 }
-                else if(lightType == "point")
+                else if(lightType == "Point")
                 {
-                    glm::vec4 position(1.0);
-                    std::string positionString = lightElement->FirstChildElement("position")->FirstChild()->Value();
-                    std::vector<std::string> positionPieces = Utils::parseSpaceSeparatedString(positionString);
-                    position.x = (float)std::atof(positionPieces[0].c_str());
-                    position.y = (float)std::atof(positionPieces[1].c_str());
-                    position.z = (float)std::atof(positionPieces[2].c_str());
+                    // Get position
+                    std::string positionString = lightElement->FirstChildElement("translate")->FirstChild()->Value();
+                    glm::vec3 position = getVec3FromString(positionString);
 
                     PointLight pointLight;
-                    pointLight.base.color = color;
-                    pointLight.base.ambient = ambient;
+                    pointLight.color = color;
                     pointLight.position = position;
                     scene->addPointLight(pointLight);
+                }
+                else if(lightType == "Spot")
+                {
+                    // Get distance and angle
+                    float distance = (float)atof(lightElement->FirstChildElement("distance")->FirstChild()->Value());
+                    float angle = (float)atof(lightElement->FirstChildElement("angle")->FirstChild()->Value());
+                    
+                    // Get position
+                    std::string positionString = lightElement->FirstChildElement("translate")->FirstChild()->Value();
+                    glm::vec3 position = getVec3FromString(positionString);
+                 
+                    // Get direction
+                    std::string directionString = lightElement->FirstChildElement("direction")->FirstChild()->Value();
+                    glm::vec3 direction = getVec3FromString(directionString);
+
+                    SpotLight spotLight;
+                    spotLight.color = color;
+                    spotLight.position = position;
+                    spotLight.distance = distance;
+                    spotLight.angle = angle;
+                    spotLight.direction = direction;
+                    scene->addSpotLight(spotLight);
                 }
             }
         }

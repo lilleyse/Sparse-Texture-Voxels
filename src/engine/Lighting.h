@@ -2,60 +2,34 @@
 
 #include "../Utils.h"
 #include "../ShaderConstants.h"
-#include "Buffer.h"
-
-struct BaseLight
-{
-    glm::vec3 color;
-    float padding1;
-    glm::vec3 ambient;
-    float padding2;
-};
 
 struct DirectionalLight
 {
+    glm::vec3 color;
     glm::vec3 direction;
-    float padding;
-    BaseLight base;
+    glm::mat4 projMatrix;
+};
+
+struct SpotLight
+{
+    float distance;
+    glm::vec3 color;
+    glm::vec3 position;
+    glm::vec3 direction;
+    float angle;
+    glm::mat4 projMatrix;
 };
 
 struct PointLight
 {
-    glm::vec4 position; //position.w contains attenuation factor
-    BaseLight base;
+    glm::vec3 color;
+    glm::vec3 position;
 };
+
 
 struct Lighting
 {
-    PointLight pointLights[MAX_POINT_LIGHTS];
-    DirectionalLight directionalLight;
-    int numLights; float padding[3];
-};
-
-struct LightingHandler
-{
-    Lighting lighting;
-    UniformBuffer* lightUBO;
-
-
-    LightingHandler()
-    {
-        lighting.numLights = 0;
-        lightUBO = new UniformBuffer(LIGHT_UBO_BINDING, 0, sizeof(Lighting), GL_STATIC_DRAW);
-    }
-
-    void addDirectionalLight(DirectionalLight& dirLight)
-    {
-        lighting.directionalLight = dirLight;
-    }
-
-    void addPointLight(PointLight& pointLight)
-    {
-        lighting.pointLights[lighting.numLights++];
-    }
-
-    void commitToGL()
-    {
-        lightUBO->commitToGL(&lighting, sizeof(Lighting), 0);
-    }
+    std::vector<DirectionalLight> dirLights;
+    std::vector<SpotLight> spotLights;
+    std::vector<PointLight> pointLights;
 };
