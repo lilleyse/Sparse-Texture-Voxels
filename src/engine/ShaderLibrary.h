@@ -6,7 +6,7 @@ struct ShaderLibrary
 {
     // Setup shaders
     GLuint mainPassShader;
-    GLuint debugDrawShader;
+    GLuint voxelDebugShader;
 
     void begin()
     {
@@ -28,13 +28,13 @@ struct ShaderLibrary
         /*GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
         GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainDeferred.frag");
 
-        debugDrawShader = glCreateProgram();
-        glAttachShader(debugDrawShader, vertexShaderObject);
-        glAttachShader(debugDrawShader, fragmentShaderObject);
+        voxelDebugShader = glCreateProgram();
+        glAttachShader(voxelDebugShader, vertexShaderObject);
+        glAttachShader(voxelDebugShader, fragmentShaderObject);
         glDeleteShader(vertexShaderObject);
         glDeleteShader(fragmentShaderObject);
 
-        glLinkProgram(debugDrawShader);
-        Utils::OpenGL::checkProgram(debugDrawShader);*/
+        glLinkProgram(voxelDebugShader);
+        Utils::OpenGL::checkProgram(voxelDebugShader);*/
     }
 };
