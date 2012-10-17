@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Utils.h"
-#include "ShaderConstants.h"
+#include "../ShaderConstants.h"
 #include "../FullScreenQuad.h"
 #include "../VoxelTexture.h"
 #include "../DeferredWrite.h"
@@ -16,18 +16,16 @@ private:
     VoxelTexture* voxelTexture;
     FullScreenQuad* fullScreenQuad;
     CoreEngine* coreEngine;
-    DeferredWrite* deferredWrite;
 
 public:
-    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad, CoreEngine* coreEngine, DeferredWrite* deferredWrite)
+    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad, CoreEngine* coreEngine)
     {
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
         this->coreEngine = coreEngine;
-        this->deferredWrite = deferredWrite;
 
         // Create program that reads the deferred data
-        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
+        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
         GLuint fragmentShaderObjectRead = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "deferredRead.frag");
 
         deferredReadProgram = glCreateProgram();
@@ -42,14 +40,13 @@ public:
 
     void display()
     {
+        glEnable(GL_DEPTH_TEST);
+
         //voxelTexture->enableNearestSampling();
         voxelTexture->enableLinearSampling();
         
-        // Render to the FBO
-        deferredWrite->display();   
-        
-        // Show the results written to the FBO
+        // rasterize triangles and render colors
         glUseProgram(deferredReadProgram);
-        fullScreenQuad->display();
+        coreEngine->display();
     }
 };

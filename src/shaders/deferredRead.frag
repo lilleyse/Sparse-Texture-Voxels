@@ -50,7 +50,6 @@
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
 
-
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
@@ -64,6 +63,48 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uTextureRes;
     float uNumMips;
 };
+
+
+//---------------------------------------------------------
+// TRIANGLE ENGINE
+//---------------------------------------------------------
+
+layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+
+in block
+{
+    vec3 position;
+    vec3 normal;
+    vec2 uv;
+    flat ivec2 propertyIndex;
+} vertexData;
+
+struct MeshMaterial
+{
+    vec4 diffuseColor;
+    vec4 specularColor;
+    ivec2 textureLayer;
+};
+
+layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
+{
+    MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
+};
+
+MeshMaterial getMeshMaterial()
+{
+    int index = vertexData.propertyIndex[MATERIAL_INDEX];
+    return meshMaterialArray[index];
+}
+
+vec4 getDiffuseColor(MeshMaterial material)
+{
+    int textureId = material.textureLayer.x;
+    int textureLayer = material.textureLayer.y;
+    return textureId == -1 ? 
+        material.diffuseColor : 
+        texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+}
 
 
 //---------------------------------------------------------
@@ -85,18 +126,17 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 // SHADER VARS
 //---------------------------------------------------------
+// may allow depth test early, gl_FragDepth will be written
+
+//layout (depth_unchanged) out float gl_FragDepth;
+//layout (depth_greater) out float gl_FragDepth;
+//layout (depth_less) out float gl_FragDepth;
+layout (early_fragment_tests) in;
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = DEFERRED_POSITIONS_TEXTURE_BINDING) uniform sampler2D tPosition;
-layout(binding = DEFERRED_COLORS_TEXTURE_BINDING) uniform sampler2D tColor;
-layout(binding = DEFERRED_NORMALS_TEXTURE_BINDING) uniform sampler2D tNormal;
-
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
-
-in vec2 vUV;
-
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
@@ -315,9 +355,10 @@ void main()
     // size of one texel in normalized texture coords
     gTexelSize = 1.0/uTextureRes;
 
-    vec3 pos = texture(tPosition, vUV).rgb;
-    vec3 nor = texture(tNormal, vUV).rgb;
-    vec4 col = texture(tColor, vUV);
+    // get fragment info
+    vec3 pos = vertexData.position;
+    vec3 nor = normalize(vertexData.normal);
+    vec4 col = getDiffuseColor(getMeshMaterial());
 
 
     //-----------------------------------------------------
@@ -370,7 +411,7 @@ void main()
         #endif
         
         #ifdef PASS_INDIR
-        vec4 indir;
+        vec4 indir = vec4(0.0);
         {
             // duplicate code from above
 
@@ -432,15 +473,5 @@ void main()
         #endif
     }
 
-
-    //-----------------------------------------------------
-    // RENDER OUT
-    //-----------------------------------------------------
-
-    // background color
-    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
-
-    // alpha blend cout over bg
-    bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
-    fragColor = bg;
+    fragColor = cout;
 }

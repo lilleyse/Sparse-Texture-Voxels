@@ -3,7 +3,6 @@
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
-#include "DeferredWrite.h"
 #include "engine/CoreEngine.h"
 #include "demos/DebugDraw.h"
 #include "demos/VoxelRaycaster.h"
@@ -46,7 +45,6 @@ namespace
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
     MipMapGenerator* mipMapGenerator = new MipMapGenerator();
-    DeferredWrite* deferredWrite = new DeferredWrite();
 
     // Demo settings
     enum DemoType {DEBUGDRAW, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
@@ -194,9 +192,6 @@ void GLFWCALL resize(int w, int h)
     glViewport(0, 0, w, h);
     camera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
-
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredWrite->resize(w, h);
 }
 
 void initGL()
@@ -246,7 +241,6 @@ void begin()
     // set up miscellaneous things
     timer.begin();
     coreEngine->begin(sceneFile);
-    deferredWrite->begin(coreEngine);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
@@ -276,7 +270,7 @@ void begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine, deferredWrite);
+        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
 
     setMipMapLevel(currentMipMapLevel);
 }

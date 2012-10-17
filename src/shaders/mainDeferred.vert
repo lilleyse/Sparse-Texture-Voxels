@@ -50,7 +50,6 @@
 #define NUM_MESHES_MAX                  500
 #define MAX_POINT_LIGHTS                8
 
-
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
