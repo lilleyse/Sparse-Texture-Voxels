@@ -19,22 +19,12 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define NON_USED_TEXTURE                         0 // Used for modifying textures that shouldn't be bound to a binding point
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define DEFERRED_POSITIONS_TEXTURE_BINDING       3
 #define DEFERRED_COLORS_TEXTURE_BINDING          4
 #define DEFERRED_NORMALS_TEXTURE_BINDING         5
 #define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6
-#define RESERVED_TEXTURE_ARRAY_1                 7
-#define RESERVED_TEXTURE_ARRAY_2                 8
-#define RESERVED_TEXTURE_ARRAY_3                 9
-#define RESERVED_TEXTURE_ARRAY_4                 10
-#define RESERVED_TEXTURE_ARRAY_5                 11
-#define RESERVED_TEXTURE_ARRAY_6                 12
-#define RESERVED_TEXTURE_ARRAY_7                 13
-#define RESERVED_TEXTURE_ARRAY_8                 14
-#define RESERVED_TEXTURE_ARRAY_9                 15
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
