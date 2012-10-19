@@ -110,7 +110,7 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     vec3 t2 = max(tMin, tMax);
     float tNear = max(max(t1.x, t1.y), t1.z);
     float tFar = min(min(t2.x, t2.y), t2.z);
-    
+    t = 0.0;
     if (tNear<tFar && tFar>0.0) {
         // difference here
         // if inside, instead of returning far plane, return ray origin

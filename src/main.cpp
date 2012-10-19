@@ -17,61 +17,56 @@ namespace
     std::string applicationName("Sparse Texture Voxels");
     glm::ivec2 windowSize(600, 400);
     glm::ivec2 openGLVersion(4, 2);
-    ThirdPersonCamera* camera = new ThirdPersonCamera();
-    glm::ivec2 mouseClickPos;
-    glm::ivec2 currentMousePos;
-    Object* currentSelectedObject;
     bool enableMousePicking = true;
     bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
-    int frameCount = 0;
-    float frameTime = 0.0f;
-    const float FRAME_TIME_DELTA = 0.01f;
-    Utils::OpenGL::OpenGLTimer timer;
     
     // Texture settings
+    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
+    uint voxelGridLength = 128;
+    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
+    uint currentMipMapLevel = 0;
+    bool loadTextures = false;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
     };
-    bool loadTextures = false;
-
-    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 128;
-    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
-    uint currentMipMapLevel = 0;
-    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
-    VoxelTexture* voxelTexture = new VoxelTexture();
-    Voxelizer* voxelizer = new Voxelizer();
-    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
-    DeferredWrite* deferredWrite = new DeferredWrite();
 
     // Demo settings
+    bool loadAllDemos = true;
     enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
+    DemoType currentDemoType = DEFERRED_PIPELINE;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
-    DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = true;
-
-    // OpenGL stuff
+    
+    // Other
+    int frameCount = 0;
+    float frameTime = 0.0f;
+    const float FRAME_TIME_DELTA = 0.01f;
+    glm::ivec2 mouseClickPos;
+    glm::ivec2 currentMousePos;
+    Object* currentSelectedObject;
+    ThirdPersonCamera* camera = new ThirdPersonCamera();
+    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
+    VoxelTexture* voxelTexture = new VoxelTexture();
+    Voxelizer* voxelizer = new Voxelizer();
+    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
+    DeferredWrite* deferredWrite = new DeferredWrite();
+    Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
-    GLuint perFrameUBO;
+    GLuint perFrameUBO;  
 }
 
 void setMipMapLevel(int level)
 {
-    int numMipMapLevels = voxelTexture->numMipMapLevels;
-    if (level < 0) level = 0;
-    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
-    currentMipMapLevel = level;
-    
+    currentMipMapLevel = std::max(std::min(level, (int)voxelTexture->numMipMapLevels - 1), 0);    
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
         voxelDebug->setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
@@ -118,7 +113,7 @@ void GLFWCALL mouseClick(int button, int action)
         }
         else if (action == GLFW_RELEASE)
         {
-            if (mouseClickPos == currentMousePos && enableMousePicking)
+            if (enableMousePicking && mouseClickPos == currentMousePos)
             {
                 Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, camera->nearPlane, camera->farPlane,  camera->viewMatrix, camera->projectionMatrix);    
                 std::vector<Object*> objects = coreEngine->scene->objects;
@@ -246,7 +241,7 @@ void begin()
     camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
-    timer.begin();
+    timer->begin();
     coreEngine->begin(sceneFile);
     deferredWrite->begin(coreEngine);
     fullScreenQuad->begin();
