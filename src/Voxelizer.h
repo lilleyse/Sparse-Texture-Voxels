@@ -60,7 +60,7 @@ public:
         perFrame.uResolution = glm::ivec2(voxelGridLength);
 
         // Update timestamp
-        timestamp = -1.0f * timestamp;
+        timestamp = -1.0f*timestamp;
         perFrame.uTimestamp = timestamp;
         
         // Render down z-axis
