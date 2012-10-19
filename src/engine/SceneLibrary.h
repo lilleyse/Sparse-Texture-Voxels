@@ -106,7 +106,7 @@ struct SceneLibrary
             Mesh* mesh = meshLibrary.get(meshName);
 
             // Create object
-            Object* object = new Object(mesh, shaderLibrary.debugDrawShader);   
+            Object* object = new Object(mesh, shaderLibrary.voxelDebugShader);   
 
             // Get translation and apply it
             XMLElement* translateElement = objectElement->FirstChildElement("translate");

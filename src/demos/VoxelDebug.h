@@ -3,7 +3,7 @@
 #include "../Utils.h"
 #include "../VoxelTexture.h"
 
-class DebugDraw
+class VoxelDebug
 {
 private:
     int currentMipMapLevel;
@@ -25,8 +25,8 @@ private:
     };
 
 public:
-    DebugDraw(){}
-    virtual ~DebugDraw(){}
+    VoxelDebug(){}
+    virtual ~VoxelDebug(){}
 
     void begin(VoxelTexture* voxelTexture)
     {
