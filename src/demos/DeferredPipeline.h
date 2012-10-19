@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Utils.h"
-#include "ShaderConstants.h"
+#include "../ShaderConstants.h"
 #include "../FullScreenQuad.h"
 #include "../VoxelTexture.h"
 #include "../DeferredWrite.h"

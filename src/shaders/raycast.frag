@@ -257,7 +257,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
     for (int k=0; k<LIGHT_NUM; ++k) {
       vec3 lo = gLightPos[k];
       vec3 ld = normalize(pos-lo);
-      float t;
+      float t = 0.0;
       textureVolumeIntersect(lo, ld, t);
       float ltm = getTransmittanceToDst(lo+ld*(t+EPS),pos);
       
@@ -309,7 +309,7 @@ void main()
     vec4 cout;
 
     // calc entry point
-    float t;
+    float t = 0.0;
     if (textureVolumeIntersect(uCamPos, rd, t)) {
         // step_size = root_three / max_steps ; to get through diagonal
         gStepSize = ROOTTHREE / float(MAX_STEPS);

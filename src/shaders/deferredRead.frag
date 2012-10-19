@@ -103,7 +103,7 @@ in vec2 vUV;
 #define TRANSMIT_K 1.0
 #define AO_DIST_K 0.5
 
-float gTexelSize;
+float gTexelSize = 0.0;
 
 
 //---------------------------------------------------------
@@ -167,25 +167,6 @@ vec3 findPerpendicular(vec3 v) {
 //---------------------------------------------------------
 // PROGRAM
 //---------------------------------------------------------
-
-// special case, optimized for 0.0 to 1.0
-bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
-    vec3 tMin = -ro / rd;
-    vec3 tMax = (1.0-ro) / rd;
-    vec3 t1 = min(tMin, tMax);
-    vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-
-    if (tNear<tFar && tFar>0.0) {
-        // difference here
-        // if inside, instead of returning far plane, return ray origin
-        t = tNear>0.0 ? tNear : 0.0;
-        return true;
-    }
-
-    return false;
-}
 
 // assumption, current pos is empty (alpha = 0.0)
 float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
@@ -370,7 +351,7 @@ void main()
         #endif
         
         #ifdef PASS_INDIR
-        vec4 indir;
+        vec4 indir = vec4(0.0);
         {
             // duplicate code from above
 

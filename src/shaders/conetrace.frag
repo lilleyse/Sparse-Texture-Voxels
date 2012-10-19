@@ -279,7 +279,7 @@ void main()
     vec4 cout;
 
     // calc entry point
-    float t;
+    float t = 0.0;
     if (textureVolumeIntersect(uCamPos+rd*EPS, rd, t))
         cout = conetraceAccum(uCamPos+rd*(t+EPS), rd);
     else
