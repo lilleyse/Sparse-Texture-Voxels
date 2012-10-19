@@ -27,7 +27,7 @@ namespace
     uint voxelGridLength = 128;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
-    bool loadTextures = false;
+    bool loadTextures = true;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
@@ -292,10 +292,13 @@ void display()
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 
     // Update the scene
-    coreEngine->updateScene();
-    voxelizer->voxelizeScene();
-    mipMapGenerator->generateMipMapGPU();
-
+    if (currentDemoType == DEFERRED_PIPELINE)
+    {
+        coreEngine->updateScene();
+        voxelizer->voxelizeScene();
+        mipMapGenerator->generateMipMapGPU();
+    }
+    
     // Update the per frame UBO
     PerFrameUBO perFrame;
     perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    

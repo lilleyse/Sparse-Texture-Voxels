@@ -55,7 +55,6 @@ public:
         Utils::OpenGL::checkProgram(voxelCleanProgram);
     }
 
-
     void generateMipMapGPU()
     {
         // Change viewport to match the size of the second mip map level
@@ -100,9 +99,6 @@ public:
         glEnable(GL_DEPTH_TEST);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
-
-
-
 
     // This code is not super efficient since it is a short term solution that will be replaced by GPU-based mipmap generation
     void generateMipMapCPU()
