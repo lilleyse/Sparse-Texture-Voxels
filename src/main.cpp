@@ -45,7 +45,7 @@ namespace
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     
-    // Other (nothing to set here)
+    // Other
     int frameCount = 0;
     float frameTime = 0.0f;
     const float FRAME_TIME_DELTA = 0.01f;

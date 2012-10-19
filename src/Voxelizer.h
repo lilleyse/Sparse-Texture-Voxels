@@ -57,7 +57,10 @@ public:
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
         PerFrameUBO perFrame;
         perFrame.uResolution = glm::ivec2(voxelGridLength);
-        perFrame.uTimestamp = 1 - timestamp;
+
+        // Update timestamp
+        timestamp = 1 - timestamp;
+        perFrame.uTimestamp = timestamp;
         
         // Render down z-axis
         perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
