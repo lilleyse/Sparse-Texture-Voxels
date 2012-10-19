@@ -54,7 +54,7 @@ public:
                     else
                         textureData.colorData[textureIndex] = glm::u8vec4(127,127,127,127);
                     
-                    textureData.normalData[textureIndex] = glm::vec4(0,0,0,0);
+                    textureData.normalData[textureIndex] = glm::u8vec4(0,0,0,0);
                     textureIndex++;
                 }
             }
@@ -71,15 +71,13 @@ public:
 				    if(distanceFromCenter < radius)
                     {
                         textureData.colorData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 255);
-                        textureData.normalData[textureIndex] = glm::vec4(glm::normalize(glm::vec3(glm::vec3(i,j,k) - center)), 0);
+                        textureData.normalData[textureIndex] = glm::u8vec4(glm::normalize(glm::vec3(glm::vec3(i,j,k) - center)), 0);
                     }
                     else
                     {
                         // "cleaner" texture, no black edges during linear interp, not sure if we should do this
                         textureData.colorData[textureIndex] = glm::u8vec4(((float)i/voxelGridLength)*255.0f, ((float)j/voxelGridLength)*255.0f, ((float)k/voxelGridLength)*255.0f, 0);
-
-                        //textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
-                        textureData.normalData[textureIndex] = glm::vec4(0,0,0,0);
+                        textureData.normalData[textureIndex] = glm::u8vec4(0,0,0,0);
                     }
                     textureIndex++;
                 }
@@ -115,7 +113,7 @@ public:
                     }
 
                     // not doing anything
-                    textureData.normalData[textureIndex] = glm::vec4(0,0,0,0);
+                    textureData.normalData[textureIndex] = glm::u8vec4(0,0,0,0);
                     textureIndex++;
                 }
             }
@@ -163,7 +161,7 @@ public:
 
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
-        glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_FLOAT, &textureData.normalData[0]);
+        glGetTexImage(GL_TEXTURE_3D, 0, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.normalData[0]);
 
         textureNamesToIndexes.insert(std::pair<std::string, uint>(name, textures.size()));
         textures.push_back(textureData);
@@ -182,7 +180,6 @@ public:
         currentTexture = std::max(std::min(textureIndex, (int)textures.size() - 1), 0);    
 
         // Fill entire texture (first mipmap level) then create mipmaps
-        voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
         voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
         //mipMapGenerator->generateMipMapCPU();
         mipMapGenerator->generateMipMapGPU();

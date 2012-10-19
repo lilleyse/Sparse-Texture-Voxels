@@ -5,7 +5,7 @@
 struct TextureData
 {
     std::vector<glm::u8vec4> colorData;
-    std::vector<glm::vec4> normalData;
+    std::vector<glm::u8vec4> normalData;
 };
 
 struct MipMapInfo
@@ -39,9 +39,7 @@ public:
 
         // Set num mipmaps based on the grid length
         if(numMipMapLevels == 0)
-        {
             numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
-        }
 
         this->numMipMapLevels = numMipMapLevels;
 
@@ -87,7 +85,7 @@ public:
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glGenTextures(1, &normalTexture);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
-        glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA32F, voxelGridLength, voxelGridLength, voxelGridLength);
+        glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, baseLevel); 
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, maxLevel);
 
@@ -95,7 +93,7 @@ public:
         uint voxelTextureSize = voxelGridLength * voxelGridLength * voxelGridLength;
         TextureData emptyData;
         emptyData.colorData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
-        emptyData.normalData.resize(voxelTextureSize);
+        emptyData.normalData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
         setData(emptyData, voxelGridLength, 0);
 
         int numVoxels = 0;
@@ -124,14 +122,13 @@ public:
    
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
-        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_FLOAT, &textureData.normalData[0]);
+        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.normalData[0]);
     }
 
     void enableLinearSampling()
     {
         glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
-        //glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
-        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
+        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
     }
 
     void enableNearestSampling()
