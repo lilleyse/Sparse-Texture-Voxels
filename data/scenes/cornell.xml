@@ -6,45 +6,27 @@
         <top_corner>10 10 10</top_corner>
     </info>
     <meshes>
-        <mesh name="sphere" />
-        <mesh name="greenCube" />
-        <mesh name="redCube" />
-        <mesh name="whiteCube" />
         <mesh name="cow" />
+        <mesh name="whiteCube" />
+        <mesh name="redCube" />
+        <mesh name="greenCube" />
+        <mesh name="sphere" />
     </meshes>
     <objects>
         <object>
-            <name>sphere</name>
-            <mesh>sphere</mesh>
-            <translate>-4.7 -4.7 -4.7</translate>
-            <scale>4 4 4</scale>
-            <rotate>0 1 0 180</rotate>
+            <name>cow</name>
+            <mesh>cow</mesh>
+            <translate>3.98616 -4.75075 1.30216e-006</translate>
+            <scale>1.2 1.2 1.2</scale>
+            <rotate>0 -1 0 240</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
-            <name>greenCube</name>
-            <mesh>greenCube</mesh>
-            <translate>9.5 0 0.5</translate>
-            <scale>0.5 9 9.5</scale>
-            <rotate>0 1 0 180</rotate>
-            <culled>true</culled>
-            <shadow>true</shadow>
-        </object>
-        <object>
-            <name>redCube</name>
-            <mesh>redCube</mesh>
-            <translate>-9.5 0 0.5</translate>
-            <scale>0.5 9 9.5</scale>
-            <rotate>0 1 0 180</rotate>
-            <culled>true</culled>
-            <shadow>true</shadow>
-        </object>
-        <object>
-            <name>whiteCube_002</name>
+            <name>whiteCube</name>
             <mesh>whiteCube</mesh>
-            <translate>0 0 -9.5</translate>
-            <scale>10 9 0.5</scale>
+            <translate>-1.62921e-007 9.5 -0</translate>
+            <scale>10 0.5 10</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
@@ -59,22 +41,56 @@
             <shadow>true</shadow>
         </object>
         <object>
-            <name>whiteCube</name>
+            <name>whiteCube_002</name>
             <mesh>whiteCube</mesh>
-            <translate>-1.62921e-007 9.5 -0</translate>
-            <scale>10 0.5 10</scale>
+            <translate>0 0 -9.5</translate>
+            <scale>10 9 0.5</scale>
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
         <object>
-            <name>cow</name>
-            <mesh>cow</mesh>
-            <translate>3.98616 -4.75075 1.30216e-006</translate>
-            <scale>1.2 1.2 1.2</scale>
-            <rotate>0 -1 0 240</rotate>
+            <name>redCube</name>
+            <mesh>redCube</mesh>
+            <translate>-9.5 0 0.5</translate>
+            <scale>0.5 9 9.5</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>greenCube</name>
+            <mesh>greenCube</mesh>
+            <translate>9.5 0 0.5</translate>
+            <scale>0.5 9 9.5</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>sphere</name>
+            <mesh>sphere</mesh>
+            <translate>-4.9 -4.9 -4.9</translate>
+            <scale>4 4 4</scale>
+            <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
     </objects>
+    <lights>
+        <light type="Spot">
+            <color>1 1 1</color>
+            <translate>3.30768 15.1425 37.5543</translate>
+            <rotate>-0.0957578 0.845806 -0.524826 168.822</rotate>
+            <direction>-0.0587095 -0.436176 0.897944</direction>
+            <angle>45</angle>
+            <distance>59.08401</distance>
+        </light>
+        <light type="Sun">
+            <color>1 1 1</color>
+            <translate>2.02126 3.72581 17.9042</translate>
+            <rotate>0 1 0 180</rotate>
+            <direction>0 -1 -0</direction>
+        </light>
+    </lights>
 </Scene>
