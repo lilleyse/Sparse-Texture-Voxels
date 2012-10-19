@@ -156,9 +156,9 @@ void GLFWCALL key(int k, int action)
         // Changing textures
         bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
         bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-        if (setsNextTexture || setsPreviousTexture)
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->voxelTextureUpdate();
+        //if (setsNextTexture || setsPreviousTexture)
+        //    if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+        //        voxelDebug->voxelTextureUpdate();
     }
 }
 

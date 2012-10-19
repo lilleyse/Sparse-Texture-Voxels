@@ -21,7 +21,6 @@ public:
 
     void begin(VoxelTexture* voxelTexture, MipMapGenerator* mipMapGenerator) 
     {
-        currentTexture = UINT_MAX;
         this->voxelTexture = voxelTexture;
         this->mipMapGenerator = mipMapGenerator;
     }
@@ -180,16 +179,13 @@ public:
 
     bool setTexture(int textureIndex)
     {     
-        if (textureIndex < 0) textureIndex = textures.size() - 1;
-        if (textureIndex >= (int)textures.size()) textureIndex = 0;
-        if (textureIndex == currentTexture) return false;
-        currentTexture = textureIndex;
-            
+        currentTexture = std::max(std::min(textureIndex, (int)textures.size() - 1), 0);    
+
         // Fill entire texture (first mipmap level) then create mipmaps
+        voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
         voxelTexture->setData(textures.at(currentTexture), voxelTexture->voxelGridLength, 0);
         //mipMapGenerator->generateMipMapCPU();
         mipMapGenerator->generateMipMapGPU();
-        
         return true;
     }
 
