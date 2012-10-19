@@ -7,14 +7,21 @@ Controls:
 Left mouse - change camera view direction
 Right mouse - zoom in and out
 Middle mouse - pan camera
+
 Click - select object in scene
+W,S - move object in y-direction
+A,D - move object in x-direction
+Q,E - move object in z-direction
+R,Shift+R - rotate object
+T,Shift+T - scale object
 
-w,s - move object in y-direction
-a,d - move object in x-direction
-q,e - move object in z-direction
-r,Shift+r - rotate object
-t,Shift+t - scale object
+L - toggle sampling type (linear vs nearest)
+; and ' - toggle between textures (no effect in deferred mode)
+, and . - change mip map levels (no effect in deferred or conetrace mode)
 
-; and ' - toggle between textures
-, and . - change mip map levels
-1 to 9 - select demo mode (not all numbers are used)
+Demo Types:
+1 - voxel viewer
+2 - triangle viewer
+3 - raycaster
+4 - conetracer
+5 - full
