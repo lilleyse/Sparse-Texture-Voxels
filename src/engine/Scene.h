@@ -9,7 +9,7 @@
 struct Scene
 {
     std::vector<Object*> objects;
-    LightingHandler lightingHandler;
+    Lighting lighting;
     glm::vec3 minBounds;
     glm::vec3 maxBounds;
 
@@ -49,12 +49,17 @@ struct Scene
 
     void addDirectionalLight(DirectionalLight& dirLight)
     {
-        //lightingHandler.addDirectionalLight(dirLight);
+        lighting.dirLights.push_back(dirLight);
     }
 
     void addPointLight(PointLight& pointLight)
     {
-        //lightingHandler.addPointLight(pointLight);
+        lighting.pointLights.push_back(pointLight);
+    }
+
+    void addSpotLight(SpotLight& spotLight)
+    {
+        lighting.spotLights.push_back(spotLight);
     }
 
     void commitToGL()

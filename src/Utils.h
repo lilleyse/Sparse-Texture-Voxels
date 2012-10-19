@@ -12,6 +12,7 @@
 #include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 // GLI libraries
 #include <gli/gli.hpp>
