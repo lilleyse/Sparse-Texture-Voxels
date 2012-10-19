@@ -41,10 +41,7 @@ public:
     }
 
     void display()
-    {
-        //voxelTexture->enableNearestSampling();
-        voxelTexture->enableLinearSampling();
-        
+    { 
         // Render to the FBO
         deferredWrite->display();   
         

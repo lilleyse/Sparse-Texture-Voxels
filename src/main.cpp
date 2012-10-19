@@ -139,7 +139,7 @@ void GLFWCALL mouseClick(int button, int action)
     }
 }
 
-void GLFWCALL key(int k, int action)
+void GLFWCALL keyPress(int k, int action)
 {
     if (action == GLFW_RELEASE)
     {
@@ -153,6 +153,9 @@ void GLFWCALL key(int k, int action)
         if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
         if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
 
+        // Enable linear sampling
+        if (k == 'L') voxelTexture->changeSamplerType();
+
         // Changing textures
         bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
         bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
@@ -162,7 +165,7 @@ void GLFWCALL key(int k, int action)
     }
 }
 
-void checkKeyDown()
+void processKeyDown()
 {
     // This method checks if keys are down every frame
     // Transforming selected objects
@@ -353,7 +356,7 @@ int main(int argc, char* argv[])
     glfwSetWindowSizeCallback(resize);
     glfwSetMousePosCallback(mouseMove);
     glfwSetMouseButtonCallback(mouseClick);
-    glfwSetKeyCallback(key);
+    glfwSetKeyCallback(keyPress);
     glfwEnable(GLFW_AUTO_POLL_EVENTS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
@@ -361,7 +364,7 @@ int main(int argc, char* argv[])
     bool running = true;
     do
     {
-        checkKeyDown();
+        processKeyDown();
         display();
         frameTime += FRAME_TIME_DELTA;
         if (showFPS) displayFPS();

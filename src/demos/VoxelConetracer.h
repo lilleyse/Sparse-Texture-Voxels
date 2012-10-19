@@ -42,8 +42,6 @@ public:
 
     void display()
     {
-        voxelTexture->enableLinearSampling();
-
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();
     }

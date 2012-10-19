@@ -17,14 +17,16 @@ struct MipMapInfo
 
 class VoxelTexture
 {
-
-
 public:
 
     GLuint colorTexture;
     GLuint normalTexture;
+    
+    // Samplers
+    enum SamplerType {LINEAR, NEAREST, MAX_SAMPLER_TYPES};
     GLuint textureNearestSampler;
     GLuint textureLinearSampler;
+    SamplerType currentSamplerType;
 
     uint voxelGridLength;
     uint numMipMapLevels;
@@ -40,17 +42,16 @@ public:
         // Set num mipmaps based on the grid length
         if(numMipMapLevels == 0)
             numMipMapLevels = (uint)(glm::log2(float(voxelGridLength)) + 1.5);
-
         this->numMipMapLevels = numMipMapLevels;
-
         int baseLevel = 0;
         int maxLevel = numMipMapLevels-1;
+
+        // Samplers
+        float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
         // Create a nearest sampler to sample from any of the 3D textures
         glGenSamplers(1, &textureNearestSampler);
         glBindSampler(0, textureNearestSampler);
-
-        float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
         glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
@@ -63,7 +64,6 @@ public:
         // Create a linear sampler to sample from any of the 3
         glGenSamplers(1, &textureLinearSampler);
         glBindSampler(0, textureLinearSampler);
-
         glSamplerParameterfv(textureLinearSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
@@ -72,6 +72,8 @@ public:
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glSamplerParameteri(textureLinearSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
+
+        this->setSamplerType(LINEAR);
 
         // Create a dense 3D color texture
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
@@ -96,6 +98,7 @@ public:
         emptyData.normalData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
         setData(emptyData, voxelGridLength, 0);
 
+        // Store mipmap data
         int numVoxels = 0;
         int mipMapSideLength = voxelGridLength;
         for(uint i = 0; i < numMipMapLevels; i++)
@@ -109,7 +112,6 @@ public:
             mipMapSideLength /= 2;
             numVoxels += mipMapInfo.numVoxels;
         }
-
         totalVoxels = numVoxels;
     }
 
@@ -125,15 +127,25 @@ public:
         glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.normalData[0]);
     }
 
-    void enableLinearSampling()
+    void setSamplerType(SamplerType samplerType)
     {
-        glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
-        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
+        this->currentSamplerType = samplerType;
+        if (currentSamplerType == LINEAR)
+        {
+            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
+            glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureLinearSampler);
+        }
+        else if (currentSamplerType == NEAREST)
+        {
+            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
+            glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
+        }
     }
-
-    void enableNearestSampling()
+    void changeSamplerType()
     {
-        glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
-        glBindSampler(NORMAL_TEXTURE_3D_BINDING, textureNearestSampler);
+        uint position = (uint)currentSamplerType + 1;
+        if (position >= (int)MAX_SAMPLER_TYPES)
+            position = 0;
+        setSamplerType((SamplerType)position);
     }
 };
