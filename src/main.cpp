@@ -45,10 +45,10 @@ namespace
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
     DeferredPipeline* deferredPipeline = new DeferredPipeline();
     
-    // Other
+    // Other (nothing to set here)
     int frameCount = 0;
     float frameTime = 0.0f;
-    const float FRAME_TIME_DELTA = 0.001f;
+    const float FRAME_TIME_DELTA = 0.01f;
     glm::ivec2 mouseClickPos;
     glm::ivec2 currentMousePos;
     Object* currentSelectedObject;
@@ -251,7 +251,7 @@ void begin()
 
     // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
-    voxelizer->voxelizeScene(frameTime);
+    voxelizer->voxelizeScene();
     voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
 
     // create procedural textures
@@ -291,7 +291,7 @@ void display()
 
     // Update the scene
     coreEngine->updateScene();
-    voxelizer->voxelizeScene(frameTime);
+    voxelizer->voxelizeScene();
     mipMapGenerator->generateMipMapGPU();
 
     // Update the per frame UBO

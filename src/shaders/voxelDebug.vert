@@ -19,20 +19,28 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define NON_USED_TEXTURE                         0
+#define NON_USED_TEXTURE                         0 // Used for modifying textures that shouldn't be bound to a binding point
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define DEFERRED_POSITIONS_TEXTURE_BINDING       3
 #define DEFERRED_COLORS_TEXTURE_BINDING          4
 #define DEFERRED_NORMALS_TEXTURE_BINDING         5
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6
+#define RESERVED_TEXTURE_ARRAY_1                 7
+#define RESERVED_TEXTURE_ARRAY_2                 8
+#define RESERVED_TEXTURE_ARRAY_3                 9
+#define RESERVED_TEXTURE_ARRAY_4                 10
+#define RESERVED_TEXTURE_ARRAY_5                 11
+#define RESERVED_TEXTURE_ARRAY_6                 12
+#define RESERVED_TEXTURE_ARRAY_7                 13
+#define RESERVED_TEXTURE_ARRAY_8                 14
+#define RESERVED_TEXTURE_ARRAY_9                 15
 
 // Image binding points
-
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3 
+#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
@@ -44,12 +52,11 @@
 #define MATERIAL_INDEX        1
 
 // Max values
-#define MAX_TEXTURE_ARRAYS              10
-#define FBO_BINDING_POINT_ARRAY_SIZE    4
-#define NUM_OBJECTS_MAX                 500
-#define NUM_MESHES_MAX                  500
-#define MAX_POINT_LIGHTS                8
-
+#define MAX_TEXTURE_ARRAYS               10
+#define FBO_BINDING_POINT_ARRAY_SIZE     3
+#define NUM_OBJECTS_MAX                  500
+#define NUM_MESHES_MAX                   500
+#define MAX_POINT_LIGHTS                 8
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -60,6 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec2 uResolution;
     float uAspect;
     float uTime;
+    int uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;

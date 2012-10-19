@@ -11,6 +11,7 @@ private:
     CoreEngine* coreEngine;
     GLuint perFrameUBO;
     GLuint voxelizerProgram;
+    int timestamp;
 public:
 
     void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, GLuint perFrameUBO)
@@ -32,7 +33,7 @@ public:
     }
 
 
-    void voxelizeScene(float frameTime)
+    void voxelizeScene()
     {
         // Update the viewport to be the size of the voxel grid
         int oldViewport[4];
@@ -51,13 +52,13 @@ public:
         
         // Use the voxelizer program
         glUseProgram(voxelizerProgram);
-
+		
         // Update the per frame UBO with the orthographic projection
+        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
         PerFrameUBO perFrame;
         perFrame.uResolution = glm::ivec2(voxelGridLength);
-        perFrame.uTime = frameTime;
-        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-
+        perFrame.uTimestamp = 1 - timestamp;
+        
         // Render down z-axis
         perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);

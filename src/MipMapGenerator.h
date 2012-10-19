@@ -72,7 +72,6 @@ public:
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
 
-
         // First clean the base mip map
         int voxelGridLength = voxelTexture->voxelGridLength;
         glViewport(0, 0, voxelGridLength, voxelGridLength);

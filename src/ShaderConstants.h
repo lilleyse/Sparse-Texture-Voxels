@@ -68,6 +68,7 @@ struct PerFrameUBO
     glm::vec2 uResolution;
     float uAspect;
     float uTime;
+    int uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;
