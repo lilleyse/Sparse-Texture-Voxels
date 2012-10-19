@@ -67,12 +67,18 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec2 uResolution;
     float uAspect;
     float uTime;
-    int uTimestamp;
+    float uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;
 };
 
+//---------------------------------------------------------
+// SHADER CONSTANTS
+//---------------------------------------------------------
+
+#define EPS       0.0001
+#define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 
 //---------------------------------------------------------
 // SHADER VARS
@@ -90,7 +96,7 @@ void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
     float timestamp = texelFetch(tVoxNormal, globalId, 0).a;
-    if (uTimestamp != timestamp)
+    if (!EQUALS(uTimestamp,timestamp))
     {
         imageStore(tColor, globalId, vec4(0.0));
     }

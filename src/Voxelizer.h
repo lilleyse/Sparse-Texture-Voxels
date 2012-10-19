@@ -11,7 +11,7 @@ private:
     CoreEngine* coreEngine;
     GLuint perFrameUBO;
     GLuint voxelizerProgram;
-    int timestamp;
+    float timestamp;
 public:
 
     void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, GLuint perFrameUBO)
@@ -59,7 +59,7 @@ public:
         perFrame.uResolution = glm::ivec2(voxelGridLength);
 
         // Update timestamp
-        timestamp = 1 - timestamp;
+        timestamp = 1.0f - timestamp;
         perFrame.uTimestamp = timestamp;
         
         // Render down z-axis

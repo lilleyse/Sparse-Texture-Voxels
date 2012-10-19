@@ -67,7 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec2 uResolution;
     float uAspect;
     float uTime;
-    int uTimestamp;
+    float uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;
