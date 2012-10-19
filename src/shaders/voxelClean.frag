@@ -67,7 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER CONSTANTS
 //---------------------------------------------------------
 
-#define EPS       0.0001
+#define EPS       0.001
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 
 //---------------------------------------------------------

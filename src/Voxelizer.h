@@ -19,6 +19,7 @@ public:
         this->voxelTexture = voxelTexture;
         this->coreEngine = coreEngine;
         this->perFrameUBO = perFrameUBO;
+        this->timestamp = 1.0f;
 
         // Create program that writes the scene to a voxel texture
         GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
@@ -48,7 +49,7 @@ public:
 
         // Bind voxelTexture's color and normal textures for writing
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8_SNORM);
         
         // Use the voxelizer program
         glUseProgram(voxelizerProgram);
@@ -59,7 +60,7 @@ public:
         perFrame.uResolution = glm::ivec2(voxelGridLength);
 
         // Update timestamp
-        timestamp = 1.0f - timestamp;
+        timestamp = -1.0f * timestamp;
         perFrame.uTimestamp = timestamp;
         
         // Render down z-axis

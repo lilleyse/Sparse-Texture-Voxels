@@ -30,9 +30,9 @@ namespace
     bool loadTextures = true;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
-        VoxelTextureGenerator::SPHERE,
-        VoxelTextureGenerator::CUBE,
-        DATA_DIRECTORY + "Bucky.raw",
+        //VoxelTextureGenerator::SPHERE,
+        //VoxelTextureGenerator::CUBE,
+        //DATA_DIRECTORY + "Bucky.raw",
     };
 
     // Demo settings
@@ -159,9 +159,9 @@ void GLFWCALL keyPress(int k, int action)
         // Changing textures
         bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
         bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-        if (setsNextTexture || setsPreviousTexture)
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->voxelTextureUpdate();
+        //if (setsNextTexture || setsPreviousTexture)
+        //    if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+        //        voxelDebug->voxelTextureUpdate();
     }
 }
 

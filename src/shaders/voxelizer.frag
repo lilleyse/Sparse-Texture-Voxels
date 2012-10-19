@@ -65,7 +65,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8) writeonly uniform image3D tNormal;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) writeonly uniform image3D tNormal;
 
 in block
 {

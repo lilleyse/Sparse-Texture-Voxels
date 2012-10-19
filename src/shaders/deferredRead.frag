@@ -213,7 +213,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float pixSize = max(dist*pixSizeAtDist, gTexelSize);
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+    vec4 texel = vec4(textureLod(tVoxNormal, pos, mipLevel).rgb, textureLod(tVoxColor, pos, mipLevel).a);
 
     #ifdef SKIP_EMPTY
     float stepSize;
@@ -304,7 +304,7 @@ void main()
     //-----------------------------------------------------
 
     #define PASS_COL
-    #define PASS_AO    
+    //#define PASS_AO    
     #define PASS_INDIR
     #define PASS_SPEC
 
@@ -379,7 +379,7 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(5.0);
+            const float FOV = radians(0.0001);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
             spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
