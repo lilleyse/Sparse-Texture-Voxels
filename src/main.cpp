@@ -159,11 +159,14 @@ void GLFWCALL keyPress(int k, int action)
         if (k == 'L') voxelTexture->changeSamplerType();
 
         // Changing textures
-        bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
-        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-        if (setsNextTexture || setsPreviousTexture)
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->voxelTextureUpdate();
+        if (loadTextures)
+        {
+            bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
+            bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
+            if (setsNextTexture || setsPreviousTexture)
+                if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                    voxelDebug->voxelTextureUpdate();
+        }
     }
 }
 
@@ -249,6 +252,7 @@ void begin()
 {
     initGL();
 
+    // camera
     camera->setFarNearPlanes(.01f, 100.0f);
     camera->zoom(3.0f);
     camera->lookAt = glm::vec3(0.5f);
@@ -262,21 +266,23 @@ void begin()
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
 
-    // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
+    // voxelize from the triangle scene
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
     voxelizer->voxelizeScene();
-    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-
-    // create procedural textures
+    
+    // load cpu textures
     if (loadTextures)
     {
+        // create procedural textures
         uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
         for (uint i = 0; i < numInitialTextures; i++)
-            voxelTextureGenerator->createTexture(voxelTextures[i]);  
-    }
+            voxelTextureGenerator->createTexture(voxelTextures[i]);
 
-    // set the active texture to the triangle scene
-    voxelTextureGenerator->setTexture(sceneFile);
+        // Load scene texture onto cpu
+        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+        voxelTextureGenerator->setTexture(sceneFile);
+    }
+    else mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
