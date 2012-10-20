@@ -72,4 +72,6 @@ struct PerFrameUBO
     float uFOV;
     float uTextureRes;
     float uNumMips;
+    float uSpecularFOV;
+    float uSpecularAmount;
 };

@@ -61,6 +61,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
     float uTextureRes;
     float uNumMips;
+    float uSpecularFOV;
+    float uSpecularAmount;
 };
 
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];

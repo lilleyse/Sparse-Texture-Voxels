@@ -61,6 +61,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uFOV;
     float uTextureRes;
     float uNumMips;
+    float uSpecularFOV;
+    float uSpecularAmount;
 };
 
 
@@ -94,7 +96,6 @@ layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 in vec2 vUV;
-
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
@@ -304,7 +305,7 @@ void main()
     //-----------------------------------------------------
 
     #define PASS_COL
-    #define PASS_AO    
+    //#define PASS_AO    
     #define PASS_INDIR
     #define PASS_SPEC
 
@@ -379,7 +380,7 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(0.0001);
+            const float FOV = radians(uSpecularFOV);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
             spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
@@ -395,15 +396,17 @@ void main()
         #ifdef PASS_INDIR
             #ifdef PASS_COL
             cout.rgb += indir.rgb*indir.a;
+            float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
+            cout.rgb = clamp(cout.rgb - difference, 0.0, 1.0);
             #else
             cout = indir;
             #endif
         #endif
         #ifdef PASS_SPEC
             #ifdef PASS_COL
-            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, 0.4);
+            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, uSpecularAmount);
             #else
-            cout = spec;    // just write spec
+            cout = spec;
             #endif
         #endif
         #ifdef PASS_AO
