@@ -23,7 +23,6 @@ public:
         this->fullScreenQuad = fullScreenQuad;
         this->coreEngine = coreEngine;
 
-        // Create program that reads the deferred data
         GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
         GLuint fragmentShaderObjectRead = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainRendererDemo.frag");
 

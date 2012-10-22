@@ -38,8 +38,8 @@ namespace
 
     // Demo settings
     bool loadAllDemos = true;
-    enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
-    DemoType currentDemoType = DEFERRED_PIPELINE;
+    enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
+    DemoType currentDemoType = MAIN_RENDERER;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
@@ -113,7 +113,7 @@ void GLFWCALL mouseClick(int button, int action)
         }
         else if (action == GLFW_RELEASE)
         {
-            if (currentDemoType == DEFERRED_PIPELINE && enableMousePicking && mouseClickPos == currentMousePos)
+            if (currentDemoType == MAIN_RENDERER && enableMousePicking && mouseClickPos == currentMousePos)
             {
                 currentSelectedObject = 0;
                 Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, camera->nearPlane, camera->farPlane,  camera->viewMatrix, camera->projectionMatrix);    
@@ -172,7 +172,7 @@ void processKeyDown()
 {
     // This method checks if keys are down every frame
     bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
-    if (currentDemoType == DEFERRED_PIPELINE)
+    if (currentDemoType == MAIN_RENDERER)
     {    
         // Transforming selected objects
         if (enableMousePicking && currentSelectedObject != 0)
@@ -287,7 +287,7 @@ void begin()
         voxelRaycaster->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
+    if (loadAllDemos || currentDemoType == MAIN_RENDERER)
         mainRenderer->begin(voxelTexture, fullScreenQuad, coreEngine);
 
     setMipMapLevel(currentMipMapLevel);
@@ -303,7 +303,7 @@ void display()
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 
     // Update the scene
-    if (currentDemoType == DEFERRED_PIPELINE)
+    if (currentDemoType == MAIN_RENDERER)
     {
         coreEngine->updateScene();
         voxelizer->voxelizeScene();
@@ -338,7 +338,7 @@ void display()
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
         voxelConetracer->display();
-    else if (currentDemoType == DEFERRED_PIPELINE)
+    else if (currentDemoType == MAIN_RENDERER)
         mainRenderer->display();
 }
 
