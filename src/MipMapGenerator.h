@@ -119,7 +119,7 @@ public:
             
             glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
             glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
-            glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_UNSIGNED_BYTE, &prevMipData.normalData[0]);
+            glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_BYTE, &prevMipData.normalData[0]);
            
             TextureData currMipData;
             currMipData.colorData.resize(mipMapSideLength*mipMapSideLength*mipMapSideLength);
@@ -154,7 +154,7 @@ public:
 
                 uint index1d = indexConverter(mipMapSideLength, glm::uvec3(j,k,l));
                 currMipData.colorData[index1d] = glm::u8vec4(finalColor*255.0f);
-                currMipData.normalData[index1d] = glm::u8vec4(finalNormal, 0.0f);
+                currMipData.normalData[index1d] = glm::i8vec4(finalNormal, 0.0f);
             }
 
             voxelTexture->setData(currMipData, mipMapSideLength, i);

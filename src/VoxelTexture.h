@@ -5,7 +5,7 @@
 struct TextureData
 {
     std::vector<glm::u8vec4> colorData;
-    std::vector<glm::u8vec4> normalData;
+    std::vector<glm::i8vec4> normalData;
 };
 
 struct MipMapInfo
@@ -95,7 +95,7 @@ public:
         uint voxelTextureSize = voxelGridLength * voxelGridLength * voxelGridLength;
         TextureData emptyData;
         emptyData.colorData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
-        emptyData.normalData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
+        emptyData.normalData.resize(voxelTextureSize, glm::i8vec4(0,0,0,0));
         setData(emptyData, voxelGridLength, 0);
 
         // Store mipmap data
@@ -124,7 +124,7 @@ public:
    
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, normalTexture);
-        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.normalData[0]);
+        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_BYTE, &textureData.normalData[0]);
     }
 
     void setSamplerType(SamplerType samplerType)
