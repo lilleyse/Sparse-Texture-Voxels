@@ -131,7 +131,7 @@ vec4 getDiffuseColor(MeshMaterial material)
 //layout (depth_unchanged) out float gl_FragDepth;
 //layout (depth_greater) out float gl_FragDepth;
 //layout (depth_less) out float gl_FragDepth;
-layout (early_fragment_tests) in;
+//layout (early_fragment_tests) in;
 
 layout(location = 0) out vec4 fragColor;
 
