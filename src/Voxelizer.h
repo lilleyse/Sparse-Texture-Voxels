@@ -11,6 +11,7 @@ private:
     CoreEngine* coreEngine;
     GLuint perFrameUBO;
     GLuint voxelizerProgram;
+    float timestamp;
 public:
 
     void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, GLuint perFrameUBO)
@@ -18,9 +19,10 @@ public:
         this->voxelTexture = voxelTexture;
         this->coreEngine = coreEngine;
         this->perFrameUBO = perFrameUBO;
+        this->timestamp = 1.0f;
 
         // Create program that writes the scene to a voxel texture
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
         GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelizer.frag");
         voxelizerProgram = glCreateProgram();
         glAttachShader(voxelizerProgram, vertexShaderObject);
@@ -32,7 +34,7 @@ public:
     }
 
 
-    void voxelizeScene(float frameTime)
+    void voxelizeScene()
     {
         // Update the viewport to be the size of the voxel grid
         int oldViewport[4];
@@ -47,17 +49,20 @@ public:
 
         // Bind voxelTexture's color and normal textures for writing
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA32F);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8_SNORM);
         
         // Use the voxelizer program
         glUseProgram(voxelizerProgram);
-
+		
         // Update the per frame UBO with the orthographic projection
+        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
         PerFrameUBO perFrame;
         perFrame.uResolution = glm::ivec2(voxelGridLength);
-        perFrame.uTime = frameTime;
-        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
 
+        // Update timestamp
+        timestamp = -1.0f*timestamp;
+        perFrame.uTimestamp = timestamp;
+        
         // Render down z-axis
         perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);

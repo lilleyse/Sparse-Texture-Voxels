@@ -19,36 +19,25 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define NON_USED_TEXTURE                         0
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DEFERRED_POSITIONS_TEXTURE_BINDING       3
-#define DEFERRED_COLORS_TEXTURE_BINDING          4
-#define DEFERRED_NORMALS_TEXTURE_BINDING         5
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
 
 // Image binding points
-
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3      
-
-// Framebuffer object outputs
-#define DEFERRED_POSITIONS_FBO_BINDING       0
-#define DEFERRED_COLORS_FBO_BINDING          1
-#define DEFERRED_NORMALS_FBO_BINDING         2
+#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Object properties
 #define POSITION_INDEX        0
 #define MATERIAL_INDEX        1
 
 // Max values
-#define MAX_TEXTURE_ARRAYS              10
-#define FBO_BINDING_POINT_ARRAY_SIZE    4
-#define NUM_OBJECTS_MAX                 500
-#define NUM_MESHES_MAX                  500
-#define MAX_POINT_LIGHTS                8
+#define MAX_TEXTURE_ARRAYS               10
+#define NUM_OBJECTS_MAX                  500
+#define NUM_MESHES_MAX                   500
+#define MAX_POINT_LIGHTS                 8
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -59,9 +48,12 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec2 uResolution;
     float uAspect;
     float uTime;
+    float uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;
+    float uSpecularFOV;
+    float uSpecularAmount;
 };
 
 
@@ -88,7 +80,7 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 
 in vec2 vUV;
 
-const int MAX_STEPS = 256;
+const int MAX_STEPS = 1000;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
@@ -110,7 +102,7 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     vec3 t2 = max(tMin, tMax);
     float tNear = max(max(t1.x, t1.y), t1.z);
     float tFar = min(min(t2.x, t2.y), t2.z);
-    
+    t = 0.0;
     if (tNear<tFar && tFar>0.0) {
         // difference here
         // if inside, instead of returning far plane, return ray origin
@@ -279,7 +271,7 @@ void main()
     vec4 cout;
 
     // calc entry point
-    float t;
+    float t = 0.0;
     if (textureVolumeIntersect(uCamPos+rd*EPS, rd, t))
         cout = conetraceAccum(uCamPos+rd*(t+EPS), rd);
     else

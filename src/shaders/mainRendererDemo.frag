@@ -19,37 +19,25 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define NON_USED_TEXTURE                         0
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DEFERRED_POSITIONS_TEXTURE_BINDING       3
-#define DEFERRED_COLORS_TEXTURE_BINDING          4
-#define DEFERRED_NORMALS_TEXTURE_BINDING         5
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
 
 // Image binding points
-
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3     
-
-// Framebuffer object outputs
-#define DEFERRED_POSITIONS_FBO_BINDING       0
-#define DEFERRED_COLORS_FBO_BINDING          1
-#define DEFERRED_NORMALS_FBO_BINDING         2
+#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Object properties
 #define POSITION_INDEX        0
 #define MATERIAL_INDEX        1
 
 // Max values
-#define MAX_TEXTURE_ARRAYS              10
-#define FBO_BINDING_POINT_ARRAY_SIZE    4
-#define NUM_OBJECTS_MAX                 500
-#define NUM_MESHES_MAX                  500
-#define MAX_POINT_LIGHTS                8
-
+#define MAX_TEXTURE_ARRAYS               10
+#define NUM_OBJECTS_MAX                  500
+#define NUM_MESHES_MAX                   500
+#define MAX_POINT_LIGHTS                 8
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
@@ -60,10 +48,55 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec2 uResolution;
     float uAspect;
     float uTime;
+    float uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;
+    float uSpecularFOV;
+    float uSpecularAmount;
 };
+
+
+//---------------------------------------------------------
+// TRIANGLE ENGINE
+//---------------------------------------------------------
+
+layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+
+in block
+{
+    vec3 position;
+    vec3 normal;
+    vec2 uv;
+    flat ivec2 propertyIndex;
+} vertexData;
+
+struct MeshMaterial
+{
+    vec4 diffuseColor;
+    vec4 specularColor;
+    ivec2 textureLayer;
+};
+
+layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
+{
+    MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
+};
+
+MeshMaterial getMeshMaterial()
+{
+    int index = vertexData.propertyIndex[MATERIAL_INDEX];
+    return meshMaterialArray[index];
+}
+
+vec4 getDiffuseColor(MeshMaterial material)
+{
+    int textureId = material.textureLayer.x;
+    int textureLayer = material.textureLayer.y;
+    return textureId == -1 ? 
+        material.diffuseColor : 
+        texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+}
 
 
 //---------------------------------------------------------
@@ -85,26 +118,17 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 // SHADER VARS
 //---------------------------------------------------------
-
 layout(location = 0) out vec4 fragColor;
-
-layout(binding = DEFERRED_POSITIONS_TEXTURE_BINDING) uniform sampler2D tPosition;
-layout(binding = DEFERRED_COLORS_TEXTURE_BINDING) uniform sampler2D tColor;
-layout(binding = DEFERRED_NORMALS_TEXTURE_BINDING) uniform sampler2D tNormal;
 
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
-
-in vec2 vUV;
-
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K 1.0
 #define AO_DIST_K 0.5
 
-float gTexelSize;
-
+float gTexelSize = 0.0;
 
 //---------------------------------------------------------
 // UTILITIES
@@ -168,25 +192,6 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
-// special case, optimized for 0.0 to 1.0
-bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
-    vec3 tMin = -ro / rd;
-    vec3 tMax = (1.0-ro) / rd;
-    vec3 t1 = min(tMin, tMax);
-    vec3 t2 = max(tMin, tMax);
-    float tNear = max(max(t1.x, t1.y), t1.z);
-    float tFar = min(min(t2.x, t2.y), t2.z);
-
-    if (tNear<tFar && tFar>0.0) {
-        // difference here
-        // if inside, instead of returning far plane, return ray origin
-        t = tNear>0.0 ? tNear : 0.0;
-        return true;
-    }
-
-    return false;
-}
-
 // assumption, current pos is empty (alpha = 0.0)
 float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
     float level = ceil(mipLevel);
@@ -245,7 +250,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     }
     else {
         // delta transmittance
-        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+        float dtm = exp( -TRANSMIT_K * texel.a );
         tm *= dtm;
         col += (1.0-dtm)*texel.rgb*tm;
         stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -315,9 +320,10 @@ void main()
     // size of one texel in normalized texture coords
     gTexelSize = 1.0/uTextureRes;
 
-    vec3 pos = texture(tPosition, vUV).rgb;
-    vec3 nor = texture(tNormal, vUV).rgb;
-    vec4 col = texture(tColor, vUV);
+    // get fragment info
+    vec3 pos = vertexData.position;
+    vec3 nor = normalize(vertexData.normal);
+    vec4 col = getDiffuseColor(getMeshMaterial());
 
 
     //-----------------------------------------------------
@@ -370,7 +376,7 @@ void main()
         #endif
         
         #ifdef PASS_INDIR
-        vec4 indir;
+        vec4 indir = vec4(0.0);
         {
             // duplicate code from above
 
@@ -400,7 +406,7 @@ void main()
         vec4 spec;
         {
             // single cone in reflected eye direction
-            const float FOV = radians(5.0);
+            const float FOV = radians(uSpecularFOV);
             vec3 rd = normalize(pos-uCamPos);
             rd = reflect(rd, nor);
             spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
@@ -416,15 +422,17 @@ void main()
         #ifdef PASS_INDIR
             #ifdef PASS_COL
             cout.rgb += indir.rgb*indir.a;
+            float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
+            cout.rgb = clamp(cout.rgb - difference, 0.0, 1.0);
             #else
             cout = indir;
             #endif
         #endif
         #ifdef PASS_SPEC
             #ifdef PASS_COL
-            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, 0.4);
+            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, uSpecularAmount);
             #else
-            cout = spec;    // just write spec
+            cout = spec;
             #endif
         #endif
         #ifdef PASS_AO
@@ -432,15 +440,5 @@ void main()
         #endif
     }
 
-
-    //-----------------------------------------------------
-    // RENDER OUT
-    //-----------------------------------------------------
-
-    // background color
-    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
-
-    // alpha blend cout over bg
-    bg.rgb = mix(bg.rgb, cout.rgb, cout.a);
-    fragColor = bg;
+    fragColor = cout;
 }
