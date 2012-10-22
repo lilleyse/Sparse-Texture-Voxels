@@ -40,13 +40,15 @@ public:
 
     void display()
     {
-        glEnable(GL_DEPTH_TEST);
-
         //voxelTexture->enableNearestSampling();
         voxelTexture->enableLinearSampling();
         
         // rasterize triangles and render colors
         glUseProgram(deferredReadProgram);
+        
+        glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+        coreEngine->display();
+        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
         coreEngine->display();
     }
 };

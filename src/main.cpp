@@ -306,19 +306,6 @@ void display()
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-    //early depth pass
-    glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
-    // Display demo
-    if (currentDemoType == DEBUGDRAW)
-        debugDraw->display();
-    else if (currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster->display(); 
-    else if (currentDemoType == VOXELCONETRACER)  
-        voxelConetracer->display();
-    else if (currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->display();
-
-    glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
     // regular render
     if (currentDemoType == DEBUGDRAW)
         debugDraw->display();
@@ -328,7 +315,6 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
         deferredPipeline->display();
-
 }
 
 void displayFPS()
