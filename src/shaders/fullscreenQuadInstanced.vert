@@ -61,30 +61,22 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER VARS
 //---------------------------------------------------------
 
-layout(location = 0) out vec4 fragColor;
+layout(location = POSITION_ATTR) in vec2 position;
 
-layout(binding = COLOR_IMAGE_3D_BINDING_CURR, rgba8) coherent uniform image3D tColorMipCurr;
-layout(binding = COLOR_IMAGE_3D_BINDING_NEXT, rgba8) coherent uniform image3D tColorMipNext;
+out gl_PerVertex
+{
+    vec4 gl_Position;
+};
 
-flat in int slice;
+flat out int slice;
 
-// typically use memoryBarrier to do all mipmaps at once, but it's not working right now
+
+//---------------------------------------------------------
+// PROGRAM
+//---------------------------------------------------------
+
 void main()
 {
-    ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-
-    vec4 avgColor = vec4(0.0);
-    for(int i = 0; i < 2; i++)
-    for(int j = 0; j < 2; j++)
-    for(int k = 0; k < 2; k++)
-    {
-        ivec3 neighbor = globalId*2 + ivec3(i,j,k);
-        vec4 neighborColor = imageLoad(tColorMipCurr, neighbor);
-        neighborColor.rgb *= neighborColor.a;
-        avgColor += neighborColor;
-    }
-    avgColor.xyz /= avgColor.a;
-    avgColor.a /= 8.0;
-    //vec4 avgColor = vec4(vec3(globalId)/32.0, 1.0);
-    imageStore(tColorMipNext, globalId, avgColor);
+    slice = gl_InstanceID;
+    gl_Position = vec4(position, 0.0, 1.0);
 }

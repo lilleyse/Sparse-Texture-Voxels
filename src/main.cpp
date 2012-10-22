@@ -7,7 +7,7 @@
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
-#include "demos/DeferredPipeline.h"
+#include "demos/MainRenderer.h"
 #include "demos/TriangleDebug.h"
 
 namespace
@@ -16,61 +16,57 @@ namespace
     std::string applicationName("Sparse Texture Voxels");
     glm::ivec2 windowSize(600, 400);
     glm::ivec2 openGLVersion(4, 2);
-    ThirdPersonCamera* camera = new ThirdPersonCamera();
-    glm::ivec2 mouseClickPos;
-    glm::ivec2 currentMousePos;
-    Object* currentSelectedObject;
     bool enableMousePicking = true;
     bool showDebugOutput = false;
     bool showFPS = true;
     bool vsync = false;
-    int frameCount = 0;
-    float frameTime = 0.0f;
-    const float FRAME_TIME_DELTA = 0.01f;
-    Utils::OpenGL::OpenGLTimer timer;
     
     // Texture settings
+    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
+    uint voxelGridLength = 128;
+    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
+    uint currentMipMapLevel = 0;
+    float specularFOV = 5.0;
+    float specularAmount = 0.5;
+    bool loadTextures = false;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
         VoxelTextureGenerator::CUBE,
         DATA_DIRECTORY + "Bucky.raw",
     };
-    bool loadTextures = false;
 
-    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 128;
-    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
-    uint currentMipMapLevel = 0;
-    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
-    VoxelTexture* voxelTexture = new VoxelTexture();
-    Voxelizer* voxelizer = new Voxelizer();
-    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
-
-    
     // Demo settings
-    enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, DEFERRED_PIPELINE, MAX_DEMO_TYPES};
+    bool loadAllDemos = true;
+    enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
+    DemoType currentDemoType = MAIN_RENDERER;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
-    DeferredPipeline* deferredPipeline = new DeferredPipeline();
-    DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = true;
-
-    // OpenGL stuff
+    MainRenderer* mainRenderer = new MainRenderer();
+    
+    // Other
+    int frameCount = 0;
+    float frameTime = 0.0f;
+    const float FRAME_TIME_DELTA = 0.01f;
+    glm::ivec2 mouseClickPos;
+    glm::ivec2 currentMousePos;
+    Object* currentSelectedObject;
+    ThirdPersonCamera* camera = new ThirdPersonCamera();
+    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
+    VoxelTexture* voxelTexture = new VoxelTexture();
+    Voxelizer* voxelizer = new Voxelizer();
+    MipMapGenerator* mipMapGenerator = new MipMapGenerator();
+    Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
-    GLuint perFrameUBO;
+    GLuint perFrameUBO;  
 }
 
 void setMipMapLevel(int level)
 {
-    int numMipMapLevels = voxelTexture->numMipMapLevels;
-    if (level < 0) level = 0;
-    if (level >= numMipMapLevels) level = numMipMapLevels - 1;
-    currentMipMapLevel = level;
-    
+    currentMipMapLevel = std::max(std::min(level, (int)voxelTexture->numMipMapLevels - 1), 0);    
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
         voxelDebug->setMipMapLevel(currentMipMapLevel);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
@@ -117,11 +113,11 @@ void GLFWCALL mouseClick(int button, int action)
         }
         else if (action == GLFW_RELEASE)
         {
-            if (mouseClickPos == currentMousePos && enableMousePicking)
+            if (currentDemoType == MAIN_RENDERER && enableMousePicking && mouseClickPos == currentMousePos)
             {
+                currentSelectedObject = 0;
                 Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, camera->nearPlane, camera->farPlane,  camera->viewMatrix, camera->projectionMatrix);    
                 std::vector<Object*> objects = coreEngine->scene->objects;
-                Object* selectedObject = 0;
                 float closestIntersection = FLT_MAX;
                 for (uint i = 0; i < objects.size(); i++)
                 {
@@ -143,7 +139,7 @@ void GLFWCALL mouseClick(int button, int action)
     }
 }
 
-void GLFWCALL key(int k, int action)
+void GLFWCALL keyPress(int k, int action)
 {
     if (action == GLFW_RELEASE)
     {
@@ -157,36 +153,50 @@ void GLFWCALL key(int k, int action)
         if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
         if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
 
+        // Enable linear sampling
+        if (k == 'L') voxelTexture->changeSamplerType();
+
         // Changing textures
-        bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
-        bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-        if (setsNextTexture || setsPreviousTexture)
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->voxelTextureUpdate();
+        if (loadTextures)
+        {
+            bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
+            bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
+            if (setsNextTexture || setsPreviousTexture)
+                if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                    voxelDebug->voxelTextureUpdate();
+        }
     }
 }
 
-void checkKeyDown()
+void processKeyDown()
 {
     // This method checks if keys are down every frame
-    // Transforming selected objects
-    if (enableMousePicking && currentSelectedObject != 0)
-    {
-        float translationAmount = 0.01f;
-        float rotationAmount = 0.5f;
-        float scaleAmount = 0.01f;
-        bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
-        if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
-        if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
-        if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
-        if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
-        if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
-        if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
-        if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
-        else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
-        if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
-        else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
-        
+    bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
+    if (currentDemoType == MAIN_RENDERER)
+    {    
+        // Transforming selected objects
+        if (enableMousePicking && currentSelectedObject != 0)
+        {
+            float translationAmount = 0.01f;
+            float rotationAmount = 0.5f;
+            float scaleAmount = 0.01f;
+            if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
+            if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
+            if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
+            if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
+            if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
+            if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
+            if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
+            else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
+            if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
+            else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
+        }
+
+        // Changing specular values
+        float specularFOVChange = 0.2f;
+        float specularAmountChange = 0.004f;
+        if (glfwGetKey('F') == GLFW_PRESS) specularFOV = glm::clamp(specularFOV + specularFOVChange * (shiftDown ? -1.0f : 1.0f), 0.01f, 50.0f);
+        if (glfwGetKey('G') == GLFW_PRESS) specularAmount = glm::clamp(specularAmount + specularAmountChange * (shiftDown ? -1.0f : 1.0f), 0.0f, 1.0f);
     }
 }
 
@@ -195,9 +205,6 @@ void GLFWCALL resize(int w, int h)
     glViewport(0, 0, w, h);
     camera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
-
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->resize(w, h);
 }
 
 void initGL()
@@ -240,35 +247,36 @@ void begin()
 {
     initGL();
 
+    // camera
     camera->setFarNearPlanes(.01f, 100.0f);
     camera->zoom(3.0f);
     camera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
-    timer.begin();
+    timer->begin();
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
 
-    // voxelize from the triangle scene. Do this first because the 3d texture starts as empty
+    // voxelize from the triangle scene
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
-    voxelizer->voxelizeScene(frameTime);
-    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-
-    // create procedural textures
+    voxelizer->voxelizeScene();
+    
+    // load cpu textures
     if (loadTextures)
     {
+        // create procedural textures
         uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
         for (uint i = 0; i < numInitialTextures; i++)
-            voxelTextureGenerator->createTexture(voxelTextures[i]);  
+            voxelTextureGenerator->createTexture(voxelTextures[i]);
+
+        // Load scene texture onto cpu
+        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+        voxelTextureGenerator->setTexture(sceneFile);
     }
-
-    // set the active texture to the triangle scene
-    voxelTextureGenerator->setTexture(sceneFile);
-
-    
+    else mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -279,16 +287,14 @@ void begin()
         voxelRaycaster->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
-    if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
-    
+    if (loadAllDemos || currentDemoType == MAIN_RENDERER)
+        mainRenderer->begin(voxelTexture, fullScreenQuad, coreEngine);
 
     setMipMapLevel(currentMipMapLevel);
 }
 
 void display()
 {
-
     // Basic GL stuff
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
@@ -297,10 +303,13 @@ void display()
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 
     // Update the scene
-    coreEngine->updateScene();
-    voxelizer->voxelizeScene(frameTime);
-    mipMapGenerator->generateMipMapGPU();
-
+    if (currentDemoType == MAIN_RENDERER)
+    {
+        coreEngine->updateScene();
+        voxelizer->voxelizeScene();
+        mipMapGenerator->generateMipMapGPU();
+    }
+    
     // Update the per frame UBO
     PerFrameUBO perFrame;
     perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
@@ -313,6 +322,8 @@ void display()
     perFrame.uFOV = camera->fieldOfView;
     perFrame.uTextureRes = (float)voxelTexture->voxelGridLength;
     perFrame.uNumMips = (float)voxelTexture->numMipMapLevels;
+    perFrame.uSpecularFOV = specularFOV;
+    perFrame.uSpecularAmount = specularAmount;
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
@@ -327,9 +338,8 @@ void display()
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
         voxelConetracer->display();
-    else if (currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->display();
-
+    else if (currentDemoType == MAIN_RENDERER)
+        mainRenderer->display();
 }
 
 void displayFPS()
@@ -360,7 +370,7 @@ int main(int argc, char* argv[])
     glfwSetWindowSizeCallback(resize);
     glfwSetMousePosCallback(mouseMove);
     glfwSetMouseButtonCallback(mouseClick);
-    glfwSetKeyCallback(key);
+    glfwSetKeyCallback(keyPress);
     glfwEnable(GLFW_AUTO_POLL_EVENTS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
@@ -368,7 +378,7 @@ int main(int argc, char* argv[])
     bool running = true;
     do
     {
-        checkKeyDown();
+        processKeyDown();
         display();
         frameTime += FRAME_TIME_DELTA;
         if (showFPS) displayFPS();

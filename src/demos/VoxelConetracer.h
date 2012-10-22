@@ -23,8 +23,8 @@ public:
         this->fullScreenQuad = fullScreenQuad;
 
         // Create shader program
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreen.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "conetrace.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuad.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelConetracerDemo.frag");
 
         fullScreenProgram = glCreateProgram();
         glAttachShader(fullScreenProgram, vertexShaderObject);
@@ -42,8 +42,6 @@ public:
 
     void display()
     {
-        voxelTexture->enableLinearSampling();
-
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();
     }

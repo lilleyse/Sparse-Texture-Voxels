@@ -78,8 +78,8 @@ public:
 
         
         // Create shader program
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebug.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebug.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "voxelDebugDemo.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelDebugDemo.frag");
 
         voxelDebugProgram = glCreateProgram();
         glAttachShader(voxelDebugProgram, vertexShaderObject);

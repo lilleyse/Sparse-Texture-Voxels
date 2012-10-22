@@ -30,7 +30,7 @@ public:
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
         GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
 
         mipmapProgram = glCreateProgram();
@@ -42,7 +42,7 @@ public:
         glLinkProgram(mipmapProgram);
         Utils::OpenGL::checkProgram(mipmapProgram);
 
-        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
+        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
         fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelClean.frag");
 
         voxelCleanProgram = glCreateProgram();
@@ -54,7 +54,6 @@ public:
         glLinkProgram(voxelCleanProgram);
         Utils::OpenGL::checkProgram(voxelCleanProgram);
     }
-
 
     void generateMipMapGPU()
     {
@@ -71,7 +70,6 @@ public:
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
-
 
         // First clean the base mip map
         int voxelGridLength = voxelTexture->voxelGridLength;
@@ -102,9 +100,6 @@ public:
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 
-
-
-
     // This code is not super efficient since it is a short term solution that will be replaced by GPU-based mipmap generation
     void generateMipMapCPU()
     {
@@ -124,7 +119,7 @@ public:
             
             glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
             glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
-            glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_FLOAT, &prevMipData.normalData[0]);
+            glGetTexImage(GL_TEXTURE_3D, i-1, GL_RGBA, GL_BYTE, &prevMipData.normalData[0]);
            
             TextureData currMipData;
             currMipData.colorData.resize(mipMapSideLength*mipMapSideLength*mipMapSideLength);
@@ -159,7 +154,7 @@ public:
 
                 uint index1d = indexConverter(mipMapSideLength, glm::uvec3(j,k,l));
                 currMipData.colorData[index1d] = glm::u8vec4(finalColor*255.0f);
-                currMipData.normalData[index1d] = glm::vec4(finalNormal, 0.0f);
+                currMipData.normalData[index1d] = glm::i8vec4(finalNormal, 0.0f);
             }
 
             voxelTexture->setData(currMipData, mipMapSideLength, i);
