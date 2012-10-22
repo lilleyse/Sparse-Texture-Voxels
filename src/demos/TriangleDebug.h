@@ -15,8 +15,8 @@ public:
     {
         this->coreEngine = coreEngine;
         // Create program that reads the deferred data
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "mainDeferred.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "triangleDebug.frag");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
+        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "triangleDebugDemo.frag");
 
         triangleDebugProgram = glCreateProgram();
         glAttachShader(triangleDebugProgram, vertexShaderObject);

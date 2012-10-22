@@ -7,7 +7,7 @@
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
-#include "demos/DeferredPipeline.h"
+#include "demos/MainRenderer.h"
 #include "demos/TriangleDebug.h"
 
 namespace
@@ -44,7 +44,7 @@ namespace
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
     VoxelConetracer* voxelConetracer = new VoxelConetracer();
-    DeferredPipeline* deferredPipeline = new DeferredPipeline();
+    MainRenderer* mainRenderer = new MainRenderer();
     
     // Other
     int frameCount = 0;
@@ -288,7 +288,7 @@ void begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->begin(voxelTexture, fullScreenQuad, coreEngine);
+        mainRenderer->begin(voxelTexture, fullScreenQuad, coreEngine);
 
     setMipMapLevel(currentMipMapLevel);
 }
@@ -339,7 +339,7 @@ void display()
     else if (currentDemoType == VOXELCONETRACER)  
         voxelConetracer->display();
     else if (currentDemoType == DEFERRED_PIPELINE)
-        deferredPipeline->display();
+        mainRenderer->display();
 }
 
 void displayFPS()

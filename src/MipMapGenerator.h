@@ -30,7 +30,7 @@ public:
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
+        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
         GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
 
         mipmapProgram = glCreateProgram();
@@ -42,7 +42,7 @@ public:
         glLinkProgram(mipmapProgram);
         Utils::OpenGL::checkProgram(mipmapProgram);
 
-        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenInstanced.vert");
+        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
         fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelClean.frag");
 
         voxelCleanProgram = glCreateProgram();
