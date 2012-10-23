@@ -4,6 +4,7 @@
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
 #include "VoxelLighting.h"
+#include "Passthrough.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -63,6 +64,8 @@ namespace
     Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
+    Passthrough* passthrough = new Passthrough();
+    PerFrameUBO* perFrame = new PerFrameUBO();
     GLuint perFrameUBO;  
 }
 
@@ -209,6 +212,14 @@ void GLFWCALL resize(int w, int h)
     windowSize = glm::ivec2(w, h);
 }
 
+void clearBuffers()
+{
+    float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
+    glClearBufferfv(GL_COLOR, 0, clearColor);
+    float clearDepth = 1.0f;
+    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+}
+
 void initGL()
 {
     glewExperimental = GL_TRUE;
@@ -258,14 +269,16 @@ void begin()
     timer->begin();
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
+    passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
+    voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
+    voxelLighting->begin(voxelTexture, coreEngine, passthrough, perFrame, perFrameUBO);
 
     // voxelize and light the scene
-    voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
+    clearBuffers();
     voxelizer->voxelizeScene();
-    voxelLighting->begin(voxelTexture, coreEngine, perFrameUBO);
     voxelLighting->lightScene();
     
     // mipmap
@@ -295,17 +308,13 @@ void begin()
         mainRenderer->begin(voxelTexture, fullScreenQuad, coreEngine);
 
     setMipMapLevel(currentMipMapLevel);
+    
 }
 
 void display()
 {
-    // Basic GL stuff
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
-    glClearBufferfv(GL_COLOR, 0, clearColor);
-    float clearDepth = 1.0f;
-    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
-
+    // blank slate
+    clearBuffers();
     // Update the scene
     if (currentDemoType == MAIN_RENDERER)
     {
@@ -316,25 +325,26 @@ void display()
     }
     
     // Update the per frame UBO
-    PerFrameUBO perFrame;
-    perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
-    perFrame.uCamLookAt = camera->lookAt;
-    perFrame.uCamPos = camera->position;
-    perFrame.uCamUp = camera->upDir;
-    perFrame.uResolution = glm::vec2(windowSize);
-    perFrame.uAspect = (float)windowSize.x/windowSize.y;
-    perFrame.uTime = frameTime;
-    perFrame.uFOV = camera->fieldOfView;
-    perFrame.uTextureRes = (float)voxelTexture->voxelGridLength;
-    perFrame.uNumMips = (float)voxelTexture->numMipMapLevels;
-    perFrame.uSpecularFOV = specularFOV;
-    perFrame.uSpecularAmount = specularAmount;
+    perFrame->uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
+    perFrame->uCamLookAt = camera->lookAt;
+    perFrame->uCamPos = camera->position;
+    perFrame->uCamUp = camera->upDir;
+    perFrame->uResolution = glm::vec2(windowSize);
+    perFrame->uAspect = (float)windowSize.x/windowSize.y;
+    perFrame->uTime = frameTime;
+    perFrame->uFOV = camera->fieldOfView;
+    perFrame->uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
+    perFrame->uSpecularFOV = specularFOV;
+    perFrame->uSpecularAmount = specularAmount;
+    //perFrame->timestamp handled by voxelizer
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Display demo
+    clearBuffers();
     if (currentDemoType == VOXEL_DEBUG)
         voxelDebug->display();
     else if (currentDemoType == TRIANGLE_DEBUG)

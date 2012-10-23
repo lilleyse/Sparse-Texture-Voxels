@@ -2,6 +2,7 @@
 #include "Utils.h"
 #include "VoxelTexture.h"
 #include "ShaderConstants.h"
+#include "Passthrough.h"
 #include "engine/CoreEngine.h"
 
 class VoxelLighting
@@ -9,14 +10,18 @@ class VoxelLighting
 private:
     VoxelTexture* voxelTexture;
     CoreEngine* coreEngine;
+    Passthrough* passthrough;
+    PerFrameUBO* perFrame;
     GLuint perFrameUBO;
     GLuint lightingProgram;
 public:
 
-    void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, GLuint perFrameUBO)
+    void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, Passthrough* passthrough, PerFrameUBO* perFrame, GLuint perFrameUBO)
     {
         this->voxelTexture = voxelTexture;
         this->coreEngine = coreEngine;
+        this->passthrough = passthrough;
+        this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
 
         // Create program that writes the scene to a voxel texture
@@ -40,37 +45,30 @@ public:
         uint voxelGridLength = voxelTexture->voxelGridLength;
         glViewport(0, 0, voxelGridLength, voxelGridLength);
 
+        // Update the per frame UBO with the orthographic projection
+        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
+        perFrame->uResolution = glm::ivec2(voxelGridLength);
+        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+        // Do a passthrough render so the depth buffer is prepared
+        passthrough->passthrough();
+
         // Bind voxelTexture's color and normal textures for writing
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
         glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
         
         // Use the lighting program
         glUseProgram(lightingProgram);
-		
-        // Update the per frame UBO with the orthographic projection
-        glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        PerFrameUBO perFrame;
-        perFrame.uResolution = glm::ivec2(voxelGridLength);
-        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
-
-
-        // depth pre-pass
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);        
-        //coreEngine->display();
-        //glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
         coreEngine->display();
-
+        
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage
         glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
 
         // return values back to normal
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 };
