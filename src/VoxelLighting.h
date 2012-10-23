@@ -36,7 +36,6 @@ public:
         Utils::OpenGL::checkProgram(lightingProgram);
     }
 
-
     void lightScene()
     {
         // Update the viewport to be the size of the voxel grid
@@ -52,7 +51,7 @@ public:
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-        // Do a passthrough render so the depth buffer is prepared
+        // Depth pre-pass
         passthrough->passthrough();
 
         // Bind voxelTexture's color and normal textures for writing

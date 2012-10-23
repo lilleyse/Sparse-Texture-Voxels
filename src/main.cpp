@@ -30,7 +30,7 @@ namespace
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0;
     float specularAmount = 0.5;
-    bool loadTextures = false;
+    bool loadTextures = true;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
@@ -305,10 +305,9 @@ void begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == MAIN_RENDERER)
-        mainRenderer->begin(voxelTexture, fullScreenQuad, coreEngine);
+        mainRenderer->begin(coreEngine, passthrough);
 
     setMipMapLevel(currentMipMapLevel);
-    
 }
 
 void display()

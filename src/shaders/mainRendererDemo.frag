@@ -56,7 +56,6 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-
 //---------------------------------------------------------
 // TRIANGLE ENGINE
 //---------------------------------------------------------
@@ -98,7 +97,6 @@ vec4 getDiffuseColor(MeshMaterial material)
         texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
 }
 
-
 //---------------------------------------------------------
 // SHADER CONSTANTS
 //---------------------------------------------------------
@@ -113,7 +111,6 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 #define EQUALSZERO(A) ( ((A)<EPS) && ((A)>-EPS) )
-
 
 //---------------------------------------------------------
 // SHADER VARS
@@ -192,36 +189,6 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
-// assumption, current pos is empty (alpha = 0.0)
-float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
-    float level = ceil(mipLevel);
-    float alpha = 0.0;
-
-    while(level < uNumMips && alpha == 0.0) {
-        alpha = textureLod(tVoxColor, pos, ++level).a;
-    }
-
-    return level;
-}
-
-// params: origin and ray within texture space
-// intersect outside bound of the enclosing texel of given mip level
-float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
-    float texelSize = pow(2, mipLevel) / uTextureRes;
-
-    vec3 texelIdx = ro/texelSize;
-
-    vec3 bMin = floor(texelIdx)*texelSize;
-    vec3 bMax = ceil(texelIdx)*texelSize;
-
-    // calc for tFar, outgoing of box
-    vec3 tMin = (bMin-ro) / rd;
-    vec3 tMax = (bMax-ro) / rd;
-    vec3 t2 = max(tMin, tMax);
-    return min(min(t2.x, t2.y), t2.z);    
-}
-
-//#define SKIP_EMPTY
 vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
   float dist = 0.0;
@@ -240,30 +207,10 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
     vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-    #ifdef SKIP_EMPTY
-    float stepSize;
-    if (texel.a == 0.0) {
-        // skip color computation
-        float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
-        stepSize = texelIntersect(pos+EPS, rd, lvl) + EPS;
-    }
-    else {
-        // delta transmittance
-        float dtm = exp( -TRANSMIT_K * texel.a );
-        tm *= dtm;
-        col += (1.0-dtm)*texel.rgb*tm;
-        stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    }
-    #else
-    if (texel.a > 0.0 )
-    {
-        float dtm = exp( -TRANSMIT_K * texel.a );
-        tm *= dtm;
-        col += (1.0 - dtm)*texel.rgb*tm;
-    }
+    float dtm = exp( -TRANSMIT_K * texel.a );
+    tm *= dtm;
+    col += (1.0 - dtm)*texel.rgb*tm;
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    #endif
 
     // increment
     dist += stepSize;
