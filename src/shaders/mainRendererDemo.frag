@@ -275,41 +275,6 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   return vec4(alpha==0 ? col : col/alpha , alpha);
 }
 
-
-// for AO, dist weighted transmittance accumulation
-float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
-    vec3 pos = ro;
-    float dist = 0.0;
-    float pixSizeAtDist = tan(fov);
-
-    float tm = 1.0;         // accumulated transmittance
-
-    while(tm > TRANSMIT_MIN &&
-        pos.x < 1.0 && pos.x > 0.0 &&
-        pos.y < 1.0 && pos.y > 0.0 &&
-        pos.z < 1.0 && pos.z > 0.0) {
-
-        // calc mip size, clamp min to texelsize
-        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
-        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-
-        // sample texture
-        vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-        // update transmittance
-        tm *= exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-
-        // increment
-        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-        dist += stepSize;
-        pos += stepSize*rd;
-    }
-
-    // weight by distance f(r) = 1/(1+K*r)
-    float weight = (1.0+AO_DIST_K*dist);
-    return tm * weight;
-}
-
 void main()
 {
 
@@ -323,59 +288,16 @@ void main()
     // get fragment info
     vec3 pos = vertexData.position;
     vec3 nor = normalize(vertexData.normal);
-    vec4 col = getDiffuseColor(getMeshMaterial());
-
+    vec4 col = textureLod(tVoxColor, pos, 0.0);//getDiffuseColor(getMeshMaterial())/2.0;
 
     //-----------------------------------------------------
     // COMPUTE COLORS
     //-----------------------------------------------------
 
-    #define PASS_COL
-    #define PASS_AO    
-    #define PASS_INDIR
-    #define PASS_SPEC
-
-    vec4 cout = vec4(vec3(1.0), col.a);
     float voxelDirectionOffset = gTexelSize*ROOTTHREE;
 
     // if nothing there, don't color
     if ( col.a!=0.0 ) {
-
-        #ifdef PASS_AO
-        float ao = 0.0;
-        {
-            // setup cones constants
-            // 6 cones 30 fov, 5 cones around 1 cone straight up
-            #define NUM_DIRS 6.0
-            #define NUM_RADIAL_DIRS 5.0
-            const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(50.0);
-            const float ANGLE_ROTATE = radians(72.0);
-
-            // radial ring of cones
-            vec3 axis = findPerpendicular(nor); // find a perpendicular vector
-            for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
-                // rotate that vector around normal (to distribute cone around)
-                vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
-
-                // ray dir is normal rotated an fov over that vector
-                vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-
-                ao += conetraceVisibility(pos+rd*voxelDirectionOffset, rd, FOV);
-            }
-
-            // single perpendicular cone (straight up)
-            ao += conetraceVisibility(pos+nor*voxelDirectionOffset, nor, FOV);
-
-            // finally, divide
-            ao /= NUM_DIRS;
-
-            #undef NUM_DIRS
-            #undef NUM_RADIAL_DIRS
-        }
-        #endif
-        
-        #ifdef PASS_INDIR
         vec4 indir = vec4(0.0);
         {
             // duplicate code from above
@@ -400,9 +322,7 @@ void main()
             #undef NUM_DIRS
             #undef NUM_RADIAL_DIRS
         }
-        #endif
-        
-        #ifdef PASS_SPEC
+
         vec4 spec;
         {
             // single cone in reflected eye direction
@@ -411,34 +331,12 @@ void main()
             rd = reflect(rd, nor);
             spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
         }
-        #endif
-        
 
-        /* COMP PASSES */
-
-        #ifdef PASS_COL
-        cout = col;
-        #endif
-        #ifdef PASS_INDIR
-            #ifdef PASS_COL
-            cout.rgb += indir.rgb*indir.a;
-            float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
-            cout.rgb = clamp(cout.rgb - difference, 0.0, 1.0);
-            #else
-            cout = indir;
-            #endif
-        #endif
-        #ifdef PASS_SPEC
-            #ifdef PASS_COL
-            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, uSpecularAmount);
-            #else
-            cout = spec;
-            #endif
-        #endif
-        #ifdef PASS_AO
-        cout.rgb *= ao;
-        #endif
+        col.rgb += indir.rgb*indir.a;
+        float difference = max(0.0,max(col.r - 1.0, max(col.g - 1.0, col.b - 1.0)));
+        col.rgb = clamp(col.rgb - difference, 0.0, 1.0);
+        col.rgb = mix(col.rgb, spec.rgb*spec.a, uSpecularAmount);
     }
 
-    fragColor = cout;
+    fragColor = col;
 }

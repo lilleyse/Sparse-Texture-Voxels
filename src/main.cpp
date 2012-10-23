@@ -3,6 +3,7 @@
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
+#include "VoxelLighting.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -57,6 +58,7 @@ namespace
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
+    VoxelLighting* voxelLighting = new VoxelLighting();
     MipMapGenerator* mipMapGenerator = new MipMapGenerator();
     Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
@@ -260,11 +262,13 @@ void begin()
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
 
-    // voxelize from the triangle scene
+    // voxelize and light the scene
     voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
     voxelizer->voxelizeScene();
+    voxelLighting->begin(voxelTexture, coreEngine, perFrameUBO);
+    voxelLighting->lightScene();
     
-    // load cpu textures
+    // mipmap
     if (loadTextures)
     {
         // create procedural textures
@@ -307,6 +311,7 @@ void display()
     {
         coreEngine->updateScene();
         voxelizer->voxelizeScene();
+        voxelLighting->lightScene();
         mipMapGenerator->generateMipMapGPU();
     }
     
