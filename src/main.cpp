@@ -55,7 +55,9 @@ namespace
     glm::ivec2 mouseClickPos;
     glm::ivec2 currentMousePos;
     Object* currentSelectedObject;
-    ThirdPersonCamera* camera = new ThirdPersonCamera();
+    ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
+    ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
+    ThirdPersonCamera* currentCamera = viewCamera;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
@@ -89,21 +91,21 @@ void GLFWCALL mouseMove(int x, int y)
     bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     if (leftPress || rightPress || middlePress)
     {
-        float cameraDistanceFromCenter = glm::length(camera->position);
+        float cameraDistanceFromCenter = glm::length(currentCamera->position);
         if (leftPress)
         {
             float rotateAmount = cameraDistanceFromCenter / 200.0f;
-            camera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
+            currentCamera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
         }
         else if (rightPress)
         {
             float zoomAmount = cameraDistanceFromCenter / 200.0f;
-            camera->zoom(mouseDelta.y * zoomAmount);
+            currentCamera->zoom(mouseDelta.y * zoomAmount);
         }
         else if (middlePress)
         {
             float panAmount = cameraDistanceFromCenter / 500.0f;
-            camera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
+            currentCamera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
         }
     }
 }
@@ -121,7 +123,7 @@ void GLFWCALL mouseClick(int button, int action)
             if (currentDemoType == MAIN_RENDERER && enableMousePicking && mouseClickPos == currentMousePos)
             {
                 currentSelectedObject = 0;
-                Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, camera->nearPlane, camera->farPlane,  camera->viewMatrix, camera->projectionMatrix);    
+                Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, currentCamera->nearPlane, currentCamera->farPlane,  currentCamera->viewMatrix, currentCamera->projectionMatrix);    
                 std::vector<Object*> objects = coreEngine->scene->objects;
                 float closestIntersection = FLT_MAX;
                 for (uint i = 0; i < objects.size(); i++)
@@ -160,6 +162,12 @@ void GLFWCALL keyPress(int k, int action)
 
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
+
+        //Switch between light and regular camera
+        if (k == GLFW_KEY_SPACE)
+        {
+            currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
+        }
 
         // Changing textures
         if (loadTextures)
@@ -208,7 +216,8 @@ void processKeyDown()
 void GLFWCALL resize(int w, int h)
 {
     glViewport(0, 0, w, h);
-    camera->setAspectRatio(w, h);
+    viewCamera->setAspectRatio(w, h);
+    lightCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
 }
 
@@ -223,14 +232,14 @@ void clearBuffers()
 void setFBO()
 {
     // Update the per frame UBO
-    perFrame->uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
-    perFrame->uCamLookAt = camera->lookAt;
-    perFrame->uCamPos = camera->position;
-    perFrame->uCamUp = camera->upDir;
+    perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
+    perFrame->uCamLookAt = currentCamera->lookAt;
+    perFrame->uCamPos = currentCamera->position;
+    perFrame->uCamUp = currentCamera->upDir;
     perFrame->uResolution = glm::vec2(windowSize);
     perFrame->uAspect = (float)windowSize.x/windowSize.y;
     perFrame->uTime = frameTime;
-    perFrame->uFOV = camera->fieldOfView;
+    perFrame->uFOV = currentCamera->fieldOfView;
     perFrame->uTextureRes = (float)voxelTexture->voxelGridLength;
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
@@ -285,9 +294,12 @@ void begin()
     initGL();
 
     // camera
-    camera->setFarNearPlanes(.01f, 100.0f);
-    camera->zoom(3.0f);
-    camera->lookAt = glm::vec3(0.5f);
+    viewCamera->setFarNearPlanes(.01f, 100.0f);
+    viewCamera->zoom(3.0f);
+    viewCamera->lookAt = glm::vec3(0.5f);
+    lightCamera->setFarNearPlanes(.01f, 100.0f);
+    lightCamera->zoom(3.0f);
+    lightCamera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
     timer->begin();
