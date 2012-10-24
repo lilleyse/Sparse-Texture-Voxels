@@ -281,7 +281,7 @@ void main()
             spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
         }
 
-        col.rgb += indir.rgb*indir.a;
+        col.rgb += indir.rgb*indir.a*5.0;
         float difference = max(0.0,max(col.r - 1.0, max(col.g - 1.0, col.b - 1.0)));
         col.rgb = clamp(col.rgb - difference, 0.0, 1.0);
         col.rgb = mix(col.rgb, spec.rgb*spec.a, uSpecularAmount);

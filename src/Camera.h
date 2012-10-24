@@ -43,16 +43,15 @@ struct Camera
         aspectRatio = (float)width/height;
     }
 
+    glm::mat4 createOrthrographicProjectionMatrix()
+    {
+        projectionMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -100.0f, 100.0f);
+        return projectionMatrix;
+    }
     glm::mat4 createProjectionMatrix()
     {
         projectionMatrix = glm::perspective(45.0f, aspectRatio, nearPlane, farPlane);
-        //projectionMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -100.0f, 100.0f);
         return projectionMatrix;
-    }
-
-    glm::mat4 createViewProjectionMatrix()
-    {
-        return createProjectionMatrix() * createViewMatrix();
     }
 
     virtual glm::mat4 createViewMatrix() = 0;

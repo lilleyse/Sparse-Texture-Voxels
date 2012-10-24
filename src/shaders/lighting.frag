@@ -114,6 +114,6 @@ void main()
     vec4 voxelColor = vec4(finalColor, alpha);
     vec4 voxelNormal = vec4(reflectedDirection, uTimestamp); 
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColor, voxelPos, voxelColor);
+    imageStore(tVoxColor, voxelPos, vec4(1.0,0.0,0.0,1.0));
     imageStore(tVoxNormal, voxelPos, voxelNormal);
 }

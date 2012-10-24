@@ -58,6 +58,7 @@ namespace
     ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
     ThirdPersonCamera* currentCamera = viewCamera;
+    bool lightPerspectiveProjection = true;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
@@ -164,10 +165,9 @@ void GLFWCALL keyPress(int k, int action)
         if (k == 'L') voxelTexture->changeSamplerType();
 
         //Switch between light and regular camera
-        if (k == GLFW_KEY_SPACE)
-        {
-            currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
-        }
+        if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
+
+        if (k == 'O') lightPerspectiveProjection = !lightPerspectiveProjection;
 
         // Changing textures
         if (loadTextures)
@@ -232,7 +232,7 @@ void clearBuffers()
 void setFBO()
 {
     // Update the per frame UBO
-    perFrame->uViewProjection = currentCamera->createViewProjectionMatrix();    
+    perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
     perFrame->uCamLookAt = currentCamera->lookAt;
     perFrame->uCamPos = currentCamera->position;
     perFrame->uCamUp = currentCamera->upDir;
@@ -318,7 +318,7 @@ void begin()
 
     // voxelize and light the scene
     voxelizer->voxelizeScene();
-    voxelLighting->lightScene(lightCamera->createViewProjectionMatrix());
+    voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
     
     // mipmap
     if (loadTextures)
@@ -360,7 +360,7 @@ void display()
     {
         coreEngine->updateScene();
         voxelizer->voxelizeScene();
-        voxelLighting->lightScene(lightCamera->createViewProjectionMatrix());
+        voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
         mipMapGenerator->generateMipMapGPU();
     }
 
