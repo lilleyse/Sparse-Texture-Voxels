@@ -354,20 +354,6 @@ void display()
     // blank slate
     clearBuffers();
     setUBO();
-    
-    // Update the scene
-    // We should move this to mainRenderer->display once lights are self contained and have working matrices
-    if (currentDemoType == MAIN_RENDERER)
-    {
-        coreEngine->updateScene();
-        voxelizer->voxelizeScene();
-        voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
-        mipMapGenerator->generateMipMapGPU();
-    }
-
-    // blank slate
-    clearBuffers();
-    setUBO();
 
     // Display demo
     if (currentDemoType == VOXEL_DEBUG)
@@ -378,8 +364,18 @@ void display()
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
         voxelConetracer->display();
-    else if (currentDemoType == MAIN_RENDERER)
+    else if (currentDemoType == MAIN_RENDERER) {
+        // Update the scene
+        // We should move this to mainRenderer->display once lights are self contained and have working matrices
+        coreEngine->updateScene();
+        voxelizer->voxelizeScene();
+        voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
+        mipMapGenerator->generateMipMapGPU();
+        clearBuffers();
+        setUBO();
+
         mainRenderer->display();
+    }
 }
 
 void displayFPS()

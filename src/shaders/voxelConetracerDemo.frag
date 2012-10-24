@@ -77,8 +77,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout(location = 0, index = 0) out vec4 fragColor;
-layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
+layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
+layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 in vec2 vUV;
 
@@ -144,7 +144,7 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // sample texture
-    vec4 src = textureLod(colorTexture, pos, mipLevel);
+    vec4 src = textureLod(tVoxColor, pos, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -200,8 +200,10 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
+    // DEBUG: mipmap level 0.0 for now to make this work.
+
     // sample texture
-    vec4 texel = textureLod(colorTexture, pos, 0.0);
+    vec4 texel = textureLod(tVoxColor, pos, 0.0);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -216,7 +218,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // compute lighting
     {
         vec3 C = (1.0-dtm)*texel.rgb;
-        vec3 R = textureLod(normalTexture, pos, 0.0).rgb;
+        vec3 R = textureLod(tVoxNormal, pos, 0.0).rgb;
 
         #define KD 0.1
         #define KS 0.9
