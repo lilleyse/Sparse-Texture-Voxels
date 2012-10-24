@@ -232,7 +232,7 @@ void clearBuffers()
 void setFBO()
 {
     // Update the per frame UBO
-    perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
+    perFrame->uViewProjection = currentCamera->createViewProjectionMatrix();    
     perFrame->uCamLookAt = currentCamera->lookAt;
     perFrame->uCamPos = currentCamera->position;
     perFrame->uCamUp = currentCamera->upDir;
@@ -318,7 +318,7 @@ void begin()
 
     // voxelize and light the scene
     voxelizer->voxelizeScene();
-    voxelLighting->lightScene();
+    voxelLighting->lightScene(lightCamera->createViewProjectionMatrix());
     
     // mipmap
     if (loadTextures)
@@ -360,7 +360,7 @@ void display()
     {
         coreEngine->updateScene();
         voxelizer->voxelizeScene();
-        voxelLighting->lightScene();
+        voxelLighting->lightScene(lightCamera->createViewProjectionMatrix());
         mipMapGenerator->generateMipMapGPU();
     }
 

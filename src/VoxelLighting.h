@@ -36,7 +36,7 @@ public:
         Utils::OpenGL::checkProgram(lightingProgram);
     }
 
-    void lightScene()
+    void lightScene(glm::mat4 lightViewProjectionMatrix)
     {
         // Update the viewport to be the size of the voxel grid
         int oldViewport[4];
@@ -47,7 +47,7 @@ public:
         // Update the per frame UBO with the orthographic projection
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
         perFrame->uResolution = glm::ivec2(voxelGridLength);
-        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
+        perFrame->uViewProjection = lightViewProjectionMatrix;
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 

@@ -50,6 +50,11 @@ struct Camera
         return projectionMatrix;
     }
 
+    glm::mat4 createViewProjectionMatrix()
+    {
+        return createProjectionMatrix() * createViewMatrix();
+    }
+
     virtual glm::mat4 createViewMatrix() = 0;
 
     virtual void rotate(float x, float y) = 0;
