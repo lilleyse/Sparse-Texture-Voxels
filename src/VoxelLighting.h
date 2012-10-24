@@ -38,15 +38,8 @@ public:
 
     void lightScene(glm::mat4 lightViewProjectionMatrix)
     {
-        // Update the viewport to be the size of the voxel grid
-        int oldViewport[4];
-        glGetIntegerv(GL_VIEWPORT, oldViewport);
-        uint voxelGridLength = voxelTexture->voxelGridLength;
-        glViewport(0, 0, voxelGridLength, voxelGridLength);
-
         // Update the per frame UBO with the orthographic projection
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        perFrame->uResolution = glm::ivec2(voxelGridLength);
         perFrame->uViewProjection = lightViewProjectionMatrix;
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -62,12 +55,9 @@ public:
         glUseProgram(lightingProgram);
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);        
         coreEngine->display();
-        
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage
         glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);
-
-        // return values back to normal
-        glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 };

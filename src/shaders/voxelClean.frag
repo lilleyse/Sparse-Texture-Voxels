@@ -62,7 +62,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER CONSTANTS
 //---------------------------------------------------------
 
-#define EPS       0.001
+#define EPS       0.01
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 
 //---------------------------------------------------------
@@ -76,12 +76,11 @@ layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D 
 
 flat in int slice;
 
-// typically use memoryBarrier to do all mipmaps at once, but it's not working right now
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
     float timestamp = imageLoad(tVoxNormal, globalId).a;
-    if (!EQUALS(uTimestamp,timestamp))
+    if (!EQUALS(uTimestamp,floor(timestamp)))
     {
         imageStore(tVoxColor, globalId, vec4(0.0));
         imageStore(tVoxNormal, globalId, vec4(0.0));

@@ -229,7 +229,7 @@ void clearBuffers()
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 }
 
-void setFBO()
+void setUBO()
 {
     // Update the per frame UBO
     perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
@@ -245,7 +245,7 @@ void setFBO()
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
     perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
-    perFrame->uLightDir = glm::vec3(0.0f, 0.0f, 1.0f);
+    perFrame->uLightDir = -lightCamera->lookDir;
     //perFrame->timestamp handled by voxelizer
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
@@ -298,7 +298,7 @@ void begin()
     viewCamera->zoom(3.0f);
     viewCamera->lookAt = glm::vec3(0.5f);
     lightCamera->setFarNearPlanes(.01f, 100.0f);
-    lightCamera->zoom(3.0f);
+    lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
@@ -314,7 +314,7 @@ void begin()
 
     // blank slate
     clearBuffers();
-    setFBO();
+    setUBO();
 
     // voxelize and light the scene
     voxelizer->voxelizeScene();
@@ -353,9 +353,10 @@ void display()
 {
     // blank slate
     clearBuffers();
-    setFBO();
+    setUBO();
     
     // Update the scene
+    // We should move this to mainRenderer->display once lights are self contained and have working matrices
     if (currentDemoType == MAIN_RENDERER)
     {
         coreEngine->updateScene();
@@ -366,7 +367,7 @@ void display()
 
     // blank slate
     clearBuffers();
-    setFBO();
+    setUBO();
 
     // Display demo
     if (currentDemoType == VOXEL_DEBUG)

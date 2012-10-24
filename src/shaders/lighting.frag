@@ -106,14 +106,14 @@ void main()
     float alpha = material.a;
     vec3 normal = normalize(vertexData.normal);
     vec3 position = vertexData.position;
-    float cosAngIncidence = clamp(dot(normal, uLightDir),0.0,1.0);
+    float cosAngIncidence = clamp(dot(normal, uLightDir),0.01,0.99);
     //In the future, the magnitude of reflectedDirection will be the specularity 
     vec3 reflectedDirection = reflect(-uLightDir, normal);
     vec3 finalColor = color*uLightColor*cosAngIncidence;
 
     vec4 voxelColor = vec4(finalColor, alpha);
-    vec4 voxelNormal = vec4(reflectedDirection, uTimestamp); 
+    vec4 voxelNormal = vec4(reflectedDirection, uTimestamp + cosAngIncidence); 
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColor, voxelPos, vec4(1.0,0.0,0.0,1.0));
+    imageStore(tVoxColor, voxelPos, voxelColor);
     imageStore(tVoxNormal, voxelPos, voxelNormal);
 }

@@ -21,7 +21,7 @@ public:
         this->coreEngine = coreEngine;
         this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
-        this->timestamp = 1.0f;
+        this->timestamp = -1.0f;
 
         // Create program that writes the scene to a voxel texture
         GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
@@ -57,7 +57,7 @@ public:
 		
         // Update the per frame UBO with the orthographic projection
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        timestamp *= -1.0f;
+        timestamp = -(1.0f - glm::abs(timestamp));
         perFrame->uTimestamp = timestamp;
         perFrame->uResolution = glm::ivec2(voxelGridLength);
         

@@ -226,66 +226,54 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 
 void main()
 {
-
-    //-----------------------------------------------------
-    // SETUP VARS
-    //-----------------------------------------------------
-
-    // size of one texel in normalized texture coords
-    gTexelSize = 1.0/uTextureRes;
-
-    // get fragment info
     vec3 pos = vertexData.position;
     vec3 nor = normalize(vertexData.normal);
-    vec4 col = textureLod(tVoxColor, pos, 0.0);//getDiffuseColor(getMeshMaterial())/2.0;
+    vec3 lightColor = textureLod(tVoxColor, pos, 0.0).rgb;
+    vec3 directColor = getDiffuseColor(getMeshMaterial()).rgb;
+    //cosAngIncidence doesn't seem to work properly unless using nearest sampling.
+    //float cosAngIncidence = textureLod(tVoxNormal, pos, 0.0).w - uTimestamp;
+    //lightColor *= cosAngIncidence;
+    vec4 spec = vec4(0.0);
+    vec4 indir = vec4(0.0);
+    vec3 finalColor = vec3(0.0);
 
-    //-----------------------------------------------------
-    // COMPUTE COLORS
-    //-----------------------------------------------------
-
+    gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelDirectionOffset = gTexelSize*ROOTTHREE;
+    // Indirect
+    {
+        #define NUM_DIRS 6.0
+        #define NUM_RADIAL_DIRS 5.0
+        const float FOV = radians(30.0);
+        const float NORMAL_ROTATE = radians(50.0);
+        const float ANGLE_ROTATE = radians(72.0);
 
-    // if nothing there, don't color
-    if ( col.a!=0.0 ) {
-        vec4 indir = vec4(0.0);
-        {
-            // duplicate code from above
-
-            #define NUM_DIRS 6.0
-            #define NUM_RADIAL_DIRS 5.0
-            const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(50.0);
-            const float ANGLE_ROTATE = radians(72.0);
-
-            vec3 axis = findPerpendicular(nor);
-            for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
-                vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
-                vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-                indir += conetraceAccum(pos+rd*voxelDirectionOffset, rd, FOV);
-            }
-
-            indir += conetraceAccum(pos+nor*voxelDirectionOffset, nor, FOV);
-
-            indir /= NUM_DIRS;
-
-            #undef NUM_DIRS
-            #undef NUM_RADIAL_DIRS
+        vec3 axis = findPerpendicular(nor);
+        for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
+            vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
+            vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
+            indir += conetraceAccum(pos+rd*voxelDirectionOffset, rd, FOV);
         }
 
-        vec4 spec;
-        {
-            // single cone in reflected eye direction
-            const float FOV = radians(uSpecularFOV);
-            vec3 rd = normalize(pos-uCamPos);
-            rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
-        }
+        indir += conetraceAccum(pos+nor*voxelDirectionOffset, nor, FOV);
+        indir /= NUM_DIRS;
 
-        col.rgb += indir.rgb*indir.a*5.0;
-        float difference = max(0.0,max(col.r - 1.0, max(col.g - 1.0, col.b - 1.0)));
-        col.rgb = clamp(col.rgb - difference, 0.0, 1.0);
-        col.rgb = mix(col.rgb, spec.rgb*spec.a, uSpecularAmount);
+        #undef NUM_DIRS
+        #undef NUM_RADIAL_DIRS
+    }
+    // Specular
+    {    
+        // single cone in reflected eye direction
+        const float FOV = radians(uSpecularFOV);
+        vec3 rd = normalize(pos-uCamPos);
+        rd = reflect(rd, nor);
+        spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
     }
 
-    fragColor = col;
+    finalColor = lightColor;
+    finalColor += directColor * indir.rgb * indir.a * 5.0;
+    //finalColor += indir.rgb * amountInShadow * 5.0;
+    //float difference = max(0.0,max(finalColor.r - 1.0, max(finalColor.g - 1.0, finalColor.b - 1.0)));
+    //finalColor = clamp(finalColor - difference, 0.0, 1.0);
+    finalColor = mix(finalColor, spec.rgb*spec.a, uSpecularAmount);
+    fragColor = vec4(finalColor, 1.0);
 }

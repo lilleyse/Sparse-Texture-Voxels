@@ -201,7 +201,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // sample texture
-    vec4 texel = textureLod(colorTexture, pos, mipLevel);
+    vec4 texel = textureLod(colorTexture, pos, 0.0);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -213,7 +213,16 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
 
-    col += (1.0-dtm)*texel.rgb*tm;
+    // compute lighting
+    {
+        vec3 C = (1.0-dtm)*texel.rgb;
+        vec3 R = textureLod(normalTexture, pos, 0.0).rgb;
+
+        #define KD 0.1
+        #define KS 0.9
+        #define SPEC 30
+        col += KD*C + KS*pow(max(dot(R,-rd), 0.0), SPEC);
+    }
 
     pos += stepSize*rd;
     
