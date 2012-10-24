@@ -45,6 +45,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
@@ -56,8 +58,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) writeonly uniform image3D tNormal;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) writeonly uniform image3D tVoxNormal;
 
 in block
 {
@@ -70,6 +72,6 @@ in block
 void main()
 {    
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tColor, voxelPos, vec4(0.0, 0.0, 0.0, 1.0));
-    imageStore(tNormal, voxelPos, vec4(1.0, 0.0, 0.0, uTimestamp));
+    imageStore(tVoxColor, voxelPos, vec4(0.0, 0.0, 0.0, 1.0));
+    imageStore(tVoxNormal, voxelPos, vec4(0.0, 0.0, 0.0, uTimestamp));
 }

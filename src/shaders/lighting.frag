@@ -45,6 +45,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
@@ -58,8 +60,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(early_fragment_tests) in;
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D tNormal;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tVoxColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D tVoxNormal;
 
 in block
 {
@@ -99,26 +101,19 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 void main()
 {        
-    //Voxel clean should happen before this stage
-    ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    //vec4 currentVoxelColor = imageLoad(tColor, voxelPos);
-    //if (currentVoxelValue != vec4(0.0,0.0,0.0,0.0)
-    //{
-        //Right now this mimics a directional light that looks down the positive z axis
-        vec4 material = getDiffuseColor(getMeshMaterial());
-        vec3 color = material.rgb;
-        float alpha = material.a;
-        vec3 normal = normalize(vertexData.normal);
-        vec3 position = vertexData.position; //normally you would have to multiply by the inverse viewprojection, but for now we are only rendering
-        vec3 lightDirection = vec3(0.0,0.0,1.0); //normally you would have to convert the light direction to world space, but we are assuming it's looking straight on for now.
-        float cosAngIncidence = clamp(dot(normal, lightDirection),0.0,1.0);
-        vec3 reflectedDirection = reflect(-lightDirection, normal); //this is what you would use when computing specular
-        vec3 lightColor = vec3(1.0,1.0,1.0); //normall this would be passed in to the shader
-        vec3 finalColor = color*lightColor*cosAngIncidence; //this is what you would use for the diffuse color
+    vec4 material = getDiffuseColor(getMeshMaterial());
+    vec3 color = material.rgb;
+    float alpha = material.a;
+    vec3 normal = normalize(vertexData.normal);
+    vec3 position = vertexData.position;
+    float cosAngIncidence = clamp(dot(normal, uLightDir),0.0,1.0);
+    //In the future, the magnitude of reflectedDirection will be the specularity 
+    vec3 reflectedDirection = reflect(-uLightDir, normal);
+    vec3 finalColor = color*uLightColor*cosAngIncidence;
 
-        vec4 voxelColor = vec4(finalColor, alpha); //light color (and alpha)
-        vec4 voxelNormal = vec4(reflectedDirection, uTimestamp); //light direction (magnitude contians specularity) and timestamp (w compontent already has the correct timestamp value). 
-        imageStore(tColor, voxelPos, voxelColor);
-        imageStore(tNormal, voxelPos, voxelNormal);
-    //}
+    vec4 voxelColor = vec4(finalColor, alpha);
+    vec4 voxelNormal = vec4(reflectedDirection, uTimestamp); 
+    ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
+    imageStore(tVoxColor, voxelPos, voxelColor);
+    imageStore(tVoxNormal, voxelPos, voxelNormal);
 }

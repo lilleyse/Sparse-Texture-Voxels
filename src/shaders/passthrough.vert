@@ -56,12 +56,17 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
+    float uTimestamp;
     float uFOV;
     float uTextureRes;
     float uNumMips;
+    float uSpecularFOV;
+    float uSpecularAmount;
 };
 
 layout(location = POSITION_ATTR) in vec3 position;

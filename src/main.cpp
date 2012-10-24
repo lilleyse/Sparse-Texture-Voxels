@@ -30,7 +30,7 @@ namespace
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0;
     float specularAmount = 0.5;
-    bool loadTextures = true;
+    bool loadTextures = false;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
         VoxelTextureGenerator::SPHERE,
@@ -220,6 +220,30 @@ void clearBuffers()
     glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 }
 
+void setFBO()
+{
+    // Update the per frame UBO
+    perFrame->uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
+    perFrame->uCamLookAt = camera->lookAt;
+    perFrame->uCamPos = camera->position;
+    perFrame->uCamUp = camera->upDir;
+    perFrame->uResolution = glm::vec2(windowSize);
+    perFrame->uAspect = (float)windowSize.x/windowSize.y;
+    perFrame->uTime = frameTime;
+    perFrame->uFOV = camera->fieldOfView;
+    perFrame->uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
+    perFrame->uSpecularFOV = specularFOV;
+    perFrame->uSpecularAmount = specularAmount;
+    perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
+    perFrame->uLightDir = glm::vec3(0.0f, 0.0f, 1.0f);
+    //perFrame->timestamp handled by voxelizer
+
+    glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
 void initGL()
 {
     glewExperimental = GL_TRUE;
@@ -276,8 +300,11 @@ void begin()
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     voxelLighting->begin(voxelTexture, coreEngine, passthrough, perFrame, perFrameUBO);
 
-    // voxelize and light the scene
+    // blank slate
     clearBuffers();
+    setFBO();
+
+    // voxelize and light the scene
     voxelizer->voxelizeScene();
     voxelLighting->lightScene();
     
@@ -314,6 +341,8 @@ void display()
 {
     // blank slate
     clearBuffers();
+    setFBO();
+    
     // Update the scene
     if (currentDemoType == MAIN_RENDERER)
     {
@@ -322,28 +351,12 @@ void display()
         voxelLighting->lightScene();
         mipMapGenerator->generateMipMapGPU();
     }
-    
-    // Update the per frame UBO
-    perFrame->uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
-    perFrame->uCamLookAt = camera->lookAt;
-    perFrame->uCamPos = camera->position;
-    perFrame->uCamUp = camera->upDir;
-    perFrame->uResolution = glm::vec2(windowSize);
-    perFrame->uAspect = (float)windowSize.x/windowSize.y;
-    perFrame->uTime = frameTime;
-    perFrame->uFOV = camera->fieldOfView;
-    perFrame->uTextureRes = (float)voxelTexture->voxelGridLength;
-    perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
-    perFrame->uSpecularFOV = specularFOV;
-    perFrame->uSpecularAmount = specularAmount;
-    //perFrame->timestamp handled by voxelizer
 
-    glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    // blank slate
+    clearBuffers();
+    setFBO();
 
     // Display demo
-    clearBuffers();
     if (currentDemoType == VOXEL_DEBUG)
         voxelDebug->display();
     else if (currentDemoType == TRIANGLE_DEBUG)
