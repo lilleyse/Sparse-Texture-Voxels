@@ -86,7 +86,7 @@ const int MAX_STEPS = 1000;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
-const float TRANSMIT_K = 1.0;
+const float TRANSMIT_K = 3.0;
 
 float gTexelSize;
 float gPixSizeAtDist;
@@ -220,7 +220,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
 
         #define KD 0.1
         #define KS 0.9
-        #define SPEC 30
+        #define SPEC 10
         col += KD*C + KS*pow(max(dot(R,-rd), 0.0), SPEC);
     }
 

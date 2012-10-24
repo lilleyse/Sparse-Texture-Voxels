@@ -124,7 +124,7 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
-#define TRANSMIT_K 1.0
+#define TRANSMIT_K 3.0
 #define AO_DIST_K 0.5
 
 float gTexelSize = 0.0;
@@ -209,7 +209,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
     vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-    float dtm = exp( -TRANSMIT_K * texel.a );
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
     col += (1.0 - dtm)*texel.rgb*tm;
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
