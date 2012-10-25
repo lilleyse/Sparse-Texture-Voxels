@@ -261,9 +261,10 @@ vec3 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     // calc local illumination
     vec3 lightCol = (1.0-dtm) * vcol.rgb;    
     //vec3 lightDir = textureLod(tVoxNormal, pos, mipLevel).xyz;
-    vec3 localColor = gDiffuse*lightCol;//*dot(lightDir, gNormal);
-    localColor *= INDIR_DIST_K*dist;    // this can be factored out, but here for now for clarity
+    vec3 localColor = gDiffuse*lightCol;//*dot(lightDir, gNormal); 
+    localColor *= INDIR_DIST_K*dist;    
     col += localColor;
+    // gDiffuse can be factored out, but here for now for clarity
     
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -329,7 +330,7 @@ void main()
 
     vec3 cout = vec3(0.0);
     #ifdef PASS_DIFFUSE
-    cout += radiance.a * gDiffuse * LdotN;
+    cout += radiance.rgb * LdotN;
     #endif
     #ifdef PASS_INDIR
     cout += indir;
