@@ -297,24 +297,21 @@ void main()
     #ifdef PASS_INDIR
     vec3 indir = vec3(0.0);
     {
-        #define NUM_DIRS 5.0
-        #define NUM_RADIAL_DIRS 4.0
+        #define NUM_DIRS 4.0
         const float FOV = radians(45.0);
         const float NORMAL_ROTATE = radians(45.0);
-        const float ANGLE_ROTATE = 2.0*PI / NUM_RADIAL_DIRS;
+        const float ANGLE_ROTATE = 2.0*PI / NUM_DIRS;
 
         vec3 axis = findPerpendicular(gNormal);
-        for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
+        for (float i=0.0; i<NUM_DIRS; i++) {
             vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
             vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
             indir += conetraceIndir(pos+rd*voxelOffset, rd, FOV);
         }
 
-        indir += conetraceIndir(pos+gNormal*voxelOffset, gNormal, FOV);
         indir /= NUM_DIRS;
 
         #undef NUM_DIRS
-        #undef NUM_RADIAL_DIRS
     }
     #endif
 
