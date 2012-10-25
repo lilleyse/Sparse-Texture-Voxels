@@ -45,6 +45,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
@@ -56,9 +58,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) writeonly uniform image3D tNormal;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) writeonly uniform image3D tVoxNormal;
 
 in block
 {
@@ -68,40 +69,9 @@ in block
     flat ivec2 propertyIndex;
 } vertexData;
 
-struct MeshMaterial
-{
-    vec4 diffuseColor;
-    vec4 specularColor;
-    ivec2 textureLayer;
-};
-
-layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
-{
-    MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
-};
-
-
-MeshMaterial getMeshMaterial()
-{
-    int index = vertexData.propertyIndex[MATERIAL_INDEX];
-    return meshMaterialArray[index];
-}
-
-vec4 getDiffuseColor(MeshMaterial material)
-{
-    int textureId = material.textureLayer.x;
-    int textureLayer = material.textureLayer.y;
-    vec4 diffuseColor = textureId == -1 ? material.diffuseColor : texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
-    return diffuseColor;
-}
-
-layout (location = 0, index = 0) out vec4 fragColor;
-
 void main()
 {    
-    vec4 color = getDiffuseColor(getMeshMaterial());
-    vec4 normal = vec4(normalize(vertexData.normal), uTimestamp);
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tColor, voxelPos, color);
-    imageStore(tNormal, voxelPos, normal);
+    imageStore(tVoxColor, voxelPos, vec4(0.0, 0.0, 0.0, 1.0));
+    imageStore(tVoxNormal, voxelPos, vec4(0.0, 0.0, 0.0, uTimestamp));
 }

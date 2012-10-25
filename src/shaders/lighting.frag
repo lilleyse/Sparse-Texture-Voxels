@@ -58,8 +58,10 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+layout(early_fragment_tests) in;
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tVoxColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D tVoxNormal;
 
 in block
 {
@@ -68,6 +70,7 @@ in block
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
+
 
 struct MeshMaterial
 {
@@ -96,13 +99,23 @@ vec4 getDiffuseColor(MeshMaterial material)
     return diffuseColor;
 }
 
-layout (location = 0, index = 0) out vec4 fragColor;
-
 void main()
-{    
-    vec4 positionOut = vec4(vertexData.position, 1.0);
-    vec4 colorOut = getDiffuseColor(getMeshMaterial());
-    vec4 normalOut = vec4(normalize(vertexData.normal), 1.0);
+{        
+    vec4 diffuse = getDiffuseColor(getMeshMaterial());
+    vec3 normal = normalize(vertexData.normal);
+    vec3 position = vertexData.position;
+    float LdotN = max( dot(uLightDir, normal), 0.0001 );
 
-    fragColor = colorOut;
+    vec4 outColor = vec4(diffuse.rgb*uLightColor, diffuse.a);
+
+    //in the future, the magnitude of reflectedDirection will be the specularity 
+    vec3 reflectedDirection = reflect(-uLightDir, normal);
+    vec4 outNormal = vec4(reflectedDirection, uTimestamp*LdotN); 
+
+    // index into voxel
+    ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
+
+    // write
+    imageStore(tVoxColor, voxelPos, outColor);
+    imageStore(tVoxNormal, voxelPos, outNormal);
 }

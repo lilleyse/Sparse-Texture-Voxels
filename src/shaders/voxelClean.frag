@@ -45,6 +45,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
@@ -60,7 +62,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER CONSTANTS
 //---------------------------------------------------------
 
-#define EPS       0.001
+#define EPS       0.01
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 
 //---------------------------------------------------------
@@ -69,18 +71,18 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tColor;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D tVoxNormal;
 
 flat in int slice;
 
-// typically use memoryBarrier to do all mipmaps at once, but it's not working right now
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-    float timestamp = texelFetch(tVoxNormal, globalId, 0).a;
-    if (!EQUALS(uTimestamp,timestamp))
+    float timestamp = imageLoad(tVoxNormal, globalId).a;
+    if ( sign(uTimestamp) != sign(timestamp) )
     {
-        imageStore(tColor, globalId, vec4(0.0));
+        imageStore(tVoxColor, globalId, vec4(0.0));
+        imageStore(tVoxNormal, globalId, vec4(0.0));
     }
 }

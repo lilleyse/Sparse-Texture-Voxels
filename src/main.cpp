@@ -3,6 +3,8 @@
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
+#include "VoxelLighting.h"
+#include "Passthrough.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -27,7 +29,7 @@ namespace
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0;
-    float specularAmount = 0.5;
+    float specularAmount = 0.0;
     bool loadTextures = false;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
@@ -53,14 +55,20 @@ namespace
     glm::ivec2 mouseClickPos;
     glm::ivec2 currentMousePos;
     Object* currentSelectedObject;
-    ThirdPersonCamera* camera = new ThirdPersonCamera();
+    ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
+    ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
+    ThirdPersonCamera* currentCamera = viewCamera;
+    bool lightPerspectiveProjection = true;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
+    VoxelLighting* voxelLighting = new VoxelLighting();
     MipMapGenerator* mipMapGenerator = new MipMapGenerator();
     Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
+    Passthrough* passthrough = new Passthrough();
+    PerFrameUBO* perFrame = new PerFrameUBO();
     GLuint perFrameUBO;  
 }
 
@@ -84,21 +92,21 @@ void GLFWCALL mouseMove(int x, int y)
     bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
     if (leftPress || rightPress || middlePress)
     {
-        float cameraDistanceFromCenter = glm::length(camera->position);
+        float cameraDistanceFromCenter = glm::length(currentCamera->position);
         if (leftPress)
         {
             float rotateAmount = cameraDistanceFromCenter / 200.0f;
-            camera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
+            currentCamera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
         }
         else if (rightPress)
         {
             float zoomAmount = cameraDistanceFromCenter / 200.0f;
-            camera->zoom(mouseDelta.y * zoomAmount);
+            currentCamera->zoom(mouseDelta.y * zoomAmount);
         }
         else if (middlePress)
         {
             float panAmount = cameraDistanceFromCenter / 500.0f;
-            camera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
+            currentCamera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
         }
     }
 }
@@ -116,7 +124,7 @@ void GLFWCALL mouseClick(int button, int action)
             if (currentDemoType == MAIN_RENDERER && enableMousePicking && mouseClickPos == currentMousePos)
             {
                 currentSelectedObject = 0;
-                Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, camera->nearPlane, camera->farPlane,  camera->viewMatrix, camera->projectionMatrix);    
+                Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, currentCamera->nearPlane, currentCamera->farPlane,  currentCamera->viewMatrix, currentCamera->projectionMatrix);    
                 std::vector<Object*> objects = coreEngine->scene->objects;
                 float closestIntersection = FLT_MAX;
                 for (uint i = 0; i < objects.size(); i++)
@@ -155,6 +163,11 @@ void GLFWCALL keyPress(int k, int action)
 
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
+
+        //Switch between light and regular camera
+        if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
+
+        if (k == 'O') lightPerspectiveProjection = !lightPerspectiveProjection;
 
         // Changing textures
         if (loadTextures)
@@ -203,8 +216,41 @@ void processKeyDown()
 void GLFWCALL resize(int w, int h)
 {
     glViewport(0, 0, w, h);
-    camera->setAspectRatio(w, h);
+    viewCamera->setAspectRatio(w, h);
+    lightCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
+}
+
+void clearBuffers()
+{
+    float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
+    glClearBufferfv(GL_COLOR, 0, clearColor);
+    float clearDepth = 1.0f;
+    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+}
+
+void setUBO()
+{
+    // Update the per frame UBO
+    perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
+    perFrame->uCamLookAt = currentCamera->lookAt;
+    perFrame->uCamPos = currentCamera->position;
+    perFrame->uCamUp = currentCamera->upDir;
+    perFrame->uResolution = glm::vec2(windowSize);
+    perFrame->uAspect = (float)windowSize.x/windowSize.y;
+    perFrame->uTime = frameTime;
+    perFrame->uFOV = currentCamera->fieldOfView;
+    perFrame->uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
+    perFrame->uSpecularFOV = specularFOV;
+    perFrame->uSpecularAmount = specularAmount;
+    perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
+    perFrame->uLightDir = -lightCamera->lookDir;
+    //perFrame->timestamp handled by voxelizer
+
+    glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
+    glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 void initGL()
@@ -248,23 +294,33 @@ void begin()
     initGL();
 
     // camera
-    camera->setFarNearPlanes(.01f, 100.0f);
-    camera->zoom(3.0f);
-    camera->lookAt = glm::vec3(0.5f);
+    viewCamera->setFarNearPlanes(.01f, 100.0f);
+    viewCamera->zoom(3.0f);
+    viewCamera->lookAt = glm::vec3(0.5f);
+    lightCamera->setFarNearPlanes(.01f, 100.0f);
+    lightCamera->zoom(4.0f);
+    lightCamera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
     timer->begin();
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
+    passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
+    voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
+    voxelLighting->begin(voxelTexture, coreEngine, passthrough, perFrame, perFrameUBO);
 
-    // voxelize from the triangle scene
-    voxelizer->begin(voxelTexture, coreEngine, perFrameUBO);
+    // blank slate
+    clearBuffers();
+    setUBO();
+
+    // voxelize and light the scene
     voxelizer->voxelizeScene();
+    voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
     
-    // load cpu textures
+    // mipmap
     if (loadTextures)
     {
         // create procedural textures
@@ -288,46 +344,16 @@ void begin()
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == MAIN_RENDERER)
-        mainRenderer->begin(voxelTexture, fullScreenQuad, coreEngine);
+        mainRenderer->begin(coreEngine, passthrough);
 
     setMipMapLevel(currentMipMapLevel);
 }
 
 void display()
 {
-    // Basic GL stuff
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-    float clearColor[4] = {0.0f,0.0f,0.0f,1.0f};
-    glClearBufferfv(GL_COLOR, 0, clearColor);
-    float clearDepth = 1.0f;
-    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
-
-    // Update the scene
-    if (currentDemoType == MAIN_RENDERER)
-    {
-        coreEngine->updateScene();
-        voxelizer->voxelizeScene();
-        mipMapGenerator->generateMipMapGPU();
-    }
-    
-    // Update the per frame UBO
-    PerFrameUBO perFrame;
-    perFrame.uViewProjection = camera->createProjectionMatrix() * camera->createViewMatrix();    
-    perFrame.uCamLookAt = camera->lookAt;
-    perFrame.uCamPos = camera->position;
-    perFrame.uCamUp = camera->upDir;
-    perFrame.uResolution = glm::vec2(windowSize);
-    perFrame.uAspect = (float)windowSize.x/windowSize.y;
-    perFrame.uTime = frameTime;
-    perFrame.uFOV = camera->fieldOfView;
-    perFrame.uTextureRes = (float)voxelTexture->voxelGridLength;
-    perFrame.uNumMips = (float)voxelTexture->numMipMapLevels;
-    perFrame.uSpecularFOV = specularFOV;
-    perFrame.uSpecularAmount = specularAmount;
-
-    glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
-    glBindBuffer(GL_UNIFORM_BUFFER, 0);
+    // blank slate
+    clearBuffers();
+    setUBO();
 
     // Display demo
     if (currentDemoType == VOXEL_DEBUG)
@@ -338,8 +364,18 @@ void display()
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
         voxelConetracer->display();
-    else if (currentDemoType == MAIN_RENDERER)
+    else if (currentDemoType == MAIN_RENDERER) {
+        // Update the scene
+        // We should move this to mainRenderer->display once lights are self contained and have working matrices
+        coreEngine->updateScene();
+        voxelizer->voxelizeScene();
+        voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
+        mipMapGenerator->generateMipMapGPU();
+        clearBuffers();
+        setUBO();
+
         mainRenderer->display();
+    }
 }
 
 void displayFPS()
