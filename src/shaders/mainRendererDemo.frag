@@ -129,10 +129,10 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K 3.0
-#define AO_DIST_K 0.5
+#define INDIR_DIST_K 8.0
 
+vec3 gNormal, gDiffuse;
 float gTexelSize = 0.0;
-
 
 //---------------------------------------------------------
 // UTILITIES
@@ -195,7 +195,7 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
-vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
+vec3 conetraceIndir(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
   float dist = 0.0;
   float pixSizeAtDist = tan(fov);
@@ -212,70 +212,88 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float pixSize = max(dist*pixSizeAtDist, gTexelSize);
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
     tm *= dtm;
-    col += (1.0 - dtm)*texel.rgb*tm;
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
+    // calc local illumination
+    vec3 lightCol = (1.0-dtm) * vcol.rgb;    
+    //vec3 lightDir = textureLod(tVoxNormal, pos, mipLevel).xyz;
+    vec3 localColor = gDiffuse*lightCol;//*dot(lightDir, gNormal);
+    localColor *= INDIR_DIST_K*dist;    // this can be factored out, but here for now for clarity
+    col += localColor;
+    
     // increment
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
     dist += stepSize;
     pos += stepSize*rd;
   }
 
-  float alpha = 1.0-tm;
-  alpha /= (1.0+AO_DIST_K*dist);
-  return vec4(alpha==0 ? col : col/alpha , alpha);
+  return col;
 }
 
 void main()
 {
+    // current vertex info
     vec3 pos = vertexData.position;
-    vec3 nor = normalize(vertexData.normal);    
-    vec3 diffuse = getDiffuseColor(getMeshMaterial()).rgb;
+    gNormal = normalize(vertexData.normal);    
+    gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
 
     vec3 radianceCol = textureLod(tVoxColor, pos, 0.0).rgb;
     float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
     
+    // calc globals
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelDirectionOffset = gTexelSize*ROOTTHREE;
+    float voxelOffset = gTexelSize;//*ROOTTHREE;
+    
+    #define PASS_DIFFUSE
+    //#define PASS_INDIR
+    //#define PASS_SPEC
 
-    vec4 spec = vec4(0.0);
-    vec4 indir = vec4(0.0);
-
-    // indirect
+    #ifdef PASS_INDIR
+    vec3 indir = vec3(0.0);
     {
         #define NUM_DIRS 6.0
         #define NUM_RADIAL_DIRS 5.0
         const float FOV = radians(30.0);
-        const float NORMAL_ROTATE = radians(50.0);
-        const float ANGLE_ROTATE = radians(72.0);
+        const float NORMAL_ROTATE = radians(60.0-5.0);  // should be 60.0
+        const float ANGLE_ROTATE = 2.0*PI / NUM_RADIAL_DIRS;
 
-        vec3 axis = findPerpendicular(nor);
+        vec3 axis = findPerpendicular(gNormal);
         for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
-            vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
-            vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-            indir += conetraceAccum(pos+rd*voxelDirectionOffset, rd, FOV);
+            vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
+            vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
+            indir += conetraceIndir(pos+rd*voxelOffset, rd, FOV);
         }
 
-        indir += conetraceAccum(pos+nor*voxelDirectionOffset, nor, FOV);
+        indir += conetraceIndir(pos+gNormal*voxelOffset, gNormal, FOV);
         indir /= NUM_DIRS;
 
         #undef NUM_DIRS
         #undef NUM_RADIAL_DIRS
     }
+    #endif
 
-    // specular
+    #ifdef PASS_SPEC
+    vec4 spec = vec4(0.0);
     {    
         // single cone in reflected eye direction
         const float FOV = radians(uSpecularFOV);
         vec3 rd = normalize(pos-uCamPos);
-        rd = reflect(rd, nor);
-        spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
+        rd = reflect(rd, gNormal);
+        spec = conetraceVisualize(pos+rd*voxelOffset, rd, FOV);
     }
+    #endif
 
-    vec3 cout = radianceCol * LdotN;
-    cout += diffuse * indir.rgb * indir.a * 4.0;
+    vec3 cout = vec3(0.0);
+    #ifdef PASS_DIFFUSE
+    cout += radianceCol * LdotN;
+    #endif
+    #ifdef PASS_INDIR
+    cout += indir;
+    #endif
+    #ifdef PASS_SPEC
     cout = mix(cout, spec.rgb*spec.a, uSpecularAmount);
+    #endif
     fragColor = vec4(cout, 1.0);
 }
