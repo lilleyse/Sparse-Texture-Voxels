@@ -297,10 +297,10 @@ void main()
     #ifdef PASS_INDIR
     vec3 indir = vec3(0.0);
     {
-        #define NUM_DIRS 6.0
-        #define NUM_RADIAL_DIRS 5.0
-        const float FOV = radians(30.0);
-        const float NORMAL_ROTATE = radians(60.0-5.0);  // should be 60.0
+        #define NUM_DIRS 5.0
+        #define NUM_RADIAL_DIRS 4.0
+        const float FOV = radians(45.0);
+        const float NORMAL_ROTATE = radians(45.0);
         const float ANGLE_ROTATE = 2.0*PI / NUM_RADIAL_DIRS;
 
         vec3 axis = findPerpendicular(gNormal);
