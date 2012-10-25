@@ -72,6 +72,6 @@ in block
 void main()
 {    
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColor, voxelPos, vec4(0.0, 0.0, 0.0, 1.0));
+    imageStore(tVoxColor, voxelPos, vec4(0.0, 0.0, 0.0, 0.0));
     imageStore(tVoxNormal, voxelPos, vec4(0.0, 0.0, 0.0, uTimestamp));
 }

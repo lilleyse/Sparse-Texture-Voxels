@@ -84,7 +84,6 @@ in vec2 vUV;
 
 const int MAX_STEPS = 1000;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
-const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
 const float TRANSMIT_K = 3.0;
 
@@ -147,7 +146,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // DEBUG: mipmap level 0.0 for now to make this work.
 
     // sample texture
-    vec4 texel = textureLod(tVoxColor, pos, 0.0);
+    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -163,7 +162,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // compute lighting
     {
         vec3 C = (1.0-dtm)*texel.rgb;
-        vec3 R = textureLod(tVoxNormal, pos, 0.0).rgb;
+        vec3 R = textureLod(tVoxNormal, pos, 0.0).rgb; // change 0.0 to mipLevel
 
         #define KD 0.6
         #define KS 0.4
@@ -218,7 +217,7 @@ void main()
     gTexelSize = 1.0/uTextureRes;
     
     // size of pixel at dist d=1.0
-    gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
+    gPixSizeAtDist = tanFOV / (uResolution.x/8.0);   // should be /2.0
 
     
     //-----------------------------------------------------

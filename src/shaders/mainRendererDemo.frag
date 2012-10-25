@@ -129,7 +129,7 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K 3.0
-#define INDIR_DIST_K 8.0
+#define INDIR_DIST_K 5.0
 
 vec3 gNormal, gDiffuse;
 float gTexelSize = 0.0;
@@ -216,7 +216,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
     tm *= dtm;
 
-    vec4 vnor = textureLod(tVoxNormal, pos, 0.0);
+    vec4 vnor = textureLod(tVoxNormal, pos, 0.0);//mipLevel);
 
     // render
     vec3 difflight = (1.0-dtm) * vcol.rgb;  // diffuseCol*lightCol
@@ -281,7 +281,7 @@ void main()
     gNormal = normalize(vertexData.normal);    
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
 
-    vec3 radianceCol = textureLod(tVoxColor, pos, 0.0).rgb;
+    vec4 radiance = textureLod(tVoxColor, pos, 1.0);
     float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
     
     // calc globals
@@ -289,8 +289,8 @@ void main()
     float voxelOffset = gTexelSize;//*ROOTTHREE;
     
     #define PASS_DIFFUSE
-    #define PASS_INDIR
-    #define PASS_SPEC
+    //#define PASS_INDIR
+    //#define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec3 indir = vec3(0.0);
@@ -329,7 +329,7 @@ void main()
 
     vec3 cout = vec3(0.0);
     #ifdef PASS_DIFFUSE
-    cout += radianceCol * LdotN;
+    cout += radiance.a * gDiffuse * LdotN;
     #endif
     #ifdef PASS_INDIR
     cout += indir;
