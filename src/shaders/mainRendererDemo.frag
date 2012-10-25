@@ -195,6 +195,48 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
+vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
+  vec3 pos = ro;
+  float dist = 0.0;
+  float pixSizeAtDist = tan(fov);
+
+  vec3 col = vec3(0.0);   // accumulated color
+  float tm = 1.0;         // accumulated transmittance
+
+  while(tm > TRANSMIT_MIN &&
+        pos.x < 1.0 && pos.x > 0.0 &&
+        pos.y < 1.0 && pos.y > 0.0 &&
+        pos.z < 1.0 && pos.z > 0.0) {
+
+    // calc mip size, clamp min to texelsize
+    float pixSize = max(dist*pixSizeAtDist, gTexelSize);
+    float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+
+    vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+    tm *= dtm;
+
+    vec4 vnor = textureLod(tVoxNormal, pos, 0.0);
+
+    // render
+    vec3 difflight = (1.0-dtm) * vcol.rgb;  // diffuseCol*lightCol
+    vec3 reflectedDir = vnor.xyz;
+    float LdotN = abs(vnor.w);
+    
+    #define KD 0.6
+    #define KS 0.4
+    #define SPEC 5
+    col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+    
+    // increment
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    dist += stepSize;
+    pos += stepSize*rd;
+  }
+
+  return col;
+}
+
 vec3 conetraceIndir(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
   float dist = 0.0;
@@ -247,8 +289,8 @@ void main()
     float voxelOffset = gTexelSize;//*ROOTTHREE;
     
     #define PASS_DIFFUSE
-    //#define PASS_INDIR
-    //#define PASS_SPEC
+    #define PASS_INDIR
+    #define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec3 indir = vec3(0.0);
@@ -275,13 +317,13 @@ void main()
     #endif
 
     #ifdef PASS_SPEC
-    vec4 spec = vec4(0.0);
+    vec3 spec = vec3(0.0);
     {    
         // single cone in reflected eye direction
         const float FOV = radians(uSpecularFOV);
         vec3 rd = normalize(pos-uCamPos);
         rd = reflect(rd, gNormal);
-        spec = conetraceVisualize(pos+rd*voxelOffset, rd, FOV);
+        spec = conetraceSpec(pos+rd*voxelOffset*2.0, rd, FOV);
     }
     #endif
 
@@ -293,7 +335,7 @@ void main()
     cout += indir;
     #endif
     #ifdef PASS_SPEC
-    cout = mix(cout, spec.rgb*spec.a, uSpecularAmount);
+    cout = mix(cout, spec, uSpecularAmount);
     #endif
     fragColor = vec4(cout, 1.0);
 }
