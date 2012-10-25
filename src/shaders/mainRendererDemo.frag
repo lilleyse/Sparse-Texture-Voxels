@@ -58,6 +58,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+
 //---------------------------------------------------------
 // TRIANGLE ENGINE
 //---------------------------------------------------------
@@ -99,6 +100,7 @@ vec4 getDiffuseColor(MeshMaterial material)
         texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
 }
 
+
 //---------------------------------------------------------
 // SHADER CONSTANTS
 //---------------------------------------------------------
@@ -114,9 +116,11 @@ vec4 getDiffuseColor(MeshMaterial material)
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 #define EQUALSZERO(A) ( ((A)<EPS) && ((A)>-EPS) )
 
+
 //---------------------------------------------------------
 // SHADER VARS
 //---------------------------------------------------------
+
 layout(location = 0) out vec4 fragColor;
 
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
@@ -128,6 +132,7 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 #define AO_DIST_K 0.5
 
 float gTexelSize = 0.0;
+
 
 //---------------------------------------------------------
 // UTILITIES
@@ -172,18 +177,17 @@ vec3 findPerpendicular(vec3 v) {
     // so: v.x + Z*v.z = 0
 
     // safe method, rely on floating point
-    vec3 result;
-    if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0))
-        result = vec3(0.0, 0.0, 1.0);
-    else if (EQUALS(abs(v.z),1.0))
-        result = vec3(1.0, 0.0, 0.0);
-    else
-        result = normalize(vec3(1.0, 0.0, -v.x/(v.z+EPS8)));
-
-    return result;
+    //vec3 result;
+    //if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0))
+        //result = vec3(0.0, 0.0, 1.0);
+    //else if (EQUALS(abs(v.z),1.0))
+        //result = vec3(1.0, 0.0, 0.0);
+    //else
+        //result = normalize(vec3(1.0, 0.0, -v.x/(v.z+EPS8)));
+    //return result;
 
     // fast dirty method
-    //return normalize( vec3(1.0, 0.0, -v.x/(v.z+EPS8)) );
+    return normalize( vec3(1.0, 0.0, -v.x/(v.z+EPS8)) );
 }
 
 
@@ -227,21 +231,19 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 void main()
 {
     vec3 pos = vertexData.position;
-    vec3 nor = normalize(vertexData.normal);
-    vec3 lightColor = textureLod(tVoxColor, pos, 0.0).rgb;
-    vec3 directColor = getDiffuseColor(getMeshMaterial()).rgb;
-    float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
-    lightColor *= LdotN;
-    //cosAngIncidence doesn't seem to work properly unless using nearest sampling.
-    //float cosAngIncidence = textureLod(tVoxNormal, pos, 0.0).w - uTimestamp;
-    //lightColor *= cosAngIncidence;
-    vec4 spec = vec4(0.0);
-    vec4 indir = vec4(0.0);
-    vec3 finalColor = vec3(0.0);
+    vec3 nor = normalize(vertexData.normal);    
+    vec3 diffuse = getDiffuseColor(getMeshMaterial()).rgb;
 
+    vec3 radianceCol = textureLod(tVoxColor, pos, 0.0).rgb;
+    float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
+    
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelDirectionOffset = gTexelSize*ROOTTHREE;
-    // Indirect
+
+    vec4 spec = vec4(0.0);
+    vec4 indir = vec4(0.0);
+
+    // indirect
     {
         #define NUM_DIRS 6.0
         #define NUM_RADIAL_DIRS 5.0
@@ -262,7 +264,8 @@ void main()
         #undef NUM_DIRS
         #undef NUM_RADIAL_DIRS
     }
-    // Specular
+
+    // specular
     {    
         // single cone in reflected eye direction
         const float FOV = radians(uSpecularFOV);
@@ -271,11 +274,8 @@ void main()
         spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
     }
 
-    finalColor = lightColor;
-    finalColor += directColor * indir.rgb * indir.a * 5.0;
-    //finalColor += indir.rgb * amountInShadow * 5.0;
-    //float difference = max(0.0,max(finalColor.r - 1.0, max(finalColor.g - 1.0, finalColor.b - 1.0)));
-    //finalColor = clamp(finalColor - difference, 0.0, 1.0);
-    finalColor = mix(finalColor, spec.rgb*spec.a, uSpecularAmount);
-    fragColor = vec4(finalColor, 1.0);
+    vec3 cout = radianceCol * LdotN;
+    cout += diffuse * indir.rgb * indir.a * 4.0;
+    cout = mix(cout, spec.rgb*spec.a, uSpecularAmount);
+    fragColor = vec4(cout, 1.0);
 }
