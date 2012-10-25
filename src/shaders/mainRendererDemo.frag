@@ -130,6 +130,7 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K 3.0
 #define INDIR_DIST_K 5.0
+#define INDIR_K 1.5
 
 vec3 gNormal, gDiffuse;
 float gTexelSize = 0.0;
@@ -262,7 +263,7 @@ vec3 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     vec3 lightCol = (1.0-dtm) * vcol.rgb;    
     //vec3 lightDir = textureLod(tVoxNormal, pos, mipLevel).xyz;
     vec3 localColor = gDiffuse*lightCol;//*dot(lightDir, gNormal); 
-    localColor *= INDIR_DIST_K*dist;    
+    localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
     col += localColor;
     // gDiffuse can be factored out, but here for now for clarity
     
@@ -272,7 +273,7 @@ vec3 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     pos += stepSize*rd;
   }
 
-  return col;
+  return INDIR_K*col;
 }
 
 void main()
@@ -289,8 +290,8 @@ void main()
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize;//*ROOTTHREE;
     
-    #define PASS_DIFFUSE
-    //#define PASS_INDIR
+    //#define PASS_DIFFUSE
+    #define PASS_INDIR
     //#define PASS_SPEC
 
     #ifdef PASS_INDIR
