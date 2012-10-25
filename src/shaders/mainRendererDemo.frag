@@ -230,6 +230,8 @@ void main()
     vec3 nor = normalize(vertexData.normal);
     vec3 lightColor = textureLod(tVoxColor, pos, 0.0).rgb;
     vec3 directColor = getDiffuseColor(getMeshMaterial()).rgb;
+    float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
+    lightColor *= LdotN;
     //cosAngIncidence doesn't seem to work properly unless using nearest sampling.
     //float cosAngIncidence = textureLod(tVoxNormal, pos, 0.0).w - uTimestamp;
     //lightColor *= cosAngIncidence;
