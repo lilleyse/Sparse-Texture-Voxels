@@ -9,17 +9,19 @@ class Voxelizer
 private:
     VoxelTexture* voxelTexture;
     CoreEngine* coreEngine;
+    PerFrameUBO* perFrame;
     GLuint perFrameUBO;
     GLuint voxelizerProgram;
     float timestamp;
 public:
 
-    void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, GLuint perFrameUBO)
+    void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, PerFrameUBO* perFrame, GLuint perFrameUBO)
     {
         this->voxelTexture = voxelTexture;
         this->coreEngine = coreEngine;
+        this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
-        this->timestamp = 1.0f;
+        this->timestamp = -1.0f;
 
         // Create program that writes the scene to a voxel texture
         GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
@@ -32,7 +34,6 @@ public:
         glLinkProgram(voxelizerProgram);
         Utils::OpenGL::checkProgram(voxelizerProgram);
     }
-
 
     void voxelizeScene()
     {
@@ -56,26 +57,23 @@ public:
 		
         // Update the per frame UBO with the orthographic projection
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        PerFrameUBO perFrame;
-        perFrame.uResolution = glm::ivec2(voxelGridLength);
-
-        // Update timestamp
-        timestamp = -1.0f*timestamp;
-        perFrame.uTimestamp = timestamp;
+        timestamp *= -1.0f;
+        perFrame->uTimestamp = timestamp;
+        perFrame->uResolution = glm::ivec2(voxelGridLength);
         
         // Render down z-axis
-        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
-        
+
         // Render down y-axis
-        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,-1,0), glm::vec3(1,0,0));
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,-1,0), glm::vec3(1,0,0));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
         
         // Render down x-axis
-        perFrame.uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(-1,0,0), glm::vec3(0,0,1));
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), &perFrame);
+        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(-1,0,0), glm::vec3(0,0,1));
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
         
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage

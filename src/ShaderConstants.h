@@ -56,6 +56,10 @@ struct PerFrameUBO
     float padding2;
     glm::vec3 uCamUp;
     float padding3;
+    glm::vec3 uLightDir;
+    float padding4;
+    glm::vec3 uLightColor;
+    float padding5;
     glm::vec2 uResolution;
     float uAspect;
     float uTime;

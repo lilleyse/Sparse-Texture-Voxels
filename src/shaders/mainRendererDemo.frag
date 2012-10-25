@@ -45,6 +45,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
@@ -118,6 +120,7 @@ vec4 getDiffuseColor(MeshMaterial material)
 //---------------------------------------------------------
 // SHADER VARS
 //---------------------------------------------------------
+
 layout(location = 0) out vec4 fragColor;
 
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
@@ -125,10 +128,11 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
-#define TRANSMIT_K 1.0
+#define TRANSMIT_K 3.0
 #define AO_DIST_K 0.5
 
 float gTexelSize = 0.0;
+
 
 //---------------------------------------------------------
 // UTILITIES
@@ -173,18 +177,17 @@ vec3 findPerpendicular(vec3 v) {
     // so: v.x + Z*v.z = 0
 
     // safe method, rely on floating point
-    vec3 result;
-    if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0))
-        result = vec3(0.0, 0.0, 1.0);
-    else if (EQUALS(abs(v.z),1.0))
-        result = vec3(1.0, 0.0, 0.0);
-    else
-        result = normalize(vec3(1.0, 0.0, -v.x/(v.z+EPS8)));
-
-    return result;
+    //vec3 result;
+    //if (EQUALS(abs(v.x),1.0) || EQUALS(abs(v.y),1.0))
+        //result = vec3(0.0, 0.0, 1.0);
+    //else if (EQUALS(abs(v.z),1.0))
+        //result = vec3(1.0, 0.0, 0.0);
+    //else
+        //result = normalize(vec3(1.0, 0.0, -v.x/(v.z+EPS8)));
+    //return result;
 
     // fast dirty method
-    //return normalize( vec3(1.0, 0.0, -v.x/(v.z+EPS8)) );
+    return normalize( vec3(1.0, 0.0, -v.x/(v.z+EPS8)) );
 }
 
 
@@ -192,36 +195,6 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
-// assumption, current pos is empty (alpha = 0.0)
-float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
-    float level = ceil(mipLevel);
-    float alpha = 0.0;
-
-    while(level < uNumMips && alpha == 0.0) {
-        alpha = textureLod(tVoxColor, pos, ++level).a;
-    }
-
-    return level;
-}
-
-// params: origin and ray within texture space
-// intersect outside bound of the enclosing texel of given mip level
-float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
-    float texelSize = pow(2, mipLevel) / uTextureRes;
-
-    vec3 texelIdx = ro/texelSize;
-
-    vec3 bMin = floor(texelIdx)*texelSize;
-    vec3 bMax = ceil(texelIdx)*texelSize;
-
-    // calc for tFar, outgoing of box
-    vec3 tMin = (bMin-ro) / rd;
-    vec3 tMax = (bMax-ro) / rd;
-    vec3 t2 = max(tMin, tMax);
-    return min(min(t2.x, t2.y), t2.z);    
-}
-
-//#define SKIP_EMPTY
 vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   vec3 pos = ro;
   float dist = 0.0;
@@ -240,30 +213,10 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
     vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-    #ifdef SKIP_EMPTY
-    float stepSize;
-    if (texel.a == 0.0) {
-        // skip color computation
-        float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
-        stepSize = texelIntersect(pos+EPS, rd, lvl) + EPS;
-    }
-    else {
-        // delta transmittance
-        float dtm = exp( -TRANSMIT_K * texel.a );
-        tm *= dtm;
-        col += (1.0-dtm)*texel.rgb*tm;
-        stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    }
-    #else
-    if (texel.a > 0.0 )
-    {
-        float dtm = exp( -TRANSMIT_K * texel.a );
-        tm *= dtm;
-        col += (1.0 - dtm)*texel.rgb*tm;
-    }
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    tm *= dtm;
+    col += (1.0 - dtm)*texel.rgb*tm;
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    #endif
 
     // increment
     dist += stepSize;
@@ -275,170 +228,54 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   return vec4(alpha==0 ? col : col/alpha , alpha);
 }
 
-
-// for AO, dist weighted transmittance accumulation
-float conetraceVisibility(vec3 ro, vec3 rd, float fov) {
-    vec3 pos = ro;
-    float dist = 0.0;
-    float pixSizeAtDist = tan(fov);
-
-    float tm = 1.0;         // accumulated transmittance
-
-    while(tm > TRANSMIT_MIN &&
-        pos.x < 1.0 && pos.x > 0.0 &&
-        pos.y < 1.0 && pos.y > 0.0 &&
-        pos.z < 1.0 && pos.z > 0.0) {
-
-        // calc mip size, clamp min to texelsize
-        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
-        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-
-        // sample texture
-        vec4 texel = textureLod(tVoxColor, pos, mipLevel);
-
-        // update transmittance
-        tm *= exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-
-        // increment
-        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-        dist += stepSize;
-        pos += stepSize*rd;
-    }
-
-    // weight by distance f(r) = 1/(1+K*r)
-    float weight = (1.0+AO_DIST_K*dist);
-    return tm * weight;
-}
-
 void main()
 {
-
-    //-----------------------------------------------------
-    // SETUP VARS
-    //-----------------------------------------------------
-
-    // size of one texel in normalized texture coords
-    gTexelSize = 1.0/uTextureRes;
-
-    // get fragment info
     vec3 pos = vertexData.position;
-    vec3 nor = normalize(vertexData.normal);
-    vec4 col = getDiffuseColor(getMeshMaterial());
+    vec3 nor = normalize(vertexData.normal);    
+    vec3 diffuse = getDiffuseColor(getMeshMaterial()).rgb;
 
-
-    //-----------------------------------------------------
-    // COMPUTE COLORS
-    //-----------------------------------------------------
-
-    #define PASS_COL
-    #define PASS_AO    
-    #define PASS_INDIR
-    #define PASS_SPEC
-
-    vec4 cout = vec4(vec3(1.0), col.a);
+    vec3 radianceCol = textureLod(tVoxColor, pos, 0.0).rgb;
+    float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
+    
+    gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelDirectionOffset = gTexelSize*ROOTTHREE;
 
-    // if nothing there, don't color
-    if ( col.a!=0.0 ) {
+    vec4 spec = vec4(0.0);
+    vec4 indir = vec4(0.0);
 
-        #ifdef PASS_AO
-        float ao = 0.0;
-        {
-            // setup cones constants
-            // 6 cones 30 fov, 5 cones around 1 cone straight up
-            #define NUM_DIRS 6.0
-            #define NUM_RADIAL_DIRS 5.0
-            const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(50.0);
-            const float ANGLE_ROTATE = radians(72.0);
+    // indirect
+    {
+        #define NUM_DIRS 6.0
+        #define NUM_RADIAL_DIRS 5.0
+        const float FOV = radians(30.0);
+        const float NORMAL_ROTATE = radians(50.0);
+        const float ANGLE_ROTATE = radians(72.0);
 
-            // radial ring of cones
-            vec3 axis = findPerpendicular(nor); // find a perpendicular vector
-            for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
-                // rotate that vector around normal (to distribute cone around)
-                vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
-
-                // ray dir is normal rotated an fov over that vector
-                vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-
-                ao += conetraceVisibility(pos+rd*voxelDirectionOffset, rd, FOV);
-            }
-
-            // single perpendicular cone (straight up)
-            ao += conetraceVisibility(pos+nor*voxelDirectionOffset, nor, FOV);
-
-            // finally, divide
-            ao /= NUM_DIRS;
-
-            #undef NUM_DIRS
-            #undef NUM_RADIAL_DIRS
+        vec3 axis = findPerpendicular(nor);
+        for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
+            vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
+            vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
+            indir += conetraceAccum(pos+rd*voxelDirectionOffset, rd, FOV);
         }
-        #endif
-        
-        #ifdef PASS_INDIR
-        vec4 indir = vec4(0.0);
-        {
-            // duplicate code from above
 
-            #define NUM_DIRS 6.0
-            #define NUM_RADIAL_DIRS 5.0
-            const float FOV = radians(30.0);
-            const float NORMAL_ROTATE = radians(50.0);
-            const float ANGLE_ROTATE = radians(72.0);
+        indir += conetraceAccum(pos+nor*voxelDirectionOffset, nor, FOV);
+        indir /= NUM_DIRS;
 
-            vec3 axis = findPerpendicular(nor);
-            for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
-                vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
-                vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
-                indir += conetraceAccum(pos+rd*voxelDirectionOffset, rd, FOV);
-            }
-
-            indir += conetraceAccum(pos+nor*voxelDirectionOffset, nor, FOV);
-
-            indir /= NUM_DIRS;
-
-            #undef NUM_DIRS
-            #undef NUM_RADIAL_DIRS
-        }
-        #endif
-        
-        #ifdef PASS_SPEC
-        vec4 spec;
-        {
-            // single cone in reflected eye direction
-            const float FOV = radians(uSpecularFOV);
-            vec3 rd = normalize(pos-uCamPos);
-            rd = reflect(rd, nor);
-            spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
-        }
-        #endif
-        
-
-        /* COMP PASSES */
-
-        #ifdef PASS_COL
-        cout = col;
-        #endif
-        #ifdef PASS_INDIR
-            #ifdef PASS_COL
-            cout.rgb += indir.rgb*indir.a;
-            float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
-            cout.rgb = clamp(cout.rgb - difference, 0.0, 1.0);
-            #else
-            cout = indir;
-            #endif
-        #endif
-        #ifdef PASS_SPEC
-            #ifdef PASS_COL
-            cout.rgb = mix(cout.rgb, spec.rgb*spec.a, uSpecularAmount);
-            #else
-            cout = spec;
-            #endif
-        #endif
-        #ifdef PASS_AO
-        cout.rgb *= ao;
-        #endif
+        #undef NUM_DIRS
+        #undef NUM_RADIAL_DIRS
     }
 
-    fragColor = cout;
+    // specular
+    {    
+        // single cone in reflected eye direction
+        const float FOV = radians(uSpecularFOV);
+        vec3 rd = normalize(pos-uCamPos);
+        rd = reflect(rd, nor);
+        spec = conetraceAccum(pos+rd*voxelDirectionOffset*3.0, rd, FOV);
+    }
+
+    vec3 cout = radianceCol * LdotN;
+    cout += diffuse * indir.rgb * indir.a * 4.0;
+    cout = mix(cout, spec.rgb*spec.a, uSpecularAmount);
+    fragColor = vec4(cout, 1.0);
 }

@@ -45,6 +45,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
+    vec3 uLightDir;
+    vec3 uLightColor;
     vec2 uResolution;
     float uAspect;
     float uTime;
@@ -75,8 +77,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout(location = 0, index = 0) out vec4 fragColor;
-layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
+layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
+layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 in vec2 vUV;
 
@@ -84,7 +86,7 @@ const int MAX_STEPS = 1000;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
-const float TRANSMIT_K = 1.0;
+const float TRANSMIT_K = 3.0;
 
 float gTexelSize;
 float gPixSizeAtDist;
@@ -111,62 +113,6 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     }
     
     return false;
-}
-
-// simple alpha blending
-vec4 conetraceSimple(vec3 ro, vec3 rd) {
-  vec3 pos = ro;
-  
-  vec4 color = vec4(0.0);
-  
-  for (int i=0; i<MAX_STEPS; ++i) {
-    float dist = distance(pos, uCamPos);
-
-    // size of texel cube we want to be looking into
-    // correctly interpolated texel size, automatic
-    float pixSize = gPixSizeAtDist * dist;
-    
-    // calc mip size
-    // if pixSize smaller than texel, clamp. that's the smallest we can go
-    float mipLevel;
-    if (pixSize > gTexelSize) {
-        // solve: pixSize = texelSize*2^mipLevel
-        mipLevel = log2(pixSize/gTexelSize);
-    }
-    else {
-        mipLevel = 0.0;
-        pixSize = gTexelSize;
-    }
-
-    // take step relative to the interpolated size
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
-    // sample texture
-    vec4 src = textureLod(colorTexture, pos, mipLevel);
-    
-    // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
-    // no need weight by "stepSize" since "pixSize" is size of an imaginary 
-    // texel cube exactly the size of a mip cube we want, if it existed, 
-    // but it doesn't so we interpolate between two mips to approximate it
-    // but need to weight by stepsize within texel
-    src.a *= STEPSIZE_WRT_TEXEL;
-
-    // alpha blending
-    vec4 dst = color;
-    color.a = src.a + dst.a*(1.0-src.a);
-    color.rgb = EQUALSZERO(color.a) ? vec3(0.0) : 
-        (src.rgb*src.a + dst.rgb*dst.a*(1.0-src.a)) / color.a;
-
-    pos += stepSize*rd;
-    
-    if (color.a > ALPHA_THRESHOLD ||
-      pos.x > 1.0 || pos.x < 0.0 ||
-      pos.y > 1.0 || pos.y < 0.0 ||
-      pos.z > 1.0 || pos.z < 0.0)
-      break;
-  }
-  
-  return color;
 }
 
 // transmittance accumulation
@@ -198,8 +144,10 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
+    // DEBUG: mipmap level 0.0 for now to make this work.
+
     // sample texture
-    vec4 texel = textureLod(colorTexture, pos, mipLevel);
+    vec4 texel = textureLod(tVoxColor, pos, 0.0);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -210,8 +158,18 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // delta transmittance
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
+    //col += (1.0 - dtm)*texel.rgb;
 
-    col += (1.0-dtm)*texel.rgb*tm;
+    // compute lighting
+    {
+        vec3 C = (1.0-dtm)*texel.rgb;
+        vec3 R = textureLod(tVoxNormal, pos, 0.0).rgb;
+
+        #define KD 0.6
+        #define KS 0.4
+        #define SPEC 10
+        col += KD*C + KS*pow(max(dot(R,-rd), 0.0), SPEC);
+    }
 
     pos += stepSize*rd;
     
