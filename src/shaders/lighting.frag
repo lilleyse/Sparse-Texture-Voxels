@@ -101,19 +101,23 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 void main()
 {        
-    vec4 material = getDiffuseColor(getMeshMaterial());
-    vec3 color = material.rgb;
-    float alpha = material.a;
+    vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
     vec3 position = vertexData.position;
-    float cosAngIncidence = clamp(dot(normal, uLightDir),0.01,0.99);
-    //In the future, the magnitude of reflectedDirection will be the specularity 
-    vec3 reflectedDirection = reflect(-uLightDir, normal);
-    vec3 finalColor = color*uLightColor*cosAngIncidence;
 
-    vec4 voxelColor = vec4(finalColor, alpha);
-    vec4 voxelNormal = vec4(reflectedDirection, uTimestamp + cosAngIncidence); 
+    //float LdotN = clamp( dot(uLightDir, normal), 0.01, 0.99);
+    float LdotN = max( dot(uLightDir, normal), 0.0001 );
+
+    vec4 outColor = vec4(diffuse.rgb*uLightColor*LdotN, diffuse.a);
+
+    //in the future, the magnitude of reflectedDirection will be the specularity 
+    vec3 reflectedDirection = reflect(-uLightDir, normal);
+    vec4 outNormal = vec4(reflectedDirection, uTimestamp); 
+
+    // index into voxel
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColor, voxelPos, voxelColor);
-    imageStore(tVoxNormal, voxelPos, voxelNormal);
+
+    // write
+    imageStore(tVoxColor, voxelPos, outColor);
+    imageStore(tVoxNormal, voxelPos, outNormal);
 }

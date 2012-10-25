@@ -57,7 +57,7 @@ public:
 		
         // Update the per frame UBO with the orthographic projection
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        timestamp = -(1.0f - glm::abs(timestamp));
+        timestamp *= -1.0f;
         perFrame->uTimestamp = timestamp;
         perFrame->uResolution = glm::ivec2(voxelGridLength);
         
