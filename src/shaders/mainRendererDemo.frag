@@ -219,7 +219,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
     tm *= dtm;
 
-    vec4 vnor = textureLod(tVoxNormal, pos, 0.0);//mipLevel);
+    vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
     // render
     vec3 difflight = (1.0-dtm) * vcol.rgb;  // diffuseCol*lightCol
@@ -263,8 +263,8 @@ vec3 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
     // calc local illumination
     vec3 lightCol = (1.0-dtm) * vcol.rgb;    
-    //vec3 lightDir = textureLod(tVoxNormal, pos, mipLevel).xyz;
-    vec3 localColor = gDiffuse*lightCol;//*dot(lightDir, gNormal); 
+    vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
+    vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
     localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
     col += localColor;
     // gDiffuse can be factored out, but here for now for clarity
@@ -285,16 +285,16 @@ void main()
     gNormal = normalize(vertexData.normal);    
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
 
-    vec4 radiance = textureLod(tVoxColor, pos, 1.0);
+    vec4 radiance = textureLod(tVoxColor, pos, 0.0);
     float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
     
     // calc globals
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize;//*ROOTTHREE;
     
-    //#define PASS_DIFFUSE
+    #define PASS_DIFFUSE
     #define PASS_INDIR
-    //#define PASS_SPEC
+    #define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec3 indir = vec3(0.0);

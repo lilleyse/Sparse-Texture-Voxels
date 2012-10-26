@@ -95,10 +95,10 @@ void main()
         avgColor += neighborColor;
 
         vec4 neighborNormal = imageLoad(tNormalMipCurr, neighbor);
-        //if (neighborNormal.w == 0.0) {
+        if (neighborNormal.w == 0.0) {
             avgNormal += neighborNormal;
-            normalCount++;
-        //}
+            ++normalCount;
+        }
     }
     avgColor.rgb /= avgColor.a;
     avgColor.a /= 8.0;
