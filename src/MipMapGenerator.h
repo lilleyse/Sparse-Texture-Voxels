@@ -68,7 +68,7 @@ public:
 
         // Bind voxelTexture's color and normal textures for writing
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING_BASE, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
 
         // First clean the base mip map
         int voxelGridLength = voxelTexture->voxelGridLength;
@@ -83,6 +83,9 @@ public:
         {
             glBindImageTexture(COLOR_IMAGE_3D_BINDING_CURR, voxelTexture->colorTexture, i-1, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
             glBindImageTexture(COLOR_IMAGE_3D_BINDING_NEXT, voxelTexture->colorTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
+
+            glBindImageTexture(NORMAL_IMAGE_3D_BINDING_CURR, voxelTexture->normalTexture, i-1, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
+            glBindImageTexture(NORMAL_IMAGE_3D_BINDING_NEXT, voxelTexture->normalTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
 
             // Call the program for each mip map level.
             // I attempted a similar loop in a single program call with memoryBarrier() but it didn't work

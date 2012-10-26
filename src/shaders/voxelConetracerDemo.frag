@@ -27,7 +27,9 @@
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3
+#define NORMAL_IMAGE_3D_BINDING_BASE             3
+#define NORMAL_IMAGE_3D_BINDING_CURR             4
+#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Object properties
 #define POSITION_INDEX        0

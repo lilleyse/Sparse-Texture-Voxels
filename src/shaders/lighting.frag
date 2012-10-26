@@ -27,7 +27,9 @@
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3
+#define NORMAL_IMAGE_3D_BINDING_BASE             3
+#define NORMAL_IMAGE_3D_BINDING_CURR             4
+#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Object properties
 #define POSITION_INDEX        0
@@ -61,7 +63,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 layout(early_fragment_tests) in;
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tVoxColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D tVoxNormal;
+layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) coherent uniform image3D tVoxNormal;
 
 in block
 {

@@ -50,7 +50,7 @@ public:
 
         // Bind voxelTexture's color and normal textures for writing
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-        glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8_SNORM);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING_BASE, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8_SNORM);
         
         // Use the voxelizer program
         glUseProgram(voxelizerProgram);

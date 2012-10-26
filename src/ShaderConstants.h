@@ -35,7 +35,9 @@ const uint RESERVED_TEXTURE_ARRAY_9                 = 12;
 const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;
 const uint COLOR_IMAGE_3D_BINDING_CURR              = 1;
 const uint COLOR_IMAGE_3D_BINDING_NEXT              = 2;
-const uint NORMAL_IMAGE_3D_BINDING                  = 3;
+const uint NORMAL_IMAGE_3D_BINDING_BASE             = 3;
+const uint NORMAL_IMAGE_3D_BINDING_CURR             = 4;
+const uint NORMAL_IMAGE_3D_BINDING_NEXT             = 5;
 
 // Object properties
 const int POSITION_INDEX        = 0;

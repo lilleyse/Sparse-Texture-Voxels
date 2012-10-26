@@ -27,7 +27,9 @@
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3
+#define NORMAL_IMAGE_3D_BINDING_BASE             3
+#define NORMAL_IMAGE_3D_BINDING_CURR             4
+#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Object properties
 #define POSITION_INDEX        0
@@ -68,6 +70,9 @@ layout(location = 0) out vec4 fragColor;
 layout(binding = COLOR_IMAGE_3D_BINDING_CURR, rgba8) coherent uniform image3D tColorMipCurr;
 layout(binding = COLOR_IMAGE_3D_BINDING_NEXT, rgba8) coherent uniform image3D tColorMipNext;
 
+layout(binding = NORMAL_IMAGE_3D_BINDING_CURR, rgba8_snorm) coherent uniform image3D tNormalMipCurr;
+layout(binding = NORMAL_IMAGE_3D_BINDING_NEXT, rgba8_snorm) coherent uniform image3D tNormalMipNext;
+
 flat in int slice;
 
 // typically use memoryBarrier to do all mipmaps at once, but it's not working right now
@@ -76,6 +81,10 @@ void main()
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
 
     vec4 avgColor = vec4(0.0);
+    vec4 avgNormal = vec4(0.0);
+
+    float normalCount = 0.0;
+
     for(int i = 0; i < 2; i++)
     for(int j = 0; j < 2; j++)
     for(int k = 0; k < 2; k++)
@@ -84,9 +93,18 @@ void main()
         vec4 neighborColor = imageLoad(tColorMipCurr, neighbor);
         neighborColor.rgb *= neighborColor.a;
         avgColor += neighborColor;
+
+        vec4 neighborNormal = imageLoad(tNormalMipCurr, neighbor);
+        //if (neighborNormal.w == 0.0) {
+            avgNormal += neighborNormal;
+            normalCount++;
+        //}
     }
-    avgColor.xyz /= avgColor.a;
+    avgColor.rgb /= avgColor.a;
     avgColor.a /= 8.0;
     //vec4 avgColor = vec4(vec3(globalId)/32.0, 1.0);
     imageStore(tColorMipNext, globalId, avgColor);
+
+    avgNormal /= normalCount;
+    imageStore(tNormalMipNext, globalId, avgNormal);
 }
