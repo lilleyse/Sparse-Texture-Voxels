@@ -30,6 +30,8 @@ public:
 
     void display()
     {
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(triangleDebugProgram);
         coreEngine->display();
     }

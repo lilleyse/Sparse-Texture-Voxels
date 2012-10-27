@@ -37,6 +37,8 @@ public:
 
     void display()
     {
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();
     }

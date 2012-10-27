@@ -36,7 +36,7 @@ public:
         Utils::OpenGL::checkProgram(lightingProgram);
     }
 
-    void lightScene(glm::mat4 lightViewProjectionMatrix)
+    void lightScene(glm::mat4& lightViewProjectionMatrix)
     {
         // Update the per frame UBO with the orthographic projection
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
@@ -52,10 +52,10 @@ public:
         glBindImageTexture(NORMAL_IMAGE_3D_BINDING, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
         
         // Use the lighting program
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, false);
         glUseProgram(lightingProgram);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);        
         coreEngine->display();
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 
         // Memory barrier waits til the 3d texture is completely written before you try to read to the CPU with glGetTexImage
         glMemoryBarrier(GL_TEXTURE_UPDATE_BARRIER_BIT);

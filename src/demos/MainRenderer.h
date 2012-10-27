@@ -38,7 +38,8 @@ public:
     { 
         // Depth pre-pass
         passthrough->passthrough();
-
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(mainRendererProgram);
         coreEngine->display();
     }

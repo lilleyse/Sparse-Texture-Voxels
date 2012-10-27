@@ -144,6 +144,8 @@ public:
         uint baseInstance = debugMipMapInfoArray[this->currentMipMapLevel].offset;
         uint primCount = debugMipMapInfoArray[this->currentMipMapLevel].numVoxels;
 
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);

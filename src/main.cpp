@@ -215,7 +215,7 @@ void processKeyDown()
 
 void GLFWCALL resize(int w, int h)
 {
-    glViewport(0, 0, w, h);
+    Utils::OpenGL::setScreenSize(w, h);
     viewCamera->setAspectRatio(w, h);
     lightCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
@@ -278,12 +278,10 @@ void initGL()
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
     // Backface culling
-    glEnable(GL_CULL_FACE);
     glFrontFace(GL_CCW);
     glCullFace(GL_BACK);
 
     // Enable depth test
-    glEnable(GL_DEPTH_TEST);
     glDepthMask(GL_TRUE);
     glDepthFunc(GL_LEQUAL);
     glDepthRange(0.0f, 1.0f);
@@ -302,6 +300,7 @@ void begin()
     lightCamera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
+    Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
     timer->begin();
     coreEngine->begin(sceneFile);
     fullScreenQuad->begin();
@@ -319,20 +318,21 @@ void begin()
     // voxelize and light the scene
     voxelizer->voxelizeScene();
     voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
-    
-    // mipmap
-    if (loadTextures)
-    {
-        // create procedural textures
-        uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-        for (uint i = 0; i < numInitialTextures; i++)
-            voxelTextureGenerator->createTexture(voxelTextures[i]);
+    mipMapGenerator->generateMipMapGPU();
 
-        // Load scene texture onto cpu
-        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-        voxelTextureGenerator->setTexture(sceneFile);
-    }
-    else mipMapGenerator->generateMipMapGPU();
+    //// mipmap
+    //if (loadTextures)
+    //{
+    //    // create procedural textures
+    //    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+    //    for (uint i = 0; i < numInitialTextures; i++)
+    //        voxelTextureGenerator->createTexture(voxelTextures[i]);
+
+    //    // Load scene texture onto cpu
+    //    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+    //    voxelTextureGenerator->setTexture(sceneFile);
+    //}
+    //else mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -354,7 +354,7 @@ void display()
     // blank slate
     clearBuffers();
     setUBO();
-
+    
     // Display demo
     if (currentDemoType == VOXEL_DEBUG)
         voxelDebug->display();

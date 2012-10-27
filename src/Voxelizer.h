@@ -37,16 +37,10 @@ public:
 
     void voxelizeScene()
     {
-        // Update the viewport to be the size of the voxel grid
-        int oldViewport[4];
-        glGetIntegerv(GL_VIEWPORT, oldViewport);
+        // Set viewport and render state
         uint voxelGridLength = voxelTexture->voxelGridLength;
-        glViewport(0, 0, voxelGridLength, voxelGridLength);
-
-        // Disable writing to the framebuffer
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        Utils::OpenGL::setViewport(voxelGridLength, voxelGridLength);
+        Utils::OpenGL::setRenderState(false, false, false);
 
         // Bind voxelTexture's color and normal textures for writing
         glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -81,9 +75,5 @@ public:
 
         // return values back to normal
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 };

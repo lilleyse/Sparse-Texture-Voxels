@@ -210,6 +210,39 @@ namespace Utils
             }
         };
 
+        void setRenderState(bool enableCulling, bool enableDepth, bool enableColor)
+        {
+            if(enableCulling) glEnable(GL_CULL_FACE);
+            else glDisable(GL_CULL_FACE);
+
+            if(enableDepth) glEnable(GL_DEPTH_TEST);
+            else glDisable(GL_DEPTH_TEST);
+
+            if(enableColor) glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
+            else glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+        }
+
+
+        int screenWidth;
+        int screenHeight;
+
+        void setViewport(int width, int height)
+        {
+            glViewport(0,0,width,height);
+        }
+
+        void setScreenSizedViewport()
+        {
+            glViewport(0, 0, Utils::OpenGL::screenWidth, Utils::OpenGL::screenHeight);
+        }
+
+        void setScreenSize(int width, int height)
+        {
+            Utils::OpenGL::screenWidth = width;
+            Utils::OpenGL::screenHeight = height;
+            setScreenSizedViewport();
+        }
+
         bool checkProgram(GLuint ProgramName)
         {
             if(!ProgramName)

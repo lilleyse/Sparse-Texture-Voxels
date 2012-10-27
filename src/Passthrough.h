@@ -28,9 +28,9 @@ public:
     void passthrough()
     {        
         // Do not write to the color buffer
-        glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, false);
         glUseProgram(passthroughProgram);
         coreEngine->display();
-        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
     }
 };
