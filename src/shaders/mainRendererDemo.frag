@@ -43,7 +43,6 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToLight;
     mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;

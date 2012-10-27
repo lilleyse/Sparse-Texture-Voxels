@@ -43,7 +43,6 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToLight;
     mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
@@ -92,6 +91,7 @@ out block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -103,6 +103,7 @@ void main()
     vec3 worldNormal = normalize(mat3(modelMatrix) * normal);
     gl_Position = uViewProjection * worldPosition;
     
+    vertexData.shadowMapPos = uWorldToShadowMap * worldPosition;
     vertexData.position = vec3(worldPosition);
     vertexData.normal = worldNormal;
     vertexData.uv = uv;

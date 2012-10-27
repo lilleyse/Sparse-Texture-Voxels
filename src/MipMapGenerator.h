@@ -24,35 +24,18 @@ public:
 
     void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad)
     {
-
-        int maxImageUnits;
-        glGetIntegerv(GL_MAX_IMAGE_UNITS, &maxImageUnits);
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
+        // Create mipmap shader program
+        std::string vertexShaderSource = SHADER_DIRECTORY + "fullscreenQuadInstanced.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "mipmap.frag";
+        mipmapProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
 
-        mipmapProgram = glCreateProgram();
-        glAttachShader(mipmapProgram, vertexShaderObject);
-        glAttachShader(mipmapProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-
-        glLinkProgram(mipmapProgram);
-        Utils::OpenGL::checkProgram(mipmapProgram);
-
-        vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
-        fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelClean.frag");
-
-        voxelCleanProgram = glCreateProgram();
-        glAttachShader(voxelCleanProgram, vertexShaderObject);
-        glAttachShader(voxelCleanProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-
-        glLinkProgram(voxelCleanProgram);
-        Utils::OpenGL::checkProgram(voxelCleanProgram);
+        // Create voxel clean shader program
+        vertexShaderSource = SHADER_DIRECTORY + "fullscreenQuadInstanced.vert";
+        fragmentShaderSource = SHADER_DIRECTORY + "voxelClean.frag";
+        voxelCleanProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void generateMipMapGPU()

@@ -21,17 +21,10 @@ public:
         this->coreEngine = coreEngine;
         this->passthrough = passthrough;
 
-        GLuint vertexShaderObjectRead = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
-        GLuint fragmentShaderObjectRead = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mainRendererDemo.frag");
-
-        mainRendererProgram = glCreateProgram();
-        glAttachShader(mainRendererProgram, vertexShaderObjectRead);
-        glAttachShader(mainRendererProgram, fragmentShaderObjectRead);
-        glDeleteShader(vertexShaderObjectRead);
-        glDeleteShader(fragmentShaderObjectRead);
-
-        glLinkProgram(mainRendererProgram);
-        Utils::OpenGL::checkProgram(mainRendererProgram);
+        // Create shader program
+        std::string vertexShaderSource = SHADER_DIRECTORY + "triangleProcessor.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "mainRendererDemo.frag";
+        mainRendererProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void display()

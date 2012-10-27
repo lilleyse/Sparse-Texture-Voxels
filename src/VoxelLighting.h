@@ -24,16 +24,10 @@ public:
         this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
 
-        // Create program that writes the scene to a voxel texture
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "lighting.frag");
-        lightingProgram = glCreateProgram();
-        glAttachShader(lightingProgram, vertexShaderObject);
-        glAttachShader(lightingProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-        glLinkProgram(lightingProgram);
-        Utils::OpenGL::checkProgram(lightingProgram);
+        // Create shader program
+        std::string vertexShaderSource = SHADER_DIRECTORY + "triangleProcessor.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "lighting.frag";
+        lightingProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void lightScene(glm::mat4& lightViewProjectionMatrix)

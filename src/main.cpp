@@ -5,12 +5,14 @@
 #include "Voxelizer.h"
 #include "VoxelLighting.h"
 #include "Passthrough.h"
+#include "ShadowMap.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
 #include "demos/VoxelConetracer.h"
 #include "demos/MainRenderer.h"
 #include "demos/TriangleDebug.h"
+
 
 namespace
 {
@@ -26,6 +28,7 @@ namespace
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
     uint voxelGridLength = 128;
+    uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0;
@@ -39,9 +42,9 @@ namespace
     };
 
     // Demo settings
-    bool loadAllDemos = true;
+    bool loadAllDemos = false;
     enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
-    DemoType currentDemoType = MAIN_RENDERER;
+    DemoType currentDemoType = TRIANGLE_DEBUG;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
@@ -56,9 +59,7 @@ namespace
     glm::ivec2 currentMousePos;
     Object* currentSelectedObject;
     ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
-    ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
     ThirdPersonCamera* currentCamera = viewCamera;
-    bool lightPerspectiveProjection = true;
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
@@ -70,6 +71,7 @@ namespace
     Passthrough* passthrough = new Passthrough();
     PerFrameUBO* perFrame = new PerFrameUBO();
     GLuint perFrameUBO;  
+    ShadowMap* shadowMap = new ShadowMap();
 }
 
 void setMipMapLevel(int level)
@@ -165,9 +167,8 @@ void GLFWCALL keyPress(int k, int action)
         if (k == 'L') voxelTexture->changeSamplerType();
 
         //Switch between light and regular camera
-        if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
-
-        if (k == 'O') lightPerspectiveProjection = !lightPerspectiveProjection;
+        //if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
+        //if (k == 'O') lightPerspectiveProjection = !lightPerspectiveProjection;
 
         // Changing textures
         if (loadTextures)
@@ -217,7 +218,6 @@ void GLFWCALL resize(int w, int h)
 {
     Utils::OpenGL::setScreenSize(w, h);
     viewCamera->setAspectRatio(w, h);
-    lightCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
 }
 
@@ -244,8 +244,6 @@ void setUBO()
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
-    perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
-    perFrame->uLightDir = -lightCamera->lookDir;
     //perFrame->timestamp handled by voxelizer
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
@@ -295,9 +293,6 @@ void begin()
     viewCamera->setFarNearPlanes(.01f, 100.0f);
     viewCamera->zoom(3.0f);
     viewCamera->lookAt = glm::vec3(0.5f);
-    lightCamera->setFarNearPlanes(.01f, 100.0f);
-    lightCamera->zoom(4.0f);
-    lightCamera->lookAt = glm::vec3(0.5f);
 
     // set up miscellaneous things
     Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
@@ -310,6 +305,7 @@ void begin()
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     voxelLighting->begin(voxelTexture, coreEngine, passthrough, perFrame, perFrameUBO);
+    shadowMap->begin(shadowMapResolution, coreEngine, perFrame, perFrameUBO);
 
     // blank slate
     clearBuffers();
@@ -317,7 +313,7 @@ void begin()
 
     // voxelize and light the scene
     voxelizer->voxelizeScene();
-    voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
+    //voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
     mipMapGenerator->generateMipMapGPU();
 
     //// mipmap
@@ -359,7 +355,11 @@ void display()
     if (currentDemoType == VOXEL_DEBUG)
         voxelDebug->display();
     else if (currentDemoType == TRIANGLE_DEBUG)
+    {
+        shadowMap->display();
+        setUBO();
         triangleDebug->display();
+    }
     else if (currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->display(); 
     else if (currentDemoType == VOXELCONETRACER)  
@@ -369,7 +369,7 @@ void display()
         // We should move this to mainRenderer->display once lights are self contained and have working matrices
         coreEngine->updateScene();
         voxelizer->voxelizeScene();
-        voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
+        //voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
         mipMapGenerator->generateMipMapGPU();
         clearBuffers();
         setUBO();

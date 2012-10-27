@@ -15,17 +15,10 @@ public:
     {
         this->coreEngine = coreEngine;
 
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "triangleProcessor.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "triangleDebugDemo.frag");
-
-        triangleDebugProgram = glCreateProgram();
-        glAttachShader(triangleDebugProgram, vertexShaderObject);
-        glAttachShader(triangleDebugProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-
-        glLinkProgram(triangleDebugProgram);
-        Utils::OpenGL::checkProgram(triangleDebugProgram);
+        // Create shader program
+        std::string vertexShaderSource = SHADER_DIRECTORY + "triangleProcessor.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "triangleDebugDemo.frag";
+        triangleDebugProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void display()

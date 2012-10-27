@@ -43,7 +43,6 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToLight;
     mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
@@ -61,6 +60,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 
 
@@ -68,6 +68,7 @@ in block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -103,9 +104,12 @@ layout (location = 0, index = 0) out vec4 fragColor;
 
 void main()
 {    
+    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+
+
     vec4 positionOut = vec4(vertexData.position, 1.0);
     vec4 colorOut = getDiffuseColor(getMeshMaterial());
     vec4 normalOut = vec4(normalize(vertexData.normal), 1.0);
 
-    fragColor = colorOut;
+    fragColor = colorOut*visibility;
 }

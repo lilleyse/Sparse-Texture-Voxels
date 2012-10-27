@@ -51,7 +51,6 @@ const uint MAX_POINT_LIGHTS                 = 8;
 struct PerFrameUBO
 {
     glm::mat4 uViewProjection;
-    glm::mat4 uWorldToLight;
     glm::mat4 uWorldToShadowMap;
     glm::vec3 uCamLookAt;
     float padding1;

@@ -334,6 +334,25 @@ namespace Utils
             }
             return Error == GL_NO_ERROR;
         }
+
+        // Returns the shader program
+        GLuint createShaderProgram(std::string& vertexShader, std::string& fragmentShader)
+        {
+            GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, vertexShader);
+            GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, fragmentShader);
+
+            GLuint shaderProgram = glCreateProgram();
+            glAttachShader(shaderProgram, vertexShaderObject);
+            glAttachShader(shaderProgram, fragmentShaderObject);
+            glDeleteShader(vertexShaderObject);
+            glDeleteShader(fragmentShaderObject);
+
+            glLinkProgram(shaderProgram);
+            Utils::OpenGL::checkProgram(shaderProgram);
+
+            return shaderProgram;
+        }
+
         bool checkFramebuffer(GLuint FramebufferName)
         {
             GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
