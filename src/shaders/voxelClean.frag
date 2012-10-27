@@ -82,9 +82,9 @@ void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
     float timestamp = imageLoad(tVoxNormal, globalId).a;
-    if ( sign(uTimestamp) != sign(timestamp) )
-    {
+    //if ( sign(uTimestamp) != sign(timestamp) )
+    //{
         imageStore(tVoxColor, globalId, vec4(0.0));
         imageStore(tVoxNormal, globalId, vec4(0.0));
-    }
+    //}
 }

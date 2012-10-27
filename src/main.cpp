@@ -5,6 +5,8 @@
 #include "Voxelizer.h"
 #include "VoxelLighting.h"
 #include "Passthrough.h"
+#include "MipMapGenerator.h"
+#include "VoxelClean.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -63,6 +65,7 @@ namespace
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
     VoxelLighting* voxelLighting = new VoxelLighting();
+    VoxelClean* voxelClean = new VoxelClean();
     MipMapGenerator* mipMapGenerator = new MipMapGenerator();
     Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
@@ -308,6 +311,7 @@ void begin()
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
+    voxelClean->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     voxelLighting->begin(voxelTexture, coreEngine, passthrough, perFrame, perFrameUBO);
@@ -317,6 +321,7 @@ void begin()
     setUBO();
 
     // voxelize and light the scene
+    voxelClean->clean();
     voxelizer->voxelizeScene();
     voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
     
@@ -332,7 +337,8 @@ void begin()
         voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
         voxelTextureGenerator->setTexture(sceneFile);
     }
-    else mipMapGenerator->generateMipMapGPU();
+    else 
+        mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -368,6 +374,7 @@ void display()
         // Update the scene
         // We should move this to mainRenderer->display once lights are self contained and have working matrices
         coreEngine->updateScene();
+        voxelClean->clean();
         voxelizer->voxelizeScene();
         voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
         mipMapGenerator->generateMipMapGPU();
