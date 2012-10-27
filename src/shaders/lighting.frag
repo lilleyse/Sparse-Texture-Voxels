@@ -112,7 +112,7 @@ void main()
 
     //in the future, the magnitude of reflectedDirection will be the specularity 
     vec3 reflectedDirection = reflect(-uLightDir, normal);
-    vec4 outNormal = vec4(reflectedDirection, uTimestamp*LdotN); 
+    vec4 outNormal = vec4(reflectedDirection, LdotN); 
 
     // index into voxel
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));

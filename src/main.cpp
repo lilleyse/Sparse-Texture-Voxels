@@ -374,6 +374,7 @@ void display()
         // Update the scene
         // We should move this to mainRenderer->display once lights are self contained and have working matrices
         coreEngine->updateScene();
+        
         voxelClean->clean();
         voxelizer->voxelizeScene();
         voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());

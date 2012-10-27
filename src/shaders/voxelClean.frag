@@ -74,17 +74,13 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 layout(location = 0) out vec4 fragColor;
 
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) coherent uniform image3D tVoxNormal;
+layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) writeonly uniform image3D tVoxNormal;
 
 flat in int slice;
 
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-    float timestamp = imageLoad(tVoxNormal, globalId).a;
-    //if ( sign(uTimestamp) != sign(timestamp) )
-    //{
-        imageStore(tVoxColor, globalId, vec4(0.0));
-        imageStore(tVoxNormal, globalId, vec4(0.0));
-    //}
+    imageStore(tVoxColor, globalId, vec4(0.0));
+    imageStore(tVoxNormal, globalId, vec4(0.0));
 }
