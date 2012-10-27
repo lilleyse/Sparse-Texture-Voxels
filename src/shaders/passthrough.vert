@@ -19,13 +19,10 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define NON_USED_TEXTURE                         0
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DEFERRED_POSITIONS_TEXTURE_BINDING       3
-#define DEFERRED_COLORS_TEXTURE_BINDING          4
-#define DEFERRED_NORMALS_TEXTURE_BINDING         5
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    6      
+#define SHADOW_MAP_BINDING                       3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4     
 
 // Image binding points
 
@@ -53,6 +50,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
+    mat4 uWorldToLight;
+    mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
