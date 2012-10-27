@@ -63,7 +63,6 @@ namespace
     VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
-    VoxelLighting* voxelLighting = new VoxelLighting();
     MipMapGenerator* mipMapGenerator = new MipMapGenerator();
     Utils::OpenGL::OpenGLTimer* timer = new Utils::OpenGL::OpenGLTimer();
     CoreEngine* coreEngine = new CoreEngine();
@@ -304,7 +303,6 @@ void begin()
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
-    voxelLighting->begin(voxelTexture, coreEngine, passthrough, perFrame, perFrameUBO);
     shadowMap->begin(shadowMapResolution, coreEngine, perFrame, perFrameUBO);
 
     // blank slate
@@ -313,7 +311,6 @@ void begin()
 
     // voxelize and light the scene
     voxelizer->voxelizeScene();
-    //voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
     mipMapGenerator->generateMipMapGPU();
 
     //// mipmap
@@ -368,8 +365,8 @@ void display()
         // Update the scene
         // We should move this to mainRenderer->display once lights are self contained and have working matrices
         coreEngine->updateScene();
+        shadowMap->display();
         voxelizer->voxelizeScene();
-        //voxelLighting->lightScene((lightPerspectiveProjection ? lightCamera->createProjectionMatrix() : lightCamera->createOrthrographicProjectionMatrix())*lightCamera->createViewMatrix());
         mipMapGenerator->generateMipMapGPU();
         clearBuffers();
         setUBO();

@@ -60,6 +60,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
 layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) writeonly uniform image3D tVoxNormal;
 
@@ -67,12 +69,15 @@ in block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
 
 void main()
-{    
+{
+    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
     imageStore(tVoxColor, voxelPos, vec4(0.0, 0.0, 0.0, 1.0));
     imageStore(tVoxNormal, voxelPos, vec4(0.0, 0.0, 0.0, uTimestamp));
