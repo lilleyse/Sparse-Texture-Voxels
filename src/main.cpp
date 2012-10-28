@@ -3,7 +3,6 @@
 #include "Camera.h"
 #include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
-#include "VoxelLighting.h"
 #include "Passthrough.h"
 #include "ShadowMap.h"
 #include "engine/CoreEngine.h"
@@ -313,19 +312,19 @@ void begin()
     voxelizer->voxelizeScene();
     mipMapGenerator->generateMipMapGPU();
 
-    //// mipmap
-    //if (loadTextures)
-    //{
-    //    // create procedural textures
-    //    uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-    //    for (uint i = 0; i < numInitialTextures; i++)
-    //        voxelTextureGenerator->createTexture(voxelTextures[i]);
+    // mipmap
+    if (loadTextures)
+    {
+        // create procedural textures
+        uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
+        for (uint i = 0; i < numInitialTextures; i++)
+            voxelTextureGenerator->createTexture(voxelTextures[i]);
 
-    //    // Load scene texture onto cpu
-    //    voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-    //    voxelTextureGenerator->setTexture(sceneFile);
-    //}
-    //else mipMapGenerator->generateMipMapGPU();
+        // Load scene texture onto cpu
+        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
+        voxelTextureGenerator->setTexture(sceneFile);
+    }
+    else mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 

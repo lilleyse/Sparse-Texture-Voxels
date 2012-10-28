@@ -77,8 +77,8 @@ public:
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
         // Create shader program
-        std::string vertexShaderSource = SHADER_DIRECTORY + "voxelDebugDemo.vert";
-        std::string fragmentShaderSource = SHADER_DIRECTORY + "voxelDebugDemo.frag";
+        std::string vertexShaderSource = SHADER_DIRECTORY + "debugVoxelDemo.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "debugVoxelDemo.frag";
         voxelDebugProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
         
         voxelTextureUpdate();

@@ -24,7 +24,7 @@ public:
 
         // Create shader program
         std::string vertexShaderSource = SHADER_DIRECTORY + "fullscreenQuad.vert";
-        std::string fragmentShaderSource = SHADER_DIRECTORY + "voxelConetracerDemo.frag";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "conetracerDemo.frag";
         fullScreenProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
