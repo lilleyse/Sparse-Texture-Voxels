@@ -21,7 +21,8 @@
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
+#define SHADOW_MAP_BINDING                       3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -44,6 +45,7 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
+    mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -71,6 +73,7 @@ in block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -125,6 +128,7 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 layout(location = 0) out vec4 fragColor;
 
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
@@ -219,17 +223,17 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
     tm *= dtm;
 
-    vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
+    //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
     // render
-    vec3 difflight = (1.0-dtm) * vcol.rgb;  // diffuseCol*lightCol
-    vec3 reflectedDir = vnor.xyz;
-    float LdotN = abs(vnor.w);
+    col += (1.0-dtm) * vcol.rgb;  // diffuseCol*lightCol
+    //vec3 reflectedDir = vnor.xyz;
+    //float LdotN = abs(vnor.w);
     
-    #define KD 0.6
-    #define KS 0.4
-    #define SPEC 5
-    col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+    //#define KD 0.6
+    //#define KS 0.4
+    //#define SPEC 5
+    //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
     
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -237,6 +241,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     pos += stepSize*rd;
   }
 
+  
   return col;
 }
 
@@ -338,5 +343,7 @@ void main()
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);
     #endif
+    //float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    //cout *= visibility*float(LdotN > 0.01);
     fragColor = vec4(cout, 1.0);
 }

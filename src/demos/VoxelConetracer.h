@@ -23,25 +23,15 @@ public:
         this->fullScreenQuad = fullScreenQuad;
 
         // Create shader program
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuad.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "voxelConetracerDemo.frag");
-
-        fullScreenProgram = glCreateProgram();
-        glAttachShader(fullScreenProgram, vertexShaderObject);
-        glAttachShader(fullScreenProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-
-        glLinkProgram(fullScreenProgram);
-        Utils::OpenGL::checkProgram(fullScreenProgram);
-        
-        glUseProgram(fullScreenProgram);
-        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uTextureRes");
-        glUniform1f(mipMapLevelUniform, (float)voxelTexture->voxelGridLength);
+        std::string vertexShaderSource = SHADER_DIRECTORY + "fullscreenQuad.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "conetracerDemo.frag";
+        fullScreenProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void display()
     {
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();
     }

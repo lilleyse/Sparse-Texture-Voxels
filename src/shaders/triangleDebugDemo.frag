@@ -21,7 +21,8 @@
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
+#define SHADOW_MAP_BINDING                       3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -44,6 +45,7 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
+    mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -60,6 +62,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 
 
@@ -67,6 +70,7 @@ in block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -102,9 +106,12 @@ layout (location = 0, index = 0) out vec4 fragColor;
 
 void main()
 {    
+    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+
+
     vec4 positionOut = vec4(vertexData.position, 1.0);
     vec4 colorOut = getDiffuseColor(getMeshMaterial());
     vec4 normalOut = vec4(normalize(vertexData.normal), 1.0);
 
-    fragColor = colorOut;
+    fragColor = colorOut*visibility;
 }

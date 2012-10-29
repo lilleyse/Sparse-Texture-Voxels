@@ -45,7 +45,7 @@ struct Camera
 
     glm::mat4 createOrthrographicProjectionMatrix()
     {
-        projectionMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -100.0f, 100.0f);
+        projectionMatrix = glm::ortho(-0.5f, 0.5f, -0.5f, 0.5f, -10.0f, 10.0f);
         return projectionMatrix;
     }
     glm::mat4 createProjectionMatrix()

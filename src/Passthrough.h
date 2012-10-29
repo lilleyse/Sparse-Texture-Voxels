@@ -14,23 +14,17 @@ public:
         this->coreEngine = coreEngine;
 
         // Create program that does a simple passthrough
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "passthrough.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "passthrough.frag");
-        passthroughProgram = glCreateProgram();
-        glAttachShader(passthroughProgram, vertexShaderObject);
-        glAttachShader(passthroughProgram , fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-        glLinkProgram(passthroughProgram);
-        Utils::OpenGL::checkProgram(passthroughProgram);
+        std::string vertexShaderSource = SHADER_DIRECTORY + "passthrough.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "passthrough.frag";
+        passthroughProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void passthrough()
     {        
         // Do not write to the color buffer
-        glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
+        Utils::OpenGL::setScreenSizedViewport();
+        Utils::OpenGL::setRenderState(true, true, false);
         glUseProgram(passthroughProgram);
         coreEngine->display();
-        glColorMask(GL_TRUE,GL_TRUE,GL_TRUE,GL_TRUE);
     }
 };

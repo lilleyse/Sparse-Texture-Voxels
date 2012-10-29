@@ -21,7 +21,8 @@
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
+#define SHADOW_MAP_BINDING                       3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -44,6 +45,7 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
+    mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -91,6 +93,7 @@ out block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -102,6 +105,7 @@ void main()
     vec3 worldNormal = normalize(mat3(modelMatrix) * normal);
     gl_Position = uViewProjection * worldPosition;
     
+    vertexData.shadowMapPos = uWorldToShadowMap * worldPosition;
     vertexData.position = vec3(worldPosition);
     vertexData.normal = worldNormal;
     vertexData.uv = uv;

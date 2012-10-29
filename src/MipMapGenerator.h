@@ -27,26 +27,29 @@ public:
         this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
-        GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, SHADER_DIRECTORY + "fullscreenQuadInstanced.vert");
-        GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, SHADER_DIRECTORY + "mipmap.frag");
-
-        mipmapProgram = glCreateProgram();
-        glAttachShader(mipmapProgram, vertexShaderObject);
-        glAttachShader(mipmapProgram, fragmentShaderObject);
-        glDeleteShader(vertexShaderObject);
-        glDeleteShader(fragmentShaderObject);
-
-        glLinkProgram(mipmapProgram);
-        Utils::OpenGL::checkProgram(mipmapProgram);
+        // Create mipmap shader program
+        std::string vertexShaderSource = SHADER_DIRECTORY + "fullscreenQuadInstanced.vert";
+        std::string fragmentShaderSource = SHADER_DIRECTORY + "mipmap.frag";
+        mipmapProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
     void generateMipMapGPU()
     {
-        // Change viewport to match the size of the second mip map level
-        int oldViewport[4];
-        glGetIntegerv(GL_VIEWPORT, oldViewport);
+        // Disable culling, depth test, rendering
+        Utils::OpenGL::setRenderState(false, false, false);
 
-        // mip-map
+        // Bind voxelTexture's color and normal textures for writing
+        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+        glBindImageTexture(NORMAL_IMAGE_3D_BINDING_BASE, voxelTexture->normalTexture, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
+
+        // First clean the base mip map
+        int voxelGridLength = voxelTexture->voxelGridLength;
+        Utils::OpenGL::setViewport(voxelGridLength, voxelGridLength);
+        glUseProgram(voxelCleanProgram);
+        fullScreenQuad->displayInstanced(voxelGridLength);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);//GL_TEXTURE_UPDATE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+
+        // Now do mipmapping
         glUseProgram(mipmapProgram);
         for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
@@ -57,18 +60,11 @@ public:
             glBindImageTexture(NORMAL_IMAGE_3D_BINDING_NEXT, voxelTexture->normalTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8_SNORM);
 
             // Call the program for each mip map level.
-            // I attempted a similar loop in a single program call with memoryBarrier() but it didn't work
             int voxelGridLength = voxelTexture->mipMapInfoArray[i].gridLength;
-            glViewport(0, 0, voxelGridLength, voxelGridLength);
+            Utils::OpenGL::setViewport(voxelGridLength, voxelGridLength);
             fullScreenQuad->displayInstanced(voxelGridLength);
             glMemoryBarrier(GL_ALL_BARRIER_BITS);//GL_TEXTURE_UPDATE_BARRIER_BIT | GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
         }
-
-        // Turn back on
-        glViewport(oldViewport[0], oldViewport[1], oldViewport[2], oldViewport[3]);
-        glEnable(GL_CULL_FACE);
-        glEnable(GL_DEPTH_TEST);
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     }
 
     // This code is not super efficient since it is a short term solution that will be replaced by GPU-based mipmap generation

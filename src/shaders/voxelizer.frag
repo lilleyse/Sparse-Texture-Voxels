@@ -21,7 +21,8 @@
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
+#define SHADOW_MAP_BINDING                       3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -44,6 +45,7 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
+    mat4 uWorldToShadowMap;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -60,6 +62,8 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
 layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) writeonly uniform image3D tVoxNormal;
 
@@ -67,13 +71,53 @@ in block
 {
     vec3 position;
     vec3 normal;
+    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
 
+struct MeshMaterial
+{
+    vec4 diffuseColor;
+    vec4 specularColor;
+    ivec2 textureLayer;
+};
+
+layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
+{
+    MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
+};
+
+
+MeshMaterial getMeshMaterial()
+{
+    int index = vertexData.propertyIndex[MATERIAL_INDEX];
+    return meshMaterialArray[index];
+}
+
+vec4 getDiffuseColor(MeshMaterial material)
+{
+    int textureId = material.textureLayer.x;
+    int textureLayer = material.textureLayer.y;
+    vec4 diffuseColor = textureId == -1 ? material.diffuseColor : texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    return diffuseColor;
+}
+
 void main()
-{    
+{
+    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    vec4 diffuse = getDiffuseColor(getMeshMaterial());
+    vec3 normal = normalize(vertexData.normal);
+    vec3 position = vertexData.position;
+    float LdotN = max( dot(uLightDir, normal), 0.0001 );
+
+    vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility, diffuse.a);
+    //in the future, the magnitude of reflectedDirection will be the specularity 
+    vec3 reflectedDirection = reflect(-uLightDir, normal);
+    vec4 outNormal = vec4(reflectedDirection, uTimestamp*LdotN); 
+
+    // write to image
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColor, voxelPos, vec4(0.0, 0.0, 0.0, 1.0));
-    imageStore(tVoxNormal, voxelPos, vec4(0.0, 0.0, 0.0, 0.0));
+    imageStore(tVoxColor, voxelPos, outColor);
+    imageStore(tVoxNormal, voxelPos, outNormal);
 }
