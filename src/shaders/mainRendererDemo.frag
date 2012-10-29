@@ -290,8 +290,8 @@ void main()
     gNormal = normalize(vertexData.normal);    
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
 
-    vec4 radiance = textureLod(tVoxColor, pos, 0.0);
-    float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
+    //vec4 radiance = textureLod(tVoxColor, pos, 0.0);
+    //float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
     
     // calc globals
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
@@ -335,15 +335,22 @@ void main()
 
     vec3 cout = vec3(0.0);
     #ifdef PASS_DIFFUSE
-    cout += radiance.rgb * LdotN;
+    vec4 diffuse = getDiffuseColor(getMeshMaterial());
+    vec3 normal = normalize(vertexData.normal);
+    vec3 position = vertexData.position;
+    float LdotN = max( dot(uLightDir, normal), 0.0001 );
+    //cout += radiance.rgb * LdotN;
+    cout += diffuse.rgb * LdotN;
+    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    cout *= visibility;
     #endif
     #ifdef PASS_INDIR
     cout += indir;
     #endif
+    
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);
     #endif
-    //float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
-    //cout *= visibility*float(LdotN > 0.01);
+    
     fragColor = vec4(cout, 1.0);
 }
