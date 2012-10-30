@@ -315,6 +315,7 @@ void begin()
     setUBO();
 
     // voxelize and light the scene
+    shadowMap->display();
     voxelClean->clean();
     voxelizer->voxelizeScene();
     mipMapGenerator->generateMipMapGPU();

@@ -109,12 +109,11 @@ void main()
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
     vec3 position = vertexData.position;
-    float LdotN = max( dot(uLightDir, normal), 0.0001 );
-
-    vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility, diffuse.a);
+    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
+    vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility*LdotN, diffuse.a);
     //in the future, the magnitude of reflectedDirection will be the specularity 
     vec3 reflectedDirection = reflect(-uLightDir, normal);
-    vec4 outNormal = vec4(reflectedDirection, uTimestamp*LdotN); 
+    vec4 outNormal = vec4(reflectedDirection, visibility); 
 
     // write to image
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
