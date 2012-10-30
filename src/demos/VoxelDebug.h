@@ -88,6 +88,8 @@ public:
         debugMipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
+        //glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
+        //glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
         glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
         

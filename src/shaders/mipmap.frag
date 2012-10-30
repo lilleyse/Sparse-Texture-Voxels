@@ -86,7 +86,7 @@ void main()
     vec4 avgNormal = vec4(0.0);
 
     float normalCount = 0.0;
-
+     
     for(int i = 0; i < 2; i++)
     for(int j = 0; j < 2; j++)
     for(int k = 0; k < 2; k++)

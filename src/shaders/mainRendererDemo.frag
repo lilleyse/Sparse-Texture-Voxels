@@ -276,11 +276,11 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
             // calc local illumination
             //col.rgb += (1.0-dtm) * vcol.rgb;
-            //occlusion += (1.0-dtm)*tm*length(col.rgb);
+            occlusion += (1.0-dtm)*tm;
             vec3 lightCol = (1.0-dtm) * vcol.rgb;    
             //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
             vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
-            localColor *= pow(INDIR_DIST_K*dist*dist, 2.0);
+            localColor *= pow(INDIR_DIST_K*dist+EPS, 2.0);
             col.rgb += localColor;
             // gDiffuse can be factored out, but here for now for clarity
         //}
@@ -292,6 +292,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     pos += stepSize*rd;
   }
 
+  occlusion = occlusion - 0.5;
   col.a = clamp(occlusion, 0.0, 1.0);
   return vec4(INDIR_K*col.rgb, col.a);
 }
@@ -326,7 +327,7 @@ void main()
     vec4 indir = vec4(0.0);
     {
         #define NUM_DIRS 4.0
-        const float FOV = radians(60.0);
+        const float FOV = radians(45.0);
         const float NORMAL_ROTATE = radians(45.0);
         const float ANGLE_ROTATE = 2.0*PI / NUM_DIRS;
 
@@ -361,7 +362,7 @@ void main()
     float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
 
     float visibility = getVisibility();
-    float indirLightAmount = indir.a;
+    float indirLightAmount = indir.a/1.0;
 
     vec3 cout = vec3(0.0);
 
@@ -372,10 +373,11 @@ void main()
     
     cout += diffuse.rgb * LdotN * visibility;
     cout += indir.rgb * 3.0;
+    cout -= indirLightAmount;
 
     float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
     cout = clamp(cout - difference, 0.0, 1.0);
-    //cout = mix(cout, spec, uSpecularAmount);
+    cout = mix(cout, spec, uSpecularAmount);
     //cout *= (visibility + indirLightAmount/2.0);
     //cout *= (visibility < 0.5) ? indirLightAmount : 1.0;
     //cout *= indirLightAmount;

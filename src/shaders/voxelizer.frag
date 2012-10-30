@@ -126,5 +126,5 @@ void main()
     // write to image
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
     imageStore(tVoxColor, voxelPos, outColor);
-    imageStore(tVoxNormal, voxelPos, outNormal);
+    imageStore(tVoxNormal, voxelPos, vec4(vertexData.position,1.0));
 }
