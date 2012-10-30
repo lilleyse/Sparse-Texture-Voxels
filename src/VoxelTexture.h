@@ -51,7 +51,7 @@ public:
 
         // Create a nearest sampler to sample from any of the 3D textures
         glGenSamplers(1, &textureNearestSampler);
-        glBindSampler(0, textureNearestSampler);
+        glBindSampler(NON_USED_TEXTURE, textureNearestSampler);
         glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
@@ -63,7 +63,7 @@ public:
 
         // Create a linear sampler to sample from any of the 3
         glGenSamplers(1, &textureLinearSampler);
-        glBindSampler(0, textureLinearSampler);
+        glBindSampler(NON_USED_TEXTURE, textureLinearSampler);
         glSamplerParameterfv(textureLinearSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MIN_LOD, (float)baseLevel);
         glSamplerParameterf(textureNearestSampler, GL_TEXTURE_MAX_LOD, (float)maxLevel);
