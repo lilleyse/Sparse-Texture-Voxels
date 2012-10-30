@@ -45,7 +45,7 @@ struct Camera
 
     glm::mat4 createOrthrographicProjectionMatrix()
     {
-        float side = -sqrt(3.0f)/2.0f; // diagonal of cube (sqrt(3)) is the greatest length of the scene that the light can witness
+        float side = 2.0f/2.0f;//-sqrt(3.0f)/2.0f; // diagonal of cube (sqrt(3)) is the greatest length of the scene that the light can witness
         projectionMatrix = glm::ortho(-side, side, -side, side, -10.0f, 10.0f);
         return projectionMatrix;
     }

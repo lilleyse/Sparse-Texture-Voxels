@@ -18,7 +18,7 @@ namespace
 {
     // Window
     std::string applicationName("Sparse Texture Voxels");
-    glm::ivec2 windowSize(600, 400);
+    glm::ivec2 windowSize(800, 533);
     glm::ivec2 openGLVersion(4, 2);
     bool enableMousePicking = true;
     bool showDebugOutput = false;

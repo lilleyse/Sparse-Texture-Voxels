@@ -271,23 +271,17 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
     if(vcol.a > 0.0)
     {
-        vec3 vnormal = textureLod(tVoxNormal, pos, 0.0).rgb;
-        //float RdotN = dot(rd, vnormal);
-        //if(RdotN < 0.0)
-        //{
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
-            tm *= dtm;
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+        tm *= dtm;
 
-            // calc local illumination
-            //col.rgb += (1.0-dtm) * vcol.rgb;
-            occlusion += (1.0-dtm)*tm;
-            vec3 lightCol = (1.0-dtm) * vcol.rgb;    
-            //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
-            vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
-            localColor *= pow(INDIR_DIST_K*dist+EPS, 2.0);
-            col.rgb += localColor;
-            // gDiffuse can be factored out, but here for now for clarity
-        //}
+        // calc local illumination
+        occlusion += (1.0-dtm)*tm;
+        vec3 lightCol = (1.0-dtm) * vcol.rgb;    
+        //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
+        vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
+        localColor *= pow(INDIR_DIST_K*dist+EPS, 2.0);
+        col.rgb += localColor;
+        // gDiffuse can be factored out, but here for now for clarity
     }
     
     // increment
@@ -296,7 +290,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     pos += stepSize*rd;
   }
 
-  occlusion = occlusion - 0.5;
+  occlusion = occlusion - 0.3;
   col.a = clamp(occlusion, 0.0, 1.0);
   return vec4(INDIR_K*col.rgb, col.a);
 }
@@ -324,11 +318,9 @@ void main()
 {
     // current vertex info
     vec3 pos = vertexData.position;
+    vec3 cout = vec3(0.0);
     gNormal = normalize(vertexData.normal);    
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
-
-    //vec4 radiance = textureLod(tVoxColor, pos, 0.0);
-    //float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
     
     // calc globals
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
@@ -370,43 +362,22 @@ void main()
     }
     #endif
 
-    
-    //visibility = clamp(visibility+0.3, 0.0, 1.0);
+    #ifdef PASS_DIFFUSE
     vec3 normal = normalize(vertexData.normal);
-    vec3 position = vertexData.position;
-    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
-
     float visibility = getVisibility();
-    float indirLightAmount = indir.a;
-
-    vec3 cout = vec3(0.0);
-
-    
-
-    //#ifdef PASS_DIFFUSE
+    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
-    
-    cout += diffuse.rgb * LdotN * visibility;
-    cout += indir.rgb * 3.0;
+    cout += diffuse.rgb * uLightColor * LdotN * visibility;
+    #endif
+    #ifdef PASS_INDIR
+    float indirLightAmount = indir.a;
+    cout += indir.rgb * 2.0;
     cout -= indirLightAmount;
-
     float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
     cout = clamp(cout - difference, 0.0, 1.0);
+    #endif
+    #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);
-    //cout *= (visibility + indirLightAmount/2.0);
-    //cout *= (visibility < 0.5) ? indirLightAmount : 1.0;
-    //cout *= indirLightAmount;
-    //#endif
-    //#ifdef PASS_INDIR
-    
-    //#endif
-    
-    //#ifdef PASS_SPEC
-    
-    //#endif
-    
-    //fragColor = vec4(vec3(indirLightAmount), 1.0);
-    //vec3 voxelColor = textureLod(tVoxColor, position, 0.0).rgb;
-    //fragColor = vec4(voxelColor, 1.0);
+    #endif
     fragColor = vec4(cout.rgb, 1.0);
 }
