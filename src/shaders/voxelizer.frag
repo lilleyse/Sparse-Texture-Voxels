@@ -66,7 +66,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
 layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) writeonly uniform image3D tVoxNormal;
@@ -107,9 +107,28 @@ vec4 getDiffuseColor(MeshMaterial material)
     return diffuseColor;
 }
 
+float getVisibility()
+{
+	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    float fragLightDepth = fragLightPos.z;
+    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    	
+	// Surface is fully lit.
+	if (fragLightDepth <= moments.x)
+		return 1.0;
+	
+	// How likely this pixel is to be lit (p_max)
+	float variance = moments.y - (moments.x*moments.x);
+	variance = max(variance,0.00002);
+	
+	float d = moments.x - fragLightDepth;
+	float p_max = variance / (variance + d*d);
+	return p_max;
+}
+
 void main()
 {
-    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    float visibility = getVisibility();
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
     vec3 position = vertexData.position;

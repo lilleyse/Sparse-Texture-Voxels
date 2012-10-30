@@ -81,8 +81,8 @@ struct ShadowMap
         // Main shadow map sampler
         glGenSamplers(1, &shadowMapMainSampler);
         glBindSampler(NON_USED_TEXTURE, shadowMapMainSampler);
-        glSamplerParameteri(shadowMapMainSampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glSamplerParameteri(shadowMapMainSampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glSamplerParameteri(shadowMapMainSampler, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glSamplerParameteri(shadowMapMainSampler, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glSamplerParameteri(shadowMapMainSampler, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glSamplerParameteri(shadowMapMainSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};

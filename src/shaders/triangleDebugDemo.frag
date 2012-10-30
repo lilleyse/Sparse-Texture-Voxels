@@ -108,33 +108,28 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 layout (location = 0, index = 0) out vec4 fragColor;
 
-float getShadow(float fragDepth, vec2 moments)
+float getVisibility()
 {
-		
-	// Surface is fully lit. as the current fragment is before the light occluder
-	if (fragDepth <= moments.x)
+	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    float fragLightDepth = fragLightPos.z;
+    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    	
+	// Surface is fully lit.
+	if (fragLightDepth <= moments.x)
 		return 1.0;
-    else return 0.0;
 	
-	// The fragment is either in shadow or penumbra. We now use chebyshev's upperBound to check
 	// How likely this pixel is to be lit (p_max)
 	float variance = moments.y - (moments.x*moments.x);
 	variance = max(variance,0.00002);
 	
-	float d = moments.x - fragDepth;
+	float d = moments.x - fragLightDepth;
 	float p_max = variance / (variance + d*d);
-	
 	return p_max;
 }
 
 void main()
 {    
-    // Do projection 
-    vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
-    float fragLightDepth = fragLightPos.z;
-    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
-    
-    float visibility = getShadow(fragLightDepth, moments);
+    float visibility = getVisibility();
 
     vec4 positionOut = vec4(vertexData.position, 1.0);
     vec4 colorOut = getDiffuseColor(getMeshMaterial());

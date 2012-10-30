@@ -132,7 +132,7 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
@@ -300,6 +300,25 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
   return vec4(INDIR_K*col.rgb, col.a);
 }
 
+float getVisibility()
+{
+	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    float fragLightDepth = fragLightPos.z;
+    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    	
+	// Surface is fully lit.
+	if (fragLightDepth <= moments.x)
+		return 1.0;
+	
+	// How likely this pixel is to be lit (p_max)
+	float variance = moments.y - (moments.x*moments.x);
+	variance = max(variance,0.00002);
+	
+	float d = moments.x - fragLightDepth;
+	float p_max = variance / (variance + d*d);
+	return p_max;
+}
+
 void main()
 {
     // current vertex info
@@ -356,7 +375,7 @@ void main()
     vec3 position = vertexData.position;
     float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
 
-    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    float visibility = getVisibility();
     float indirLightAmount = indir.a;
 
     vec3 cout = vec3(0.0);
