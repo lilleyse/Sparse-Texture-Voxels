@@ -32,6 +32,10 @@ const uint RESERVED_TEXTURE_ARRAY_7                 = 11;
 const uint RESERVED_TEXTURE_ARRAY_8                 = 12;
 const uint RESERVED_TEXTURE_ARRAY_9                 = 13;
 
+// Shadow Map FBO
+const uint SHADOW_MAP_FBO_BINDING = 0;
+const uint BLURRED_MAP_FBO_BINDING = 1;
+
 // Image binding points
 const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;
 const uint COLOR_IMAGE_3D_BINDING_CURR              = 1;

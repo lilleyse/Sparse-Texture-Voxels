@@ -32,6 +32,10 @@
 #define NORMAL_IMAGE_3D_BINDING_CURR             4
 #define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
+// Shadow Map FBO
+#define SHADOW_MAP_FBO_BINDING      0
+#define BLURRED_MAP_FBO_BINDING     1
+
 // Object properties
 #define POSITION_INDEX        0
 #define MATERIAL_INDEX        1
@@ -62,7 +66,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 
 
@@ -106,17 +110,29 @@ layout (location = 0, index = 0) out vec4 fragColor;
 
 float getVisibility()
 {
-    vec3 shadowMapPos = vertexData.shadowMapPos.xyz/vertexData.shadowMapPos.w;
-    vec4 neighbors = textureGather(shadowMap, shadowMapPos.xy, shadowMapPos.z);
-    float percentInLight = dot(neighbors, vec4(.25));
-    return percentInLight;
+	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    float fragLightDepth = fragLightPos.z;
+    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    	
+	// Surface is fully lit.
+	if (fragLightDepth <= moments.x)
+		return 1.0;
+	
+	// How likely this pixel is to be lit (p_max)
+	float variance = moments.y - (moments.x*moments.x);
+	variance = max(variance,0.00002);
+	
+	float d = moments.x - fragLightDepth;
+	float p_max = variance / (variance + d*d);
+	return p_max;
 }
 
 void main()
 {    
+    float visibility = getVisibility();
     vec4 positionOut = vec4(vertexData.position, 1.0);
     vec4 colorOut = getDiffuseColor(getMeshMaterial());
     vec4 normalOut = vec4(normalize(vertexData.normal), 1.0);
 
-    fragColor = colorOut*getVisibility();
+    fragColor = visibility*colorOut;
 }

@@ -28,9 +28,7 @@
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
+#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Shadow Map FBO
 #define SHADOW_MAP_FBO_BINDING      0
@@ -66,19 +64,19 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
+layout(early_fragment_tests) in;
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) writeonly uniform image3D tVoxNormal;
+layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) coherent uniform image3D tVoxColor;
+layout(binding = NORMAL_IMAGE_3D_BINDING, rgba8_snorm) coherent uniform image3D tVoxNormal;
 
 in block
 {
     vec3 position;
     vec3 normal;
-    vec4 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
+
 
 struct MeshMaterial
 {
@@ -107,39 +105,23 @@ vec4 getDiffuseColor(MeshMaterial material)
     return diffuseColor;
 }
 
-float getVisibility()
-{
-	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
-    float fragLightDepth = fragLightPos.z;
-    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
-    	
-	// Surface is fully lit.
-	if (fragLightDepth <= moments.x)
-		return 1.0;
-	
-	// How likely this pixel is to be lit (p_max)
-	float variance = moments.y - (moments.x*moments.x);
-	variance = max(variance,0.00002);
-	
-	float d = moments.x - fragLightDepth;
-	float p_max = variance / (variance + d*d);
-	return p_max;
-}
-
 void main()
-{
-    float visibility = getVisibility();
+{        
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
     vec3 position = vertexData.position;
-    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
-    vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility*LdotN, diffuse.a);
+    float LdotN = max( dot(uLightDir, normal), 0.0001 );
+
+    vec4 outColor = vec4(diffuse.rgb*uLightColor, diffuse.a);
+
     //in the future, the magnitude of reflectedDirection will be the specularity 
     vec3 reflectedDirection = reflect(-uLightDir, normal);
-    vec4 outNormal = vec4(reflectedDirection, visibility); 
+    vec4 outNormal = vec4(reflectedDirection, uTimestamp*LdotN); 
 
-    // write to image
+    // index into voxel
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
+
+    // write
     imageStore(tVoxColor, voxelPos, outColor);
-    imageStore(tVoxNormal, voxelPos, vec4(vertexData.position,1.0));
+    imageStore(tVoxNormal, voxelPos, outNormal);
 }
