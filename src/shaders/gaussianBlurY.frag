@@ -22,7 +22,7 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    43
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -64,19 +64,23 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-/***************************************************/
+in vec2 vUV;
+layout (binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap; 
+layout (location = 0) out vec4 fragColor;
 
-layout (location = 0, index = 0) out vec4 fragColor;
+//void main()
+//{
+    //fragColor = texture(shadowMap, vUV);
+//}
 
-in block
-{
-    vec3 position;
-    vec4 color;
-    vec3 normal;
-
-} vertexData;
+uniform float offset[3] = float[]( 0.0, 1.3846153846, 3.2307692308 );
+uniform float weight[3] = float[]( 0.2270270270, 0.3162162162, 0.0702702703 );
 
 void main()
 {
-    fragColor = vertexData.color;
+	fragColor = texture( shadowMap, vec2(gl_FragCoord)/1024.0 ) * weight[0];
+	for (int i=1; i<3; i++) {
+		fragColor += texture( shadowMap, ( vec2(gl_FragCoord)+vec2(0.0, offset[i]) )/1024.0 ) * weight[i];
+		fragColor += texture( shadowMap, ( vec2(gl_FragCoord)-vec2(0.0, offset[i]) )/1024.0 ) * weight[i];
+	}
 }

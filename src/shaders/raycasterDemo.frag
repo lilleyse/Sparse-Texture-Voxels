@@ -30,6 +30,10 @@
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
 #define NORMAL_IMAGE_3D_BINDING                  3
 
+// Shadow Map FBO
+#define SHADOW_MAP_FBO_BINDING      0
+#define BLURRED_MAP_FBO_BINDING     1
+
 // Object properties
 #define POSITION_INDEX        0
 #define MATERIAL_INDEX        1
