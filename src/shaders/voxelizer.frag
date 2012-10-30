@@ -103,9 +103,17 @@ vec4 getDiffuseColor(MeshMaterial material)
     return diffuseColor;
 }
 
+float getVisibility()
+{
+    vec3 shadowMapPos = vertexData.shadowMapPos.xyz/vertexData.shadowMapPos.w;
+    vec4 neighbors = textureGather(shadowMap, shadowMapPos.xy, shadowMapPos.z);
+    float percentInLight = dot(neighbors, vec4(.25));
+    return percentInLight;
+}
+
 void main()
 {
-    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    float visibility = getVisibility();
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
     vec3 position = vertexData.position;

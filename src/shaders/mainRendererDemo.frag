@@ -296,6 +296,14 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
   return vec4(INDIR_K*col.rgb, col.a);
 }
 
+float getVisibility()
+{
+    vec3 shadowMapPos = vertexData.shadowMapPos.xyz/vertexData.shadowMapPos.w;
+    vec4 neighbors = textureGather(shadowMap, shadowMapPos.xy, shadowMapPos.z);
+    float percentInLight = dot(neighbors, vec4(.25));
+    return percentInLight;
+}
+
 void main()
 {
     // current vertex info
@@ -352,7 +360,7 @@ void main()
     vec3 position = vertexData.position;
     float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
 
-    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
+    float visibility = getVisibility();
     float indirLightAmount = indir.a;
 
     vec3 cout = vec3(0.0);

@@ -104,14 +104,19 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 layout (location = 0, index = 0) out vec4 fragColor;
 
+float getVisibility()
+{
+    vec3 shadowMapPos = vertexData.shadowMapPos.xyz/vertexData.shadowMapPos.w;
+    vec4 neighbors = textureGather(shadowMap, shadowMapPos.xy, shadowMapPos.z);
+    float percentInLight = dot(neighbors, vec4(.25));
+    return percentInLight;
+}
+
 void main()
 {    
-    float visibility = textureProj(shadowMap, vertexData.shadowMapPos);
-
-
     vec4 positionOut = vec4(vertexData.position, 1.0);
     vec4 colorOut = getDiffuseColor(getMeshMaterial());
     vec4 normalOut = vec4(normalize(vertexData.normal), 1.0);
 
-    fragColor = colorOut*visibility;
+    fragColor = colorOut*getVisibility();
 }
