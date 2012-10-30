@@ -69,8 +69,7 @@ struct ShadowMap
         Utils::OpenGL::setViewport(shadowMapResolution, shadowMapResolution);
         Utils::OpenGL::setRenderState(true, true, false);
         
-        //glm::mat4 worldToLight = lightCamera->createOrthrographicProjectionMatrix() * lightCamera->createViewMatrix();
-        glm::mat4 worldToLight = lightCamera->createProjectionMatrix() * lightCamera->createViewMatrix();
+        glm::mat4 worldToLight = lightCamera->createOrthrographicProjectionMatrix() * lightCamera->createViewMatrix();
         // Offset matrix from NDC space to texture space
         glm::mat4 offsetMatrix(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
         glm::mat4 worldToShadowMap = offsetMatrix * worldToLight;
