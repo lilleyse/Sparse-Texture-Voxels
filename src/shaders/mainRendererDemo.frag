@@ -141,13 +141,20 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 #define TRANSMIT_K 3.0
 #define INDIR_DIST_K 5.0
 #define INDIR_K 1.5
+#define AO_DIST_K 0.3
+#define JITTER_K 0.025
 
 vec3 gNormal, gDiffuse;
-float gTexelSize = 0.0;
+float gTexelSize, gRandVal;
 
 //---------------------------------------------------------
 // UTILITIES
 //---------------------------------------------------------
+
+// http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
+float rand(vec2 n) {
+    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
 
 // rotate vector a given angle(rads) over a given axis
 // source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToMatrix/index.htm
@@ -230,7 +237,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
     // render
-    col += (1.0-dtm) * vcol.rgb;  
+    col += (1.0-dtm) * vcol.rgb;
     //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
     //vec3 reflectedDir = vnor.xyz;
     //float LdotN = abs(vnor.w);
@@ -242,6 +249,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    stepSize += gRandVal*pixSize*JITTER_K;
     dist += stepSize;
     pos += stepSize*rd;
   }
@@ -257,7 +265,6 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
   vec4 col = vec4(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
-  float occlusion = 0.0;
 
   while(tm > TRANSMIT_MIN &&
         pos.x < 1.0 && pos.x > 0.0 &&
@@ -275,24 +282,25 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         tm *= dtm;
 
         // calc local illumination
-        occlusion += (1.0-dtm)*tm;
-        vec3 lightCol = (1.0-dtm) * vcol.rgb;    
+        vec3 lightCol = (1.0-dtm) * vcol.rgb;
         //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
         vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
-        localColor *= pow(INDIR_DIST_K*dist+EPS, 2.0);
+        localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
         col.rgb += localColor;
         // gDiffuse can be factored out, but here for now for clarity
     }
     
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    stepSize += gRandVal*pixSize*JITTER_K;
     dist += stepSize;
     pos += stepSize*rd;
   }
+  
+  // weight AO by distance f(r) = 1/(1+K*r)
+  float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
 
-  occlusion = occlusion - 0.3;
-  col.a = clamp(occlusion, 0.0, 1.0);
-  return vec4(INDIR_K*col.rgb, col.a);
+  return vec4(INDIR_K*col.rgb, visibility);
 }
 
 float getVisibility()
@@ -319,12 +327,13 @@ void main()
     // current vertex info
     vec3 pos = vertexData.position;
     vec3 cout = vec3(0.0);
-    gNormal = normalize(vertexData.normal);    
+    gNormal = normalize(vertexData.normal);
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
     
     // calc globals
+    gRandVal = rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize;//*ROOTTHREE;
+    float voxelOffset = gTexelSize*ROOTTHREE;
     
     #define PASS_DIFFUSE
     #define PASS_INDIR
@@ -342,7 +351,7 @@ void main()
         for (float i=0.0; i<NUM_DIRS; i++) {
             vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
             vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
-            indir += conetraceIndir(pos+rd*voxelOffset*2.0, rd, FOV);
+            indir += conetraceIndir(pos+rd*voxelOffset, rd, FOV);
         }
 
         indir /= NUM_DIRS;
@@ -358,7 +367,7 @@ void main()
         const float FOV = radians(uSpecularFOV);
         vec3 rd = normalize(pos-uCamPos);
         rd = reflect(rd, gNormal);
-        spec = conetraceSpec(pos+rd*voxelOffset*2.0, rd, FOV);
+        spec = conetraceSpec(pos+rd*voxelOffset, rd, FOV);
     }
     #endif
 
@@ -369,15 +378,17 @@ void main()
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     cout += diffuse.rgb * uLightColor * LdotN * visibility;
     #endif
-    #ifdef PASS_INDIR
-    float indirLightAmount = indir.a;
+    #ifdef PASS_INDIR    
     cout += indir.rgb * 2.0;
-    cout -= indirLightAmount;
-    float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
-    cout = clamp(cout - difference, 0.0, 1.0);
+    cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);
     #endif
+
+    // adjust blown out colors
+    float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
+    cout = clamp(cout - difference, 0.0, 1.0);
+
     fragColor = vec4(cout.rgb, 1.0);
 }
