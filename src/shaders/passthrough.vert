@@ -22,7 +22,8 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4     
+#define NOISE_TEXTURE_2D_BINDING                 4
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
 
 // Image binding points
 

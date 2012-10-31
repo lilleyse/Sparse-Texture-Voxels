@@ -22,7 +22,8 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
+#define NOISE_TEXTURE_2D_BINDING                 4
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -135,6 +136,7 @@ layout(location = 0) out vec4 fragColor;
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
+layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
@@ -153,7 +155,7 @@ float gTexelSize, gRandVal;
 
 // http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
 float rand(vec2 n) {
-    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+    return fract(sin(dot(n.xy, vec2(13, 78)))* 43758);
 }
 
 // rotate vector a given angle(rads) over a given axis
@@ -249,7 +251,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    stepSize += gRandVal*pixSize*JITTER_K;
+    //stepSize += gRandVal*pixSize*JITTER_K;
     dist += stepSize;
     pos += stepSize*rd;
   }
@@ -331,9 +333,9 @@ void main()
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
     
     // calc globals
-    gRandVal = rand(pos.xy);
+    gRandVal = texture(tNoise,pos.xy).r;//rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize*ROOTTHREE;
+    float voxelOffset = gTexelSize*2.0;
     
     #define PASS_DIFFUSE
     #define PASS_INDIR
