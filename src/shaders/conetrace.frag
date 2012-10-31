@@ -55,11 +55,11 @@ layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
 in vec2 vUV;
 uniform float uTextureRes;
 
-const int MAX_STEPS = 256;
+const int MAX_STEPS = 1024;
 const float STEPSIZE_WRT_TEXEL = 0.3333;  // Cyrill uses 1/3
 const float ALPHA_THRESHOLD = 0.95;
 const float TRANSMIT_MIN = 0.05;
-const float TRANSMIT_K = 1.0;
+const float TRANSMIT_K = 3.0;
 
 float gTexelSize;
 float gPixSizeAtDist;
@@ -68,6 +68,11 @@ float gPixSizeAtDist;
 //---------------------------------------------------------
 // PROGRAM
 //---------------------------------------------------------
+
+// http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
+float rand(vec2 n) {
+    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
 
 // special case, optimized for 0.0 to 1.0
 bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {    
@@ -152,6 +157,8 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
   for (int i=0; i<MAX_STEPS; ++i) {
     float dist = distance(pos, uCamPos);
 
+    float randval = rand(pos.xy);
+
     // size of texel cube we want to be looking into
     // correctly interpolated texel size, automatic
     float pixSize = gPixSizeAtDist * dist;
@@ -169,7 +176,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     }
 
     // take step relative to the interpolated size
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    float stepSize = pixSize * STEPSIZE_WRT_TEXEL + randval*pixSize*0.1;
 
     // sample texture
     vec4 texel = textureLod(colorTexture, pos, mipLevel);
@@ -201,6 +208,39 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
   return vec4( alpha==0 ? col : col/alpha , alpha);;
 }
 
+vec4 raytraceAccum(vec3 ro, vec3 rd) {
+  vec3 pos = ro;
+  
+  float stepSize = gTexelSize * STEPSIZE_WRT_TEXEL;
+
+  vec3 col = vec3(0.0);   // accumulated color
+  float tm = 1.0;         // accumulated transmittance
+  
+  for (int i=0; i<MAX_STEPS; ++i) {
+    // sample texture
+    vec4 texel = textureLod(colorTexture, pos, 1.0);
+    
+    // delta transmittance
+    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
+    tm *= dtm;
+
+    col += (1.0-dtm)*texel.rgb;//*tm;
+
+    pos += stepSize*rd;//+ 0.0002*rand(pos.xy+1.0);
+    
+    if (tm < TRANSMIT_MIN ||
+      pos.x > 1.0 || pos.x < 0.0 ||
+      pos.y > 1.0 || pos.y < 0.0 ||
+      pos.z > 1.0 || pos.z < 0.0)
+      break;
+  }
+
+  //return col;
+  
+  float alpha = 1.0-tm;
+  return vec4( alpha==0 ? col : col/alpha , alpha);;
+}
+
 void main()
 {
 	// flip uv.y
@@ -209,7 +249,8 @@ void main()
     //-----------------------------------------------------
     // CAMERA RAY
     //-----------------------------------------------------
-
+    #define AO_TEST
+    #ifndef AO_TEST
     // camera ray
     vec3 C = normalize(uCamLookAt-uCamPos);
 
@@ -224,25 +265,29 @@ void main()
 
     vec3 rd = normalize(
         C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
-    );
+    );    
+    vec3 campos = uCamPos;
 
-    //vec3 CAMUP = vec3(0.0, 1.0, 0.0);
-    //vec3 CAMPOS = vec3(fract(uTime), 0.2, 0.5);
-//
-    //vec3 C = normalize(vec3(2.0, 1.0, 0.0));
-//
-    //// calc A (screen x)
-    //// calc B (screen y) then scale down relative to aspect
-    //// fov is for screen x axis
-    //vec3 A = normalize(cross(C,CAMUP));
-    //vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
-//
-    //// scale by FOV
-    //float tanFOV = tan(radians(uFOV));
-//
-    //vec3 rd = normalize(
-        //C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
-    //);
+    #else
+    vec3 CAMUP = vec3(0.0, 1.0, 0.0);
+    vec3 CAMPOS = vec3(fract(uTime), 0.2, 0.5);
+    
+    vec3 C = normalize(vec3(2.0, 1.0, 0.0));
+
+    // calc A (screen x)
+    // calc B (screen y) then scale down relative to aspect
+    // fov is for screen x axis
+    vec3 A = normalize(cross(C,CAMUP));
+    vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
+
+    // scale by FOV
+    float tanFOV = tan(radians(uFOV));
+
+    vec3 rd = normalize(
+        C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
+    );
+    vec3 campos = CAMPOS;
+    #endif
 
     
     //-----------------------------------------------------
@@ -265,14 +310,18 @@ void main()
 
     // calc entry point
     float t;
-    if (textureVolumeIntersect(uCamPos+rd*EPS, rd, t))
-        cout = conetraceAccum(uCamPos+rd*(t+EPS), rd);
+    //campos += 0.01*vec3(rand(uv), rand(uv.yx), rand(-uv));
+    if (textureVolumeIntersect(campos+rd*EPS, rd, t))
+        //cout = raytraceAccum(campos+rd*(t+EPS), rd);
+        cout = conetraceAccum(campos+rd*(t+EPS), rd);
         //cout = conetraceSimple(uCamPos+rd*(t+EPS), rd);
     else
         cout = vec4(0.0);
 
+    //fragColor = vec4(cout.rgb, cout.a);
+
     // background color
-    vec4 bg = vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
+    vec4 bg = vec4(vec3(0.0), 1.0);//vec4(vec3(0.0, 0.0, (1.0-vUV.y)/2.0), 1.0);
 
     // alpha blend cout over bg
     bg.rgb = mix(bg.rgb, cout.rgb, cout.a);

@@ -74,6 +74,11 @@ float gTexelSize;
 // UTILITIES
 //---------------------------------------------------------
 
+// http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
+float rand(vec2 n) {
+    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
+
 // rotate vector a given angle(rads) over a given axis
 // source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToMatrix/index.htm
 vec3 rotate(vec3 vector, float angle, vec3 axis) {
@@ -178,6 +183,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    stepSize +=  rand(pos.xy)*pixSize*0.1;
 
     // sample texture
     vec4 texel = textureLod(tVoxColor, pos, mipLevel);
@@ -191,7 +197,8 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
 
     // increment
     dist += stepSize;
-    pos += stepSize*rd;
+    pos += stepSize*rd;    
+    //pos += 0.001*rand(pos.xy);
 
     if (tm < TRANSMIT_MIN ||
       pos.x > 1.0 || pos.x < 0.0 ||
@@ -329,6 +336,8 @@ void main()
             for (float i=0.0; i<1.0; i++) {
                 vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
+
+                //vec3 randval = 0.0001*vec3(rand(pos.xy), rand(pos.yz), rand(pos.xz));
                 indir += conetraceAccum(pos+rd*0.01, rd, FOV);
             }
 
