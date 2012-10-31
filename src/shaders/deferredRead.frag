@@ -187,7 +187,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
 
-    col += (1.0-dtm)*texel.rgb*tm;
+    col += (1.0-dtm)*texel.rgb;//*(4.0*dist)*(4.0*dist);//*tm;
 
     // increment
     dist += stepSize;
@@ -201,7 +201,6 @@ vec4 conetraceAccum(vec3 ro, vec3 rd, float fov) {
   }
 
   float alpha = 1.0-tm;
-  alpha /= (1.0+AO_DIST_K*dist);
   return vec4( alpha==0 ? col : col/alpha , alpha);
 }
 
@@ -273,8 +272,8 @@ void main()
     //-----------------------------------------------------
 
     //#define PASS_COL
-    #define PASS_AO    
-    //#define PASS_INDIR
+    //#define PASS_AO    
+    #define PASS_INDIR
     //#define PASS_SPEC
 
     vec4 cout = vec4(vec3(1.0), col.a);
@@ -321,25 +320,21 @@ void main()
         {
             // duplicate code from above
 
-            #define NUM_DIRS 6.0
-            #define NUM_RADIAL_DIRS 5.0
+            #define NUM_DIRS 4.0
             const float FOV = radians(30.0);
             const float NORMAL_ROTATE = radians(60.0);
-            const float ANGLE_ROTATE = radians(72.0);
+            const float ANGLE_ROTATE = 2.0*PI/NUM_DIRS;
 
             vec3 axis = findPerpendicular(nor);
-            for (float i=0.0; i<NUM_RADIAL_DIRS; i++) {
+            for (float i=0.0; i<1.0; i++) {
                 vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), nor);
                 vec3 rd = rotate(nor, NORMAL_ROTATE, rotatedAxis);
                 indir += conetraceAccum(pos+rd*0.01, rd, FOV);
             }
 
-            indir += conetraceAccum(pos+nor*0.01, nor, FOV);
-
-            indir /= NUM_DIRS;
+            //indir /= NUM_DIRS;
 
             #undef NUM_DIRS
-            #undef NUM_RADIAL_DIRS
         }
         #endif
         

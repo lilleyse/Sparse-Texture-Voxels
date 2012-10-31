@@ -44,9 +44,9 @@ public:
 
     void createAllPresets()
     {
+        createTexture(CORNELL_BOX);  
         createTexture(CUBE_PRESET);
         createTexture(SPHERE_PRESET);  
-        createTexture(CORNELL_BOX);  
     }
     void createTexture(std::string name)
     {
@@ -121,6 +121,7 @@ public:
                 {
                     float sphereDist = glm::distance(sphereCenter, glm::vec3(i,j,k));
 
+                    
                     if (j==0 || 
                         j==voxelGridLength-1 ||
                         k==0 ) {
@@ -135,6 +136,11 @@ public:
                     else if (sphereDist<sphereRadius) {
                         textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,0.0f,255.0f);
                     }
+
+                    //if (j==0)
+                    //    textureData.colorData[textureIndex] = glm::u8vec4(255.0f,255.0f,255.0f,255.0f);                    
+                    //else if (i==voxelGridLength-1) 
+                    //    textureData.colorData[textureIndex] = glm::u8vec4(0,255.0f,0,255.0f);                    
                     else {
                         textureData.colorData[textureIndex] = glm::u8vec4(0,0,0,0);
                     }

@@ -32,7 +32,7 @@ namespace
     // Texture settings
     VoxelTextureGenerator voxelTextureGenerator;
     const std::string initialTextures[] = {"data/Bucky.raw"};
-    bool loadMultipleTextures = true;
+    bool loadMultipleTextures = false;
     uint voxelGridLength = 32;
     uint numMipMapLevels;
     uint currentMipMapLevel;
@@ -43,7 +43,7 @@ namespace
     VoxelConetracer voxelConetracer;
     DeferredPipeline deferredPipeline;
     DemoType currentDemoType = DEFERRED_PIPELINE;
-    bool loadAllDemos = false;
+    bool loadAllDemos = true;
 
     // OpenGL stuff
     GLuint perFrameUBO;
@@ -137,9 +137,9 @@ bool begin()
     // all process, nothing interesting here
     fullScreenQuad.begin();
     voxelTextureGenerator.begin(voxelGridLength, loadMultipleTextures);
-    uint numInitialTextures = sizeof(initialTextures) / sizeof(initialTextures[0]);
-    for (uint i = 0; i < numInitialTextures; i++)
-        voxelTextureGenerator.createTexture(initialTextures[i]);
+    //uint numInitialTextures = sizeof(initialTextures) / sizeof(initialTextures[0]);
+    //for (uint i = 0; i < numInitialTextures; i++)
+    //    voxelTextureGenerator.createTexture(initialTextures[i]);
     voxelTextureGenerator.createAllPresets();
     voxelTextureGenerator.setTexture(0);
     VoxelTexture* voxelTexture = voxelTextureGenerator.getVoxelTexture();
@@ -226,7 +226,7 @@ void display()
     }
     else if (currentDemoType == DEFERRED_PIPELINE)
     {
-        voxelTextureGenerator.getVoxelTexture()->display(true);
+        voxelTextureGenerator.getVoxelTexture()->display(false);
         deferredPipeline.display(fullScreenQuad, debugDraw);
     }
 

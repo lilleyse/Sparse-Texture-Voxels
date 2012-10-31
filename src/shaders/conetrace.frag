@@ -117,20 +117,18 @@ vec4 conetraceSimple(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
 
     // sample texture
-    vec4 src = textureLod(colorTexture, pos, mipLevel);
+    vec4 texel = textureLod(colorTexture, pos, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
     // texel cube exactly the size of a mip cube we want, if it existed, 
     // but it doesn't so we interpolate between two mips to approximate it
     // but need to weight by stepsize within texel
-    src.a *= STEPSIZE_WRT_TEXEL;
+    texel *= STEPSIZE_WRT_TEXEL;
 
-    // alpha blending
-    vec4 dst = color;
-    color.a = src.a + dst.a*(1.0-src.a);
-    color.rgb = EQUALSZERO(color.a) ? vec3(0.0) : 
-        (src.rgb*src.a + dst.rgb*dst.a*(1.0-src.a)) / color.a;
+    // blending
+    color.rgb += (1.0-color.a)*texel.rgb;
+    color.a +=   (1.0-color.a)*texel.a;
 
     pos += stepSize*rd;
     
@@ -182,11 +180,11 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // but it doesn't so we interpolate between two mips to approximate it
     // but need to weight by stepsize within texel
 
-    // delta transmittance
+    //// delta transmittance
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
 
-    col += (1.0-dtm)*texel.rgb*tm;
+    col += (1.0-dtm)*texel.rgb;//*tm;
 
     pos += stepSize*rd;
     
@@ -196,6 +194,8 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
       pos.z > 1.0 || pos.z < 0.0)
       break;
   }
+
+  //return col;
   
   float alpha = 1.0-tm;
   return vec4( alpha==0 ? col : col/alpha , alpha);;
@@ -226,6 +226,24 @@ void main()
         C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
     );
 
+    //vec3 CAMUP = vec3(0.0, 1.0, 0.0);
+    //vec3 CAMPOS = vec3(fract(uTime), 0.2, 0.5);
+//
+    //vec3 C = normalize(vec3(2.0, 1.0, 0.0));
+//
+    //// calc A (screen x)
+    //// calc B (screen y) then scale down relative to aspect
+    //// fov is for screen x axis
+    //vec3 A = normalize(cross(C,CAMUP));
+    //vec3 B = -1.0/(uAspect)*normalize(cross(A,C));
+//
+    //// scale by FOV
+    //float tanFOV = tan(radians(uFOV));
+//
+    //vec3 rd = normalize(
+        //C + (2.0*uv.x-1.0)*tanFOV*A + (2.0*uv.y-1.0)*tanFOV*B
+    //);
+
     
     //-----------------------------------------------------
     // SETUP GLOBAL VARS
@@ -235,7 +253,7 @@ void main()
     gTexelSize = 1.0/uTextureRes;
     
     // size of pixel at dist d=1.0
-    gPixSizeAtDist = tanFOV / (uResolution.x/2.0);
+    gPixSizeAtDist = tanFOV / (uResolution.x/32.0);
 
     
     //-----------------------------------------------------
@@ -249,6 +267,7 @@ void main()
     float t;
     if (textureVolumeIntersect(uCamPos+rd*EPS, rd, t))
         cout = conetraceAccum(uCamPos+rd*(t+EPS), rd);
+        //cout = conetraceSimple(uCamPos+rd*(t+EPS), rd);
     else
         cout = vec4(0.0);
 
