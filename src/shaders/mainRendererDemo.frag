@@ -146,7 +146,7 @@ layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 #define AO_DIST_K 0.3
 #define JITTER_K 0.025
 
-vec3 gNormal, gDiffuse, gRandVec;
+vec3 gNormal, gDiffuse;
 float gTexelSize, gRandVal;
 
 //---------------------------------------------------------
@@ -333,9 +333,9 @@ void main()
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
     
     // calc globals
-    gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
+    gRandVal = 0.0;
+    //gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
     //gRandVal = rand(pos.xy);
-    //gRandVec = vec3(rand(pos.xy), rand(pos.xz), rand(pos.yz));
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.0;
 
