@@ -231,24 +231,27 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     // calc mip size, clamp min to texelsize
     float pixSize = max(dist*pixSizeAtDist, gTexelSize);
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-
     vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
-    tm *= dtm;
+    if(vcol.a > 0.0)
+    {
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+        tm *= dtm;
 
-    //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
-    // render
-    col += (1.0-dtm) * vcol.rgb;
-    //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
-    //vec3 reflectedDir = vnor.xyz;
-    //float LdotN = abs(vnor.w);
+        //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
+
+        // render
+        col += (1.0-dtm) * vcol.rgb * tm * 2.0;
+        //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
+        //vec3 reflectedDir = vnor.xyz;
+        //float LdotN = abs(vnor.w);
     
-    //#define KD 0.6
-    //#define KS 0.4
-    //#define SPEC 5
-    //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
-    
+        //#define KD 0.6
+        //#define KS 0.4
+        //#define SPEC 5
+        //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+    }
+      
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
     //stepSize += gRandVal*pixSize*JITTER_K;
@@ -287,7 +290,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         vec3 lightCol = (1.0-dtm) * vcol.rgb;
         //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
         vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
-        localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
+        localColor *= (INDIR_DIST_K*dist);
         col.rgb += localColor;
         // gDiffuse can be factored out, but here for now for clarity
     }
@@ -337,11 +340,11 @@ void main()
     //gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
     //gRandVal = rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize*2.0;
+    float voxelOffset = gTexelSize*2.5;
 
     #define PASS_DIFFUSE
     #define PASS_INDIR
-    //#define PASS_SPEC
+    #define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec4 indir = vec4(0.0);
@@ -382,7 +385,7 @@ void main()
     cout += diffuse.rgb * uLightColor * LdotN * visibility;
     #endif
     #ifdef PASS_INDIR
-    cout += indir.rgb;
+    cout += indir.rgb*3.0;
     cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
