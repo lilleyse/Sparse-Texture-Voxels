@@ -146,7 +146,7 @@ layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 #define AO_DIST_K 0.3
 #define JITTER_K 0.025
 
-vec3 gNormal, gDiffuse;
+vec3 gNormal, gDiffuse, gRandVec;
 float gTexelSize, gRandVal;
 
 //---------------------------------------------------------
@@ -155,7 +155,7 @@ float gTexelSize, gRandVal;
 
 // http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
 float rand(vec2 n) {
-    return fract(sin(dot(n.xy, vec2(13, 78)))* 43758);
+    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
 }
 
 // rotate vector a given angle(rads) over a given axis
@@ -333,13 +333,15 @@ void main()
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
     
     // calc globals
-    gRandVal = texture(tNoise,pos.xy).r;//rand(pos.xy);
+    gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
+    //gRandVal = rand(pos.xy);
+    //gRandVec = vec3(rand(pos.xy), rand(pos.xz), rand(pos.yz));
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.0;
-    
+
     #define PASS_DIFFUSE
     #define PASS_INDIR
-    #define PASS_SPEC
+    //#define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec4 indir = vec4(0.0);
@@ -374,14 +376,13 @@ void main()
     #endif
 
     #ifdef PASS_DIFFUSE
-    vec3 normal = normalize(vertexData.normal);
     float visibility = getVisibility();
-    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
+    float LdotN = pow(max(dot(uLightDir, gNormal), 0.0), 0.5);
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     cout += diffuse.rgb * uLightColor * LdotN * visibility;
     #endif
-    #ifdef PASS_INDIR    
-    cout += indir.rgb * 2.0;
+    #ifdef PASS_INDIR
+    cout += indir.rgb;
     cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
