@@ -7,6 +7,7 @@
 #include "MipMapGenerator.h"
 #include "VoxelClean.h"
 #include "ShadowMap.h"
+#include "NoiseTexture.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -18,7 +19,7 @@ namespace
 {
     // Window
     std::string applicationName("Sparse Texture Voxels");
-    glm::ivec2 windowSize(600, 400);
+    glm::ivec2 windowSize(800, 533);
     glm::ivec2 openGLVersion(4, 2);
     bool enableMousePicking = true;
     bool showDebugOutput = false;
@@ -31,8 +32,8 @@ namespace
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
-    float specularFOV = 5.0;
-    float specularAmount = 0.5;
+    float specularFOV = 5.0f;
+    float specularAmount = 0.0f;
     bool loadTextures = false;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,
@@ -72,6 +73,7 @@ namespace
     Passthrough* passthrough = new Passthrough();
     PerFrameUBO* perFrame = new PerFrameUBO();
     ShadowMap* shadowMap = new ShadowMap();
+    NoiseTexture* noiseTexture = new NoiseTexture();
     GLuint perFrameUBO;
 }
 
@@ -124,7 +126,7 @@ void GLFWCALL mouseClick(int button, int action)
         }
         else if (action == GLFW_RELEASE)
         {
-            if (currentDemoType == MAIN_RENDERER && enableMousePicking && mouseClickPos == currentMousePos)
+            if (enableMousePicking && mouseClickPos == currentMousePos)
             {
                 currentSelectedObject = 0;
                 Utils::Math::Ray ray = Utils::Math::getPickingRay(currentMousePos.x, currentMousePos.y, windowSize.x, windowSize.y, currentCamera->nearPlane, currentCamera->farPlane,  currentCamera->viewMatrix, currentCamera->projectionMatrix);    
@@ -186,32 +188,30 @@ void processKeyDown()
 {
     // This method checks if keys are down every frame
     bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
-    if (currentDemoType == MAIN_RENDERER)
-    {    
-        // Transforming selected objects
-        if (enableMousePicking && currentSelectedObject != 0)
-        {
-            float translationAmount = 0.01f;
-            float rotationAmount = 0.5f;
-            float scaleAmount = 0.01f;
-            if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
-            if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
-            if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
-            if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
-            if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
-            if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
-            if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
-            else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
-            if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
-            else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
-        }
-
-        // Changing specular values
-        float specularFOVChange = 0.2f;
-        float specularAmountChange = 0.004f;
-        if (glfwGetKey('F') == GLFW_PRESS) specularFOV = glm::clamp(specularFOV + specularFOVChange * (shiftDown ? -1.0f : 1.0f), 0.01f, 50.0f);
-        if (glfwGetKey('G') == GLFW_PRESS) specularAmount = glm::clamp(specularAmount + specularAmountChange * (shiftDown ? -1.0f : 1.0f), 0.0f, 1.0f);
+  
+    // Transforming selected objects
+    if (enableMousePicking && currentSelectedObject != 0)
+    {
+        float translationAmount = 0.01f;
+        float rotationAmount = 0.5f;
+        float scaleAmount = 0.01f;
+        if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
+        if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
+        if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
+        if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
+        if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
+        else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
+        if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
+        else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
     }
+
+    // Changing specular values
+    float specularFOVChange = 0.2f;
+    float specularAmountChange = 0.004f;
+    if (glfwGetKey('F') == GLFW_PRESS) specularFOV = glm::clamp(specularFOV + specularFOVChange * (shiftDown ? -1.0f : 1.0f), 0.01f, 50.0f);
+    if (glfwGetKey('G') == GLFW_PRESS) specularAmount = glm::clamp(specularAmount + specularAmountChange * (shiftDown ? -1.0f : 1.0f), 0.0f, 1.0f);
 }
 
 void GLFWCALL resize(int w, int h)
@@ -219,14 +219,6 @@ void GLFWCALL resize(int w, int h)
     Utils::OpenGL::setScreenSize(w, h);
     viewCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
-}
-
-void clearBuffers()
-{
-    float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
-    glClearBufferfv(GL_COLOR, 0, clearColor);
-    float clearDepth = 1.0f;
-    glClearBufferfv(GL_DEPTH, 0, &clearDepth);
 }
 
 void setUBO()
@@ -300,18 +292,19 @@ void begin()
     // set up miscellaneous things
     Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
     timer->begin();
-    coreEngine->begin(sceneFile);
+    noiseTexture->begin();
     fullScreenQuad->begin();
+    coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelClean->begin(voxelTexture, fullScreenQuad);
     voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
-    shadowMap->begin(shadowMapResolution, coreEngine, perFrame, perFrameUBO, lightCamera);
+    shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
 
     // blank slate
-    clearBuffers();
+    Utils::OpenGL::clearColorAndDepth();
     setUBO();
 
     // voxelize and light the scene
@@ -353,9 +346,10 @@ void begin()
 void display()
 {
     // blank slate
-    clearBuffers();
+    Utils::OpenGL::clearColorAndDepth();
     setUBO();
-    
+    coreEngine->updateScene();
+
     // Display demo
     if (currentDemoType == VOXEL_DEBUG)
         voxelDebug->display();
@@ -372,12 +366,11 @@ void display()
     else if (currentDemoType == MAIN_RENDERER) {
         // Update the scene
         // We should move this to mainRenderer->display once lights are self contained and have working matrices
-        coreEngine->updateScene();
         shadowMap->display();
         voxelClean->clean();
         voxelizer->voxelizeScene();
         mipMapGenerator->generateMipMapGPU();
-        clearBuffers();
+        Utils::OpenGL::clearColorAndDepth();
         setUBO();
         mainRenderer->display();
     }

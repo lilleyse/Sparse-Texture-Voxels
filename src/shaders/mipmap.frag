@@ -22,7 +22,8 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
+#define NOISE_TEXTURE_2D_BINDING                 4
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -31,6 +32,10 @@
 #define NORMAL_IMAGE_3D_BINDING_BASE             3
 #define NORMAL_IMAGE_3D_BINDING_CURR             4
 #define NORMAL_IMAGE_3D_BINDING_NEXT             5
+
+// Shadow Map FBO
+#define SHADOW_MAP_FBO_BINDING      0
+#define BLURRED_MAP_FBO_BINDING     1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -86,7 +91,7 @@ void main()
     vec4 avgNormal = vec4(0.0);
 
     float normalCount = 0.0;
-
+     
     for(int i = 0; i < 2; i++)
     for(int j = 0; j < 2; j++)
     for(int k = 0; k < 2; k++)
@@ -97,10 +102,11 @@ void main()
         avgColor += neighborColor;
 
         vec4 neighborNormal = imageLoad(tNormalMipCurr, neighbor);
-        if (neighborNormal.w == 0.0) {
+        if (neighborNormal.w != 0.0) {
             avgNormal += neighborNormal;
             ++normalCount;
         }
+        //avgNormal += neighborNormal;
     }
     avgColor.rgb /= avgColor.a;
     avgColor.a /= 8.0;
