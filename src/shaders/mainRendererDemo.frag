@@ -288,8 +288,8 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
         // calc local illumination
         vec3 lightCol = (1.0-dtm) * vcol.rgb;
-        //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
-        vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
+        vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
+        vec3 localColor = gDiffuse*lightCol*max(dot(-lightDir, gNormal),0.0);
         localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
         col.rgb += localColor;
         // gDiffuse can be factored out, but here for now for clarity

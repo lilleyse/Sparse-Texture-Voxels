@@ -137,10 +137,10 @@ void main()
     vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility*LdotN, diffuse.a);
     //in the future, the magnitude of reflectedDirection will be the specularity 
     vec3 reflectedDirection = reflect(-uLightDir, normal);
-    vec4 outNormal = vec4(reflectedDirection, 0.0); 
+    vec4 outNormal = vec4(reflectedDirection, 1.0);
 
     // write to image
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
     imageStore(tVoxColor, voxelPos, outColor);
-    imageStore(tVoxNormal, voxelPos, vec4(vertexData.position,1.0));
+    imageStore(tVoxNormal, voxelPos, outNormal);
 }
