@@ -22,26 +22,23 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4     
 
 // Image binding points
 
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
-
-// Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Framebuffer object outputs
 #define DEFERRED_POSITIONS_FBO_BINDING       0
 #define DEFERRED_COLORS_FBO_BINDING          1
 #define DEFERRED_NORMALS_FBO_BINDING         2
+
+// Shadow Map FBO
+#define SHADOW_MAP_FBO_BINDING      0
+#define BLURRED_MAP_FBO_BINDING     1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -74,38 +71,11 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(location = POSITION_ATTR) in vec3 position;
-layout(location = NORMAL_ATTR) in vec3 normal;
-layout(location = UV_ATTR) in vec2 uv;
-layout(location = PROPERTY_INDEX_ATTR)  in ivec2 indexes;
-
-struct ObjectPosition
-{
-    mat4 modelMatrix;
-};
-
-// Wating to use Shader Storage Buffers so I don't need to statically declare my array size
-layout(std140, binding = POSITION_ARRAY_BINDING) uniform PositionArray
-{
-    ObjectPosition positionArray[NUM_OBJECTS_MAX];
-};
-
-ObjectPosition getObjectPosition()
-{
-    int index = indexes[POSITION_INDEX];
-    return positionArray[index];
-}
-
-out gl_PerVertex
-{
-    vec4 gl_Position;
-};
-
+layout (location = 0) out vec4 fragColor;
 
 void main()
 {    
-    mat4 modelMatrix = getObjectPosition().modelMatrix; 
-    vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-    gl_Position = uViewProjection * worldPosition;
+    float depth = gl_FragCoord.z;
+    float depth2 = depth * depth;
+    fragColor = vec4(depth, depth2, 0.0, 0.0);
 }
-

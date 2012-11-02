@@ -22,7 +22,8 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
+#define NOISE_TEXTURE_2D_BINDING                 4
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -31,6 +32,10 @@
 #define NORMAL_IMAGE_3D_BINDING_BASE             3
 #define NORMAL_IMAGE_3D_BINDING_CURR             4
 #define NORMAL_IMAGE_3D_BINDING_NEXT             5
+
+// Shadow Map FBO
+#define SHADOW_MAP_FBO_BINDING      0
+#define BLURRED_MAP_FBO_BINDING     1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -128,22 +133,30 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
 layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
+layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
-#define TRANSMIT_K 3.0
-#define INDIR_DIST_K 5.0
+#define TRANSMIT_K  8.0
+#define INDIR_DIST_K 4.0
 #define INDIR_K 1.5
+#define AO_DIST_K 0.3
+#define JITTER_K 0.025
 
 vec3 gNormal, gDiffuse;
-float gTexelSize = 0.0;
+float gTexelSize, gRandVal;
 
 //---------------------------------------------------------
 // UTILITIES
 //---------------------------------------------------------
+
+// http://www.ozone3d.net/blogs/lab/20110427/glsl-random-generator/
+float rand(vec2 n) {
+    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
 
 // rotate vector a given angle(rads) over a given axis
 // source: http://www.euclideanspace.com/maths/geometry/rotations/conversions/angleToMatrix/index.htm
@@ -218,26 +231,30 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     // calc mip size, clamp min to texelsize
     float pixSize = max(dist*pixSizeAtDist, gTexelSize);
     float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-
     vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
-    tm *= dtm;
+    if(vcol.a > 0.0)
+    {
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+        tm *= dtm;
 
-    //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
-    // render
-    col += (1.0-dtm) * vcol.rgb;  
-    //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
-    //vec3 reflectedDir = vnor.xyz;
-    //float LdotN = abs(vnor.w);
+        //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
+
+        // render
+        col += (1.0-dtm) * vcol.rgb;
+        //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
+        //vec3 reflectedDir = vnor.xyz;
+        //float LdotN = abs(vnor.w);
     
-    //#define KD 0.6
-    //#define KS 0.4
-    //#define SPEC 5
-    //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
-    
+        //#define KD 0.6
+        //#define KS 0.4
+        //#define SPEC 5
+        //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+    }
+      
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    //stepSize += gRandVal*pixSize*JITTER_K;
     dist += stepSize;
     pos += stepSize*rd;
   }
@@ -253,7 +270,6 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
   vec4 col = vec4(0.0);   // accumulated color
   float tm = 1.0;         // accumulated transmittance
-  float occlusion = 0.0;
 
   while(tm > TRANSMIT_MIN &&
         pos.x < 1.0 && pos.x > 0.0 &&
@@ -267,57 +283,65 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
     if(vcol.a > 0.0)
     {
-        vec3 vnormal = textureLod(tVoxNormal, pos, 0.0).rgb;
-        //float RdotN = dot(rd, vnormal);
-        //if(RdotN < 0.0)
-        //{
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
-            tm *= dtm;
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+        tm *= dtm;
 
-            // calc local illumination
-            //col.rgb += (1.0-dtm) * vcol.rgb;
-            //occlusion += (1.0-dtm)*tm*length(col.rgb);
-            vec3 lightCol = (1.0-dtm) * vcol.rgb;    
-            //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
-            vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
-            localColor *= pow(INDIR_DIST_K*dist*dist, 2.0);
-            col.rgb += localColor;
-            // gDiffuse can be factored out, but here for now for clarity
-        //}
+        // calc local illumination
+        vec3 lightCol = (1.0-dtm) * vcol.rgb;
+        vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
+        vec3 localColor = gDiffuse*lightCol*max(dot(-lightDir, gNormal),0.0);
+        localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
+        col.rgb += localColor;
+        // gDiffuse can be factored out, but here for now for clarity
     }
     
     // increment
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+    stepSize += gRandVal*pixSize*JITTER_K;
     dist += stepSize;
     pos += stepSize*rd;
   }
+  
+  // weight AO by distance f(r) = 1/(1+K*r)
+  float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
 
-  col.a = clamp(occlusion, 0.0, 1.0);
-  return vec4(INDIR_K*col.rgb, col.a);
+  return vec4(INDIR_K*col.rgb, visibility);
 }
 
 float getVisibility()
 {
-    vec3 shadowMapPos = vertexData.shadowMapPos.xyz/vertexData.shadowMapPos.w;
-    vec4 neighbors = textureGather(shadowMap, shadowMapPos.xy, shadowMapPos.z);
-    float percentInLight = dot(neighbors, vec4(.25));
-    return percentInLight;
+	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    float fragLightDepth = fragLightPos.z;
+    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    	
+	// Surface is fully lit.
+	if (fragLightDepth <= moments.x)
+		return 1.0;
+	
+	// How likely this pixel is to be lit (p_max)
+	float variance = moments.y - (moments.x*moments.x);
+	variance = max(variance,0.00002);
+	
+	float d = moments.x - fragLightDepth;
+	float p_max = variance / (variance + d*d);
+	return p_max;
 }
 
 void main()
 {
     // current vertex info
     vec3 pos = vertexData.position;
-    gNormal = normalize(vertexData.normal);    
+    vec3 cout = vec3(0.0);
+    gNormal = normalize(vertexData.normal);
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
-
-    //vec4 radiance = textureLod(tVoxColor, pos, 0.0);
-    //float LdotN = abs(textureLod(tVoxNormal, pos, 0.0).w);
     
     // calc globals
+    gRandVal = 0.0;
+    //gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
+    //gRandVal = rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize;//*ROOTTHREE;
-    
+    float voxelOffset = gTexelSize*2.5;
+
     #define PASS_DIFFUSE
     #define PASS_INDIR
     #define PASS_SPEC
@@ -326,7 +350,7 @@ void main()
     vec4 indir = vec4(0.0);
     {
         #define NUM_DIRS 4.0
-        const float FOV = radians(60.0);
+        const float FOV = radians(45.0);
         const float NORMAL_ROTATE = radians(45.0);
         const float ANGLE_ROTATE = 2.0*PI / NUM_DIRS;
 
@@ -334,7 +358,7 @@ void main()
         for (float i=0.0; i<NUM_DIRS; i++) {
             vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
             vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
-            indir += conetraceIndir(pos+rd*voxelOffset*2.0, rd, FOV);
+            indir += conetraceIndir(pos+rd*voxelOffset, rd, FOV);
         }
 
         indir /= NUM_DIRS;
@@ -350,46 +374,27 @@ void main()
         const float FOV = radians(uSpecularFOV);
         vec3 rd = normalize(pos-uCamPos);
         rd = reflect(rd, gNormal);
-        spec = conetraceSpec(pos+rd*voxelOffset*2.0, rd, FOV);
+        spec = conetraceSpec(pos+rd*voxelOffset, rd, FOV);
     }
     #endif
 
-    
-    //visibility = clamp(visibility+0.3, 0.0, 1.0);
-    vec3 normal = normalize(vertexData.normal);
-    vec3 position = vertexData.position;
-    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
-
+    #ifdef PASS_DIFFUSE
     float visibility = getVisibility();
-    float indirLightAmount = indir.a;
-
-    vec3 cout = vec3(0.0);
-
-    
-
-    //#ifdef PASS_DIFFUSE
+    float LdotN = pow(max(dot(uLightDir, gNormal), 0.0), 0.5);
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
-    
-    cout += diffuse.rgb * LdotN * visibility;
-    cout += indir.rgb * 3.0;
+    cout += diffuse.rgb * uLightColor * LdotN * visibility;
+    #endif
+    #ifdef PASS_INDIR
+    cout += indir.rgb;
+    cout *= indir.a;
+    #endif
+    #ifdef PASS_SPEC
+    cout = mix(cout, spec, uSpecularAmount);
+    #endif
 
+    // adjust blown out colors
     float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
     cout = clamp(cout - difference, 0.0, 1.0);
-    //cout = mix(cout, spec, uSpecularAmount);
-    //cout *= (visibility + indirLightAmount/2.0);
-    //cout *= (visibility < 0.5) ? indirLightAmount : 1.0;
-    //cout *= indirLightAmount;
-    //#endif
-    //#ifdef PASS_INDIR
-    
-    //#endif
-    
-    //#ifdef PASS_SPEC
-    
-    //#endif
-    
-    //fragColor = vec4(vec3(indirLightAmount), 1.0);
-    //vec3 voxelColor = textureLod(tVoxColor, position, 0.0).rgb;
-    //fragColor = vec4(voxelColor, 1.0);
+
     fragColor = vec4(cout.rgb, 1.0);
 }

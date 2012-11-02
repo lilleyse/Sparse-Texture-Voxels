@@ -12,6 +12,7 @@
 #include <glm/gtc/type_precision.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtc/random.hpp>
+#include <glm/gtx/random.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 // GLI libraries
@@ -222,7 +223,6 @@ namespace Utils
             else glColorMask(GL_FALSE,GL_FALSE,GL_FALSE,GL_FALSE);
         }
 
-
         int screenWidth;
         int screenHeight;
 
@@ -241,6 +241,21 @@ namespace Utils
             Utils::OpenGL::screenWidth = width;
             Utils::OpenGL::screenHeight = height;
             setScreenSizedViewport();
+        }
+
+        // Clears the color and depth for the bound framebuffer
+        void clearColorAndDepth()
+        {
+            float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
+            glClearBufferfv(GL_COLOR, 0, clearColor);
+            float clearDepth = 1.0f;
+            glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+        }
+
+        void clearDepth()
+        {
+            float clearDepth = 1.0f;
+            glClearBufferfv(GL_DEPTH, 0, &clearDepth);
         }
 
         bool checkProgram(GLuint ProgramName)

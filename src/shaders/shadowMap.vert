@@ -22,17 +22,14 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4     
 
 // Image binding points
 
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
+#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Shadow Map FBO
 #define SHADOW_MAP_FBO_BINDING      0

@@ -22,7 +22,8 @@
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define NORMAL_TEXTURE_3D_BINDING                2
 #define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
+#define NOISE_TEXTURE_2D_BINDING                 4
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -31,6 +32,10 @@
 #define NORMAL_IMAGE_3D_BINDING_BASE             3
 #define NORMAL_IMAGE_3D_BINDING_CURR             4
 #define NORMAL_IMAGE_3D_BINDING_NEXT             5
+
+// Shadow Map FBO
+#define SHADOW_MAP_FBO_BINDING      0
+#define BLURRED_MAP_FBO_BINDING     1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -62,7 +67,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2DShadow shadowMap;  
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
 layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) writeonly uniform image3D tVoxNormal;
@@ -105,10 +110,21 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 float getVisibility()
 {
-    vec3 shadowMapPos = vertexData.shadowMapPos.xyz/vertexData.shadowMapPos.w;
-    vec4 neighbors = textureGather(shadowMap, shadowMapPos.xy, shadowMapPos.z);
-    float percentInLight = dot(neighbors, vec4(.25));
-    return percentInLight;
+	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    float fragLightDepth = fragLightPos.z;
+    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    	
+	// Surface is fully lit.
+	if (fragLightDepth <= moments.x)
+		return 1.0;
+	
+	// How likely this pixel is to be lit (p_max)
+	float variance = moments.y - (moments.x*moments.x);
+	variance = max(variance,0.00002);
+	
+	float d = moments.x - fragLightDepth;
+	float p_max = variance / (variance + d*d);
+	return p_max;
 }
 
 void main()
@@ -121,7 +137,7 @@ void main()
     vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility*LdotN, diffuse.a);
     //in the future, the magnitude of reflectedDirection will be the specularity 
     vec3 reflectedDirection = reflect(-uLightDir, normal);
-    vec4 outNormal = vec4(reflectedDirection, visibility); 
+    vec4 outNormal = vec4(reflectedDirection, 1.0);
 
     // write to image
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
