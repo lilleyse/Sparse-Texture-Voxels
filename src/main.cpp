@@ -32,8 +32,8 @@ namespace
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
-    float specularFOV = 5.0;
-    float specularAmount = 0.5;
+    float specularFOV = 5.0f;
+    float specularAmount = 0.0f;
     bool loadTextures = false;
     const std::string voxelTextures[] = {
         VoxelTextureGenerator::CORNELL_BOX,

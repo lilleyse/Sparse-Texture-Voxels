@@ -140,8 +140,8 @@ layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
-#define TRANSMIT_K 3.0
-#define INDIR_DIST_K 5.0
+#define TRANSMIT_K  8.0
+#define INDIR_DIST_K 4.0
 #define INDIR_K 1.5
 #define AO_DIST_K 0.3
 #define JITTER_K 0.025
@@ -241,7 +241,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
         // render
-        col += (1.0-dtm) * vcol.rgb * tm * 2.0;
+        col += (1.0-dtm) * vcol.rgb;
         //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
         //vec3 reflectedDir = vnor.xyz;
         //float LdotN = abs(vnor.w);
@@ -288,9 +288,9 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
         // calc local illumination
         vec3 lightCol = (1.0-dtm) * vcol.rgb;
-        //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, 0.0).xyz);
+        //vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
         vec3 localColor = gDiffuse*lightCol;//*dot(-lightDir, gNormal);
-        localColor *= (INDIR_DIST_K*dist);
+        localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
         col.rgb += localColor;
         // gDiffuse can be factored out, but here for now for clarity
     }
@@ -385,7 +385,7 @@ void main()
     cout += diffuse.rgb * uLightColor * LdotN * visibility;
     #endif
     #ifdef PASS_INDIR
-    cout += indir.rgb*3.0;
+    cout += indir.rgb;
     cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
