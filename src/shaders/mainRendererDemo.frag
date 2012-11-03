@@ -21,8 +21,7 @@
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
 #define SHADOW_MAP_BINDING                       2
-#define NOISE_TEXTURE_2D_BINDING                 3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
@@ -131,7 +130,6 @@ layout(location = 0) out vec4 fragColor;
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
-layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
@@ -328,7 +326,6 @@ void main()
     
     // calc globals
     gRandVal = 0.0;
-    //gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
     //gRandVal = rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;

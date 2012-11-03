@@ -20,17 +20,16 @@ const uint POSITION_ARRAY_BINDING           = 3;
 const uint NON_USED_TEXTURE                         = 0; // Used for modifying textures that shouldn't be bound to a binding point
 const uint COLOR_TEXTURE_3D_BINDING                 = 1;
 const uint SHADOW_MAP_BINDING                       = 2;
-const uint NOISE_TEXTURE_2D_BINDING                 = 3;
-const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 4;
-const uint RESERVED_TEXTURE_ARRAY_1                 = 5;
-const uint RESERVED_TEXTURE_ARRAY_2                 = 6;
-const uint RESERVED_TEXTURE_ARRAY_3                 = 7;
-const uint RESERVED_TEXTURE_ARRAY_4                 = 8;
-const uint RESERVED_TEXTURE_ARRAY_5                 = 9;
-const uint RESERVED_TEXTURE_ARRAY_6                 = 10;
-const uint RESERVED_TEXTURE_ARRAY_7                 = 11;
-const uint RESERVED_TEXTURE_ARRAY_8                 = 12;
-const uint RESERVED_TEXTURE_ARRAY_9                 = 13;
+const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 3;
+const uint RESERVED_TEXTURE_ARRAY_1                 = 4;
+const uint RESERVED_TEXTURE_ARRAY_2                 = 5;
+const uint RESERVED_TEXTURE_ARRAY_3                 = 6;
+const uint RESERVED_TEXTURE_ARRAY_4                 = 7;
+const uint RESERVED_TEXTURE_ARRAY_5                 = 8;
+const uint RESERVED_TEXTURE_ARRAY_6                 = 9;
+const uint RESERVED_TEXTURE_ARRAY_7                 = 10;
+const uint RESERVED_TEXTURE_ARRAY_8                 = 11;
+const uint RESERVED_TEXTURE_ARRAY_9                 = 12;
 
 // Image binding points
 const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;

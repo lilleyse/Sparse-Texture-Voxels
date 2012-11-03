@@ -7,7 +7,6 @@
 #include "MipMapGenerator.h"
 #include "VoxelClean.h"
 #include "ShadowMap.h"
-#include "NoiseTexture.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -73,7 +72,6 @@ namespace
     Passthrough* passthrough = new Passthrough();
     PerFrameUBO* perFrame = new PerFrameUBO();
     ShadowMap* shadowMap = new ShadowMap();
-    NoiseTexture* noiseTexture = new NoiseTexture();
     GLuint perFrameUBO;
 }
 
@@ -292,7 +290,6 @@ void begin()
     // set up miscellaneous things
     Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
     timer->begin();
-    noiseTexture->begin();
     fullScreenQuad->begin();
     coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
