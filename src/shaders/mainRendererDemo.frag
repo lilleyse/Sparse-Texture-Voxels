@@ -20,22 +20,18 @@
 
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define SHADOW_MAP_BINDING                       2
+#define NOISE_TEXTURE_2D_BINDING                 3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -135,7 +131,6 @@ layout(location = 0) out vec4 fragColor;
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
@@ -237,9 +232,6 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
         tm *= dtm;
 
-
-        //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
-
         // render
         col += (1.0-dtm) * vcol.rgb;
         //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
@@ -288,8 +280,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
         // calc local illumination
         vec3 lightCol = (1.0-dtm) * vcol.rgb;
-        vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
-        vec3 localColor = gDiffuse*lightCol*max(dot(-lightDir, gNormal),0.0);
+        vec3 localColor = gDiffuse*lightCol;
         localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
         col.rgb += localColor;
         // gDiffuse can be factored out, but here for now for clarity

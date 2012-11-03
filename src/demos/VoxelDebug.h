@@ -90,8 +90,6 @@ public:
 
         glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
         glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
-        //glActiveTexture(GL_TEXTURE0 + NORMAL_TEXTURE_3D_BINDING);
-        //glBindTexture(GL_TEXTURE_3D, voxelTexture->normalTexture);
         
         float voxelScale = 1.0f / voxelTexture->mipMapInfoArray[0].gridLength;
         for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)

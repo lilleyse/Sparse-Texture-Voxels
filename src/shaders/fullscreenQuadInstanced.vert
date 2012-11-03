@@ -20,22 +20,18 @@
 
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define SHADOW_MAP_BINDING                       2
+#define NOISE_TEXTURE_2D_BINDING                 3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -66,7 +62,6 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularFOV;
     float uSpecularAmount;
 };
-
 
 //---------------------------------------------------------
 // SHADER VARS

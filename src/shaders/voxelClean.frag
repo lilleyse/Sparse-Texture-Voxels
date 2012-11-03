@@ -20,22 +20,18 @@
 
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define SHADOW_MAP_BINDING                       2
+#define NOISE_TEXTURE_2D_BINDING                 3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -81,7 +77,6 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 layout(location = 0) out vec4 fragColor;
 
 layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
-layout(binding = NORMAL_IMAGE_3D_BINDING_BASE, rgba8_snorm) writeonly uniform image3D tVoxNormal;
 
 flat in int slice;
 
@@ -89,5 +84,4 @@ void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
     imageStore(tVoxColor, globalId, vec4(0.0));
-    imageStore(tVoxNormal, globalId, vec4(0.0));
 }

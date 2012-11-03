@@ -19,30 +19,27 @@ const uint POSITION_ARRAY_BINDING           = 3;
 // Sampler binding points
 const uint NON_USED_TEXTURE                         = 0; // Used for modifying textures that shouldn't be bound to a binding point
 const uint COLOR_TEXTURE_3D_BINDING                 = 1;
-const uint NORMAL_TEXTURE_3D_BINDING                = 2;
-const uint SHADOW_MAP_BINDING                       = 3;
-const uint NOISE_TEXTURE_2D_BINDING                 = 4;
-const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 5;
-const uint RESERVED_TEXTURE_ARRAY_1                 = 6;
-const uint RESERVED_TEXTURE_ARRAY_2                 = 7;
-const uint RESERVED_TEXTURE_ARRAY_3                 = 8;
-const uint RESERVED_TEXTURE_ARRAY_4                 = 9;
-const uint RESERVED_TEXTURE_ARRAY_5                 = 10;
-const uint RESERVED_TEXTURE_ARRAY_6                 = 11;
-const uint RESERVED_TEXTURE_ARRAY_7                 = 12;
-const uint RESERVED_TEXTURE_ARRAY_8                 = 13;
-
-// Shadow Map FBO
-const uint SHADOW_MAP_FBO_BINDING = 0;
-const uint BLURRED_MAP_FBO_BINDING = 1;
+const uint SHADOW_MAP_BINDING                       = 2;
+const uint NOISE_TEXTURE_2D_BINDING                 = 3;
+const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 4;
+const uint RESERVED_TEXTURE_ARRAY_1                 = 5;
+const uint RESERVED_TEXTURE_ARRAY_2                 = 6;
+const uint RESERVED_TEXTURE_ARRAY_3                 = 7;
+const uint RESERVED_TEXTURE_ARRAY_4                 = 8;
+const uint RESERVED_TEXTURE_ARRAY_5                 = 9;
+const uint RESERVED_TEXTURE_ARRAY_6                 = 10;
+const uint RESERVED_TEXTURE_ARRAY_7                 = 11;
+const uint RESERVED_TEXTURE_ARRAY_8                 = 12;
+const uint RESERVED_TEXTURE_ARRAY_9                 = 13;
 
 // Image binding points
 const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;
 const uint COLOR_IMAGE_3D_BINDING_CURR              = 1;
 const uint COLOR_IMAGE_3D_BINDING_NEXT              = 2;
-const uint NORMAL_IMAGE_3D_BINDING_BASE             = 3;
-const uint NORMAL_IMAGE_3D_BINDING_CURR             = 4;
-const uint NORMAL_IMAGE_3D_BINDING_NEXT             = 5;
+
+// Shadow Map FBO
+const uint SHADOW_MAP_FBO_BINDING = 0;
+const uint BLURRED_MAP_FBO_BINDING = 1;
 
 // Object properties
 const int POSITION_INDEX        = 0;

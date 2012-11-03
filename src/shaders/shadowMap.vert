@@ -20,36 +20,28 @@
 
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4     
+#define SHADOW_MAP_BINDING                       2
+#define NOISE_TEXTURE_2D_BINDING                 3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
-
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
-
-// Framebuffer object outputs
-#define DEFERRED_POSITIONS_FBO_BINDING       0
-#define DEFERRED_COLORS_FBO_BINDING          1
-#define DEFERRED_NORMALS_FBO_BINDING         2
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
 #define MATERIAL_INDEX        1
 
 // Max values
-#define MAX_TEXTURE_ARRAYS              10
-#define FBO_BINDING_POINT_ARRAY_SIZE    4
-#define NUM_OBJECTS_MAX                 500
-#define NUM_MESHES_MAX                  500
-#define MAX_POINT_LIGHTS                8
+#define MAX_TEXTURE_ARRAYS               10
+#define NUM_OBJECTS_MAX                  500
+#define NUM_MESHES_MAX                   500
+#define MAX_POINT_LIGHTS                 8
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {

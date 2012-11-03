@@ -20,22 +20,18 @@
 
 // Sampler binding points
 #define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define SHADOW_MAP_BINDING                       2
+#define NOISE_TEXTURE_2D_BINDING                 3
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
 
 // Image binding points
 #define COLOR_IMAGE_3D_BINDING_BASE              0
 #define COLOR_IMAGE_3D_BINDING_CURR              1
 #define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -87,7 +83,6 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0, index = 0) out vec4 fragColor;
 layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
 
 in vec2 vUV;
 
@@ -170,13 +165,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
 
     // compute lighting
     {
-        vec3 C = (1.0-dtm)*texel.rgb;
-        vec3 R = textureLod(tVoxNormal, pos, 0.0).rgb; // change 0.0 to mipLevel
-
-        #define KD 0.6
-        #define KS 0.4
-        #define SPEC 10
-        col += KD*C + KS*pow(max(dot(R,-rd), 0.0), SPEC);
+        col += (1.0-dtm)*texel.rgb;
     }
 
     pos += stepSize*rd;
