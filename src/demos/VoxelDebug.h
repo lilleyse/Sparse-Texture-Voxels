@@ -13,9 +13,7 @@ private:
     static const uint numVerticesCube = 24;
     static const uint numElementsCube = 36; 
     VoxelTexture* voxelTexture;
-
     std::vector<MipMapInfo> debugMipMapInfoArray;
-
 
     struct Voxel
     {

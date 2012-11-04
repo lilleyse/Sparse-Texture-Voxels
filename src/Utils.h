@@ -188,7 +188,7 @@ namespace Utils
             // 1) timer.begin() to initialize
             // 2) timer.startTimer() before GL command
             // 3) timer.stopTimer() after GL command
-            // 4) uint total = getElapsedTime()
+            // 4) uint total = timer.getElapsedTime()
 
             GLuint queryObject;
             uint totalTime;
@@ -243,19 +243,20 @@ namespace Utils
             setScreenSizedViewport();
         }
 
-        // Clears the color and depth for the bound framebuffer
-        void clearColorAndDepth()
+        void clearColor()
         {
             float clearColor[4] = {0.0f,0.0f,0.0f,0.0f};
             glClearBufferfv(GL_COLOR, 0, clearColor);
-            float clearDepth = 1.0f;
-            glClearBufferfv(GL_DEPTH, 0, &clearDepth);
         }
-
         void clearDepth()
         {
             float clearDepth = 1.0f;
             glClearBufferfv(GL_DEPTH, 0, &clearDepth);
+        }
+        void clearColorAndDepth()
+        { 
+            clearColor();
+            clearDepth();
         }
 
         bool checkProgram(GLuint ProgramName)

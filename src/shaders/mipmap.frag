@@ -92,6 +92,5 @@ void main()
     }
     avgColor.rgb /= avgColor.a;
     avgColor.a /= 8.0;
-    //vec4 avgColor = vec4(vec3(globalId)/32.0, 1.0);
     imageStore(tColorMipNext, globalId, avgColor);
 }

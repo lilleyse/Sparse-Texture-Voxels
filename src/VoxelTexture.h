@@ -2,11 +2,6 @@
 
 #include "Utils.h"
 
-struct TextureData
-{
-    std::vector<glm::u8vec4> colorData;
-};
-
 struct MipMapInfo
 {
     uint offset;
@@ -28,13 +23,10 @@ public:
 
     uint voxelGridLength;
     uint numMipMapLevels;
-
-    uint totalVoxels;
     std::vector<MipMapInfo> mipMapInfoArray;
 
     void begin(uint voxelGridLength, uint numMipMapLevels)
     {
-        //Create a default empty vector for each texture data
         this->voxelGridLength = voxelGridLength;
 
         // Set num mipmaps based on the grid length
@@ -47,7 +39,7 @@ public:
         // Samplers
         float zeroes[] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-        // Create a nearest sampler to sample from any of the 3D textures
+        // Nearest
         glGenSamplers(1, &textureNearestSampler);
         glBindSampler(NON_USED_TEXTURE, textureNearestSampler);
         glSamplerParameterfv(textureNearestSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
@@ -59,7 +51,7 @@ public:
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glSamplerParameteri(textureNearestSampler, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
 
-        // Create a linear sampler to sample from any of the 3
+        // Linear
         glGenSamplers(1, &textureLinearSampler);
         glBindSampler(NON_USED_TEXTURE, textureLinearSampler);
         glSamplerParameterfv(textureLinearSampler, GL_TEXTURE_BORDER_COLOR, zeroes);
@@ -81,12 +73,6 @@ public:
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, baseLevel); 
         glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, maxLevel);
 
-        // Store empty data in the voxel texture
-        uint voxelTextureSize = voxelGridLength * voxelGridLength * voxelGridLength;
-        TextureData emptyData;
-        emptyData.colorData.resize(voxelTextureSize, glm::u8vec4(0,0,0,0));
-        setData(emptyData, voxelGridLength, 0);
-
         // Store mipmap data
         int numVoxels = 0;
         int mipMapSideLength = voxelGridLength;
@@ -101,16 +87,7 @@ public:
             mipMapSideLength /= 2;
             numVoxels += mipMapInfo.numVoxels;
         }
-        totalVoxels = numVoxels;
     }
-
-    // Data is assumed to be in RGBA format
-    void setData(TextureData& textureData, uint sideLength, uint mipMapLevel)
-    {
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, colorTexture);
-        glTexSubImage3D(GL_TEXTURE_3D, mipMapLevel, 0, 0, 0, sideLength, sideLength, sideLength, GL_RGBA, GL_UNSIGNED_BYTE, &textureData.colorData[0]);
-       }
 
     void setSamplerType(SamplerType samplerType)
     {
@@ -120,6 +97,7 @@ public:
         else if (currentSamplerType == NEAREST)
             glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
     }
+
     void changeSamplerType()
     {
         uint position = (uint)currentSamplerType + 1;

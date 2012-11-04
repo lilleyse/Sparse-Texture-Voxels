@@ -1,7 +1,6 @@
 #include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
 #include "Passthrough.h"
 #include "MipMapGenerator.h"
@@ -32,14 +31,7 @@ namespace
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0f;
-    float specularAmount = 0.0f;
-    bool loadTextures = false;
-    const std::string voxelTextures[] = {
-        VoxelTextureGenerator::CORNELL_BOX,
-        VoxelTextureGenerator::SPHERE,
-        VoxelTextureGenerator::CUBE,
-        DATA_DIRECTORY + "Bucky.raw",
-    };
+    float specularAmount = 0.5f;
 
     // Demo settings
     bool loadAllDemos = true;
@@ -61,7 +53,6 @@ namespace
     ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
     ThirdPersonCamera* currentCamera = viewCamera;
-    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
     VoxelClean* voxelClean = new VoxelClean();
@@ -169,16 +160,6 @@ void GLFWCALL keyPress(int k, int action)
 
         //Switch between light and regular camera
         if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
-
-        // Changing textures
-        if (loadTextures)
-        {
-            bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
-            bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-            if (setsNextTexture || setsPreviousTexture)
-                if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                    voxelDebug->voxelTextureUpdate();
-        }
     }
 }
 
@@ -222,7 +203,7 @@ void GLFWCALL resize(int w, int h)
 void setUBO()
 {
     // Update the per frame UBO
-    perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
+    perFrame->uViewProjection = currentCamera->createPerspectiveProjectionMatrix() * currentCamera->createViewMatrix();    
     perFrame->uCamLookAt = currentCamera->lookAt;
     perFrame->uCamPos = currentCamera->position;
     perFrame->uCamUp = currentCamera->upDir;
@@ -296,7 +277,6 @@ void begin()
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelClean->begin(voxelTexture, fullScreenQuad);
-    voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
 
@@ -309,21 +289,6 @@ void begin()
     voxelClean->clean();
     voxelizer->voxelizeScene();
     mipMapGenerator->generateMipMapGPU();
-
-    // mipmap
-    if (loadTextures)
-    {
-        // create procedural textures
-        uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-        for (uint i = 0; i < numInitialTextures; i++)
-            voxelTextureGenerator->createTexture(voxelTextures[i]);
-
-        // Load scene texture onto cpu
-        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-        voxelTextureGenerator->setTexture(sceneFile);
-    }
-    else 
-        mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -367,7 +332,6 @@ void display()
         voxelClean->clean();
         voxelizer->voxelizeScene();
         mipMapGenerator->generateMipMapGPU();
-        Utils::OpenGL::clearColorAndDepth();
         setUBO();
         mainRenderer->display();
     }
@@ -402,7 +366,6 @@ int main(int argc, char* argv[])
     glfwSetMousePosCallback(mouseMove);
     glfwSetMouseButtonCallback(mouseClick);
     glfwSetKeyCallback(keyPress);
-    glfwEnable(GLFW_AUTO_POLL_EVENTS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
 

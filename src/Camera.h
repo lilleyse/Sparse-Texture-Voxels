@@ -49,7 +49,7 @@ struct Camera
         projectionMatrix = glm::ortho(-side, side, -side, side, -10.0f, 10.0f);
         return projectionMatrix;
     }
-    glm::mat4 createProjectionMatrix()
+    glm::mat4 createPerspectiveProjectionMatrix()
     {
         projectionMatrix = glm::perspective(45.0f, aspectRatio, nearPlane, farPlane);
         return projectionMatrix;

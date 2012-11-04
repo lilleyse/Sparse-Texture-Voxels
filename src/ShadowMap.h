@@ -162,7 +162,5 @@ struct ShadowMap
         
         // Unbind FBO
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        
     }
-
 };
