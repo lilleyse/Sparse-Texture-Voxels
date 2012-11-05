@@ -13,10 +13,12 @@ class VoxelTexture
 {
 public:
 
-    GLuint colorTexture;
+    std::vector<GLuint> colorTextures;
     
     // Samplers
+    enum VoxelDirections {POSX, NEGX, POSY, NEGY, POSZ, NEGZ, NUM_DIRECTIONS};
     enum SamplerType {LINEAR, NEAREST, MAX_SAMPLER_TYPES};
+    uint firstDirectionBindingPoint;
     GLuint textureNearestSampler;
     GLuint textureLinearSampler;
     SamplerType currentSamplerType;
@@ -66,13 +68,18 @@ public:
         this->setSamplerType(LINEAR);
 
         // Create a dense 3D color texture
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
-        glGenTextures(1, &colorTexture);
-        glBindTexture(GL_TEXTURE_3D, colorTexture);
-        glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, baseLevel); 
-        glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, maxLevel);
-
+        colorTextures.resize(NUM_DIRECTIONS);
+        this->firstDirectionBindingPoint = GL_TEXTURE0 + POSX;
+        for (uint i = 0; i < NUM_DIRECTIONS; i++)
+        {
+            glActiveTexture(firstDirectionBindingPoint + i);
+            glGenTextures(1, &colorTextures[i]);
+            glBindTexture(GL_TEXTURE_3D, colorTextures[i]);
+            glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_BASE_LEVEL, baseLevel); 
+            glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAX_LEVEL, maxLevel);
+        }
+        
         // Store mipmap data
         int numVoxels = 0;
         int mipMapSideLength = voxelGridLength;
@@ -92,12 +99,14 @@ public:
     void setSamplerType(SamplerType samplerType)
     {
         this->currentSamplerType = samplerType;
-        if (currentSamplerType == LINEAR)
-            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureLinearSampler);
-        else if (currentSamplerType == NEAREST)
-            glBindSampler(COLOR_TEXTURE_3D_BINDING, textureNearestSampler);
+        for (uint i = 0; i < NUM_DIRECTIONS; i++)
+        {
+            if (currentSamplerType == LINEAR)
+                glBindSampler(firstDirectionBindingPoint + i, textureLinearSampler);
+            else if (currentSamplerType == NEAREST)
+                glBindSampler(firstDirectionBindingPoint + i, textureNearestSampler);
+        }
     }
-
     void changeSamplerType()
     {
         uint position = (uint)currentSamplerType + 1;

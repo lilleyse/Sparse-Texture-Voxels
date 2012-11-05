@@ -18,23 +18,31 @@ const uint POSITION_ARRAY_BINDING           = 3;
 
 // Sampler binding points
 const uint NON_USED_TEXTURE                         = 0; // Used for modifying textures that shouldn't be bound to a binding point
-const uint COLOR_TEXTURE_3D_BINDING                 = 1;
-const uint SHADOW_MAP_BINDING                       = 2;
-const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 3;
-const uint RESERVED_TEXTURE_ARRAY_1                 = 4;
-const uint RESERVED_TEXTURE_ARRAY_2                 = 5;
-const uint RESERVED_TEXTURE_ARRAY_3                 = 6;
-const uint RESERVED_TEXTURE_ARRAY_4                 = 7;
-const uint RESERVED_TEXTURE_ARRAY_5                 = 8;
-const uint RESERVED_TEXTURE_ARRAY_6                 = 9;
-const uint RESERVED_TEXTURE_ARRAY_7                 = 10;
-const uint RESERVED_TEXTURE_ARRAY_8                 = 11;
-const uint RESERVED_TEXTURE_ARRAY_9                 = 12;
+const uint COLOR_TEXTURE_POSX_3D_BINDING            = 1; // right direction
+const uint COLOR_TEXTURE_NEGX_3D_BINDING            = 2; // left direction
+const uint COLOR_TEXTURE_POSY_3D_BINDING            = 3; // up direction
+const uint COLOR_TEXTURE_NEGY_3D_BINDING            = 4; // down direction
+const uint COLOR_TEXTURE_POSZ_3D_BINDING            = 5; // front direction
+const uint COLOR_TEXTURE_NEGZ_3D_BINDING            = 6; // back direction
+const uint SHADOW_MAP_BINDING                       = 7;
+const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 8;
+const uint RESERVED_TEXTURE_ARRAY_1                 = 9;
+const uint RESERVED_TEXTURE_ARRAY_2                 = 10;
+const uint RESERVED_TEXTURE_ARRAY_3                 = 11;
+const uint RESERVED_TEXTURE_ARRAY_4                 = 12;
+const uint RESERVED_TEXTURE_ARRAY_5                 = 13;
+const uint RESERVED_TEXTURE_ARRAY_6                 = 14;
+const uint RESERVED_TEXTURE_ARRAY_7                 = 15;
+const uint RESERVED_TEXTURE_ARRAY_8                 = 16;
+const uint RESERVED_TEXTURE_ARRAY_9                 = 17;
 
 // Image binding points
-const uint COLOR_IMAGE_3D_BINDING_BASE              = 0;
-const uint COLOR_IMAGE_3D_BINDING_CURR              = 1;
-const uint COLOR_IMAGE_3D_BINDING_NEXT              = 2;
+const uint COLOR_IMAGE_POSX_3D_BINDING              = 0; // right direction 
+const uint COLOR_IMAGE_NEGX_3D_BINDING              = 1; // left direction
+const uint COLOR_IMAGE_POSY_3D_BINDING              = 2; // up direction
+const uint COLOR_IMAGE_NEGY_3D_BINDING              = 3; // down direction
+const uint COLOR_IMAGE_POSZ_3D_BINDING              = 4; // front direction
+const uint COLOR_IMAGE_NEGZ_3D_BINDING              = 5; // back direction
 
 // Shadow Map FBO
 const uint SHADOW_MAP_FBO_BINDING = 0;

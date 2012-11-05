@@ -28,7 +28,10 @@ public:
         int voxelGridLength = voxelTexture->voxelGridLength;
         Utils::OpenGL::setViewport(voxelGridLength, voxelGridLength);
         Utils::OpenGL::setRenderState(false, false, false);
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+
+        // Bind the six texture directions for writing
+        for(uint i = 0; i < voxelTexture->NUM_DIRECTIONS; i++)
+            glBindImageTexture(voxelTexture->firstDirectionBindingPoint + i, voxelTexture->colorTextures[i], 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
         // Clean the base mip map
         glUseProgram(cleanProgram);

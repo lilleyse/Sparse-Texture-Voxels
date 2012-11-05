@@ -31,16 +31,14 @@ public:
         // Disable culling, depth test, rendering
         Utils::OpenGL::setRenderState(false, false, false);
 
-        // Bind voxelTexture's color for writing
-        glBindImageTexture(COLOR_IMAGE_3D_BINDING_BASE, voxelTexture->colorTexture, 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-
         // Mip-map
         glUseProgram(mipmapProgram);
         int voxelGridLength = voxelTexture->voxelGridLength;
         for(uint i = 1; i < voxelTexture->numMipMapLevels; i++)
         {
-            glBindImageTexture(COLOR_IMAGE_3D_BINDING_CURR, voxelTexture->colorTexture, i-1, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
-            glBindImageTexture(COLOR_IMAGE_3D_BINDING_NEXT, voxelTexture->colorTexture, i, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA8);
+            // Bind the six texture directions for writing
+            for(uint j = 0; j < voxelTexture->NUM_DIRECTIONS; j++)
+                glBindImageTexture(voxelTexture->firstDirectionBindingPoint + j, voxelTexture->colorTextures[j], i, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
 
             // Call the program for each mip map level.
             int voxelGridLength = voxelTexture->mipMapInfoArray[i].gridLength;

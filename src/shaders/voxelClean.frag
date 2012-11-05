@@ -19,14 +19,22 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define SHADOW_MAP_BINDING                       2
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
 #define SHADOW_MAP_FBO_BINDING     0
@@ -75,12 +83,22 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
+layout(binding = COLOR_IMAGE_POSX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosX;
+layout(binding = COLOR_IMAGE_NEGX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegX;
+layout(binding = COLOR_IMAGE_POSY_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosY;
+layout(binding = COLOR_IMAGE_NEGY_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegY;
+layout(binding = COLOR_IMAGE_POSZ_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosZ;
+layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegZ;
 
 flat in int slice;
 
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-    imageStore(tVoxColor, globalId, vec4(0.0));
+    imageStore(tVoxColorPosX, globalId, vec4(0.0));
+    imageStore(tVoxColorNegX, globalId, vec4(0.0));
+    imageStore(tVoxColorPosY, globalId, vec4(0.0));
+    imageStore(tVoxColorNegY, globalId, vec4(0.0));
+    imageStore(tVoxColorPosZ, globalId, vec4(0.0));
+    imageStore(tVoxColorNegZ, globalId, vec4(0.0));
 }

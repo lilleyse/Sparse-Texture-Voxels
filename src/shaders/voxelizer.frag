@@ -19,14 +19,22 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define SHADOW_MAP_BINDING                       2
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    3
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
 #define SHADOW_MAP_FBO_BINDING     0
@@ -64,7 +72,12 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = COLOR_IMAGE_3D_BINDING_BASE, rgba8) writeonly uniform image3D tVoxColor;
+layout(binding = COLOR_IMAGE_POSX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosX;
+layout(binding = COLOR_IMAGE_NEGX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegX;
+layout(binding = COLOR_IMAGE_POSY_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosY;
+layout(binding = COLOR_IMAGE_NEGY_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegY;
+layout(binding = COLOR_IMAGE_POSZ_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosZ;
+layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegZ;
 
 in block
 {
@@ -126,11 +139,33 @@ void main()
     float visibility = getVisibility();
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
-    vec3 position = vertexData.position;
-    float LdotN = pow(max(dot(uLightDir, normal), 0.0), 0.5);
-    vec4 outColor = vec4(diffuse.rgb*uLightColor*visibility*LdotN, diffuse.a);
+    float LdotN = max(dot(uLightDir, normal), 0.0);
+    vec3 outColor = diffuse.rgb*uLightColor*visibility*LdotN;
+
+    // six directions
+    float AdotNPosX = max(dot(vec3(1.0,0.0,0.0),normal),0.0);
+    float AdotNNegX = max(dot(vec3(-1.0,0.0,0.0),normal),0.0);
+    float AdotNPosY = max(dot(vec3(0.0,1.0,0.0),normal),0.0);
+    float AdotNNegY = max(dot(vec3(0.0,-1.0,0.0),normal),0.0);
+    float AdotNPosZ = max(dot(vec3(0.0,0.0,1.0),normal),0.0);
+    float AdotNNegZ = max(dot(vec3(0.0,0.0,-1.0),normal),0.0);
+
+    // six colors
+    float vec3 outColorPosX = outColor*AdotNPosX;
+    float vec3 outColorNegX = outColor*AdotNNegX;
+    float vec3 outColorPosY = outColor*AdotNPosY;
+    float vec3 outColorNegY = outColor*AdotNNegY;
+    float vec3 outColorPosZ = outColor*AdotNPosZ;
+    float vec3 outColorNegZ = outColor*AdotNNegZ;
 
     // write to image
+    // should we only write alpha to one of the textures to save space?
+    vec3 position = vertexData.position;
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColor, voxelPos, outColor);
+    imageStore(tVoxColorPosX, voxelPos, vec4(outColorPosX, diffuse.a));
+    imageStore(tVoxColorNegX, voxelPos, vec4(outColorNegX, diffuse.a));
+    imageStore(tVoxColorPosY, voxelPos, vec4(outColorPosY, diffuse.a));
+    imageStore(tVoxColorNegY, voxelPos, vec4(outColorNegY, diffuse.a));
+    imageStore(tVoxColorPosZ, voxelPos, vec4(outColorPosZ, diffuse.a));
+    imageStore(tVoxColorNegZ, voxelPos, vec4(outColorNegZ, diffuse.a));
 }

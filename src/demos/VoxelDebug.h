@@ -86,8 +86,8 @@ public:
         debugMipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
+        glActiveTexture(voxelTexture->firstDirectionBindingPoint);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[0]);
         
         float voxelScale = 1.0f / voxelTexture->mipMapInfoArray[0].gridLength;
         for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)
@@ -122,9 +122,6 @@ public:
             debugMipMapInfoArray.push_back(debugMipMapInfo);
             voxelScale *= 2;
         }
-
-        glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_3D_BINDING);
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTexture);
 
         glBindBuffer(GL_ARRAY_BUFFER, voxelBuffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(Voxel)*voxelArray.size(), &voxelArray[0], GL_STATIC_DRAW);
