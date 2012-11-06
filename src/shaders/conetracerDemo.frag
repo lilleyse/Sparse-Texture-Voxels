@@ -147,7 +147,7 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     // get scaling factors for each axis
     dir = abs(dir);
 
-    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel) / (dir.x+dir.y+dir.z);
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);//  / ROOTTHREE;// / (dir.x+dir.y+dir.z);
 }
 
 // transmittance accumulation
@@ -180,7 +180,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
     
     // sample texture
-    vec4 texel = sampleAnisotropic(pos, rd, mipLevel);
+    float vocclusion = textureLod(tVoxColor, pos, mipLevel).a;
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -189,9 +189,11 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // but need to weight by stepsize within texel
 
     // delta transmittance
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-    tm *= dtm;
-    col += (1.0 - dtm)*texel.rgb;
+    if (vocclusion > 0.0) {
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*vocclusion );
+        tm *= dtm;
+        col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
+    }
 
     pos += stepSize*rd;
     

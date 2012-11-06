@@ -223,6 +223,25 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
+vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
+    vec4 xtexel = dir.x > 0.0 ? 
+        textureLod(tVoxColorNegX, pos, mipLevel) : 
+        textureLod(tVoxColor, pos, mipLevel);
+
+    vec4 ytexel = dir.y > 0.0 ? 
+        textureLod(tVoxColorNegY, pos, mipLevel) : 
+        textureLod(tVoxColorPosY, pos, mipLevel);
+
+    vec4 ztexel = dir.z > 0.0 ? 
+        textureLod(tVoxColorNegZ, pos, mipLevel) : 
+        textureLod(tVoxColorPosZ, pos, mipLevel);
+
+    // get scaling factors for each axis
+    dir = abs(dir);
+
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
+}
+
 vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     vec3 pos = ro;
     float dist = 0.0;
@@ -239,14 +258,15 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         // calc mip size, clamp min to texelsize
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-        vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-        if(vcol.a > 0.0)
+
+        float vocc = textureLod(tVoxColor, pos, mipLevel).a;
+        if(vocc > 0.0)
         {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
             tm *= dtm;
 
             // render
-            col += (1.0-dtm) * vcol.rgb;
+            col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
             //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
             //vec3 reflectedDir = vnor.xyz;
             //float LdotN = abs(vnor.w);
@@ -284,14 +304,14 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-        if(vcol.a > 0.0)
+        float vocc = textureLod(tVoxColor, pos, mipLevel).a;
+        if(vocc > 0.0)
         {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
             tm *= dtm;
 
             // calc local illumination
-            vec3 lightCol = (1.0-dtm) * vcol.rgb;
+            vec3 lightCol = (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
             vec3 localColor = gDiffuse*lightCol;
             localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
             col.rgb += localColor;
@@ -339,8 +359,7 @@ void main()
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
     
     // calc globals
-    gRandVal = 0.0;
-    //gRandVal = rand(pos.xy);
+    gRandVal = 0.0;//rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;
 
@@ -388,7 +407,7 @@ void main()
     #endif
     #ifdef PASS_INDIR
     cout += indir.rgb;
-    cout *= indir.a;
+    //cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);

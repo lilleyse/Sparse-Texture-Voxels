@@ -31,12 +31,12 @@ namespace
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0f;
-    float specularAmount = 0.5f;
+    float specularAmount = 0.0f;
 
     // Demo settings
     bool loadAllDemos = true;
     enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
-    DemoType currentDemoType = VOXELCONETRACER;
+    DemoType currentDemoType = MAIN_RENDERER;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();

@@ -31,7 +31,7 @@
             <culled>true</culled>
             <shadow>true</shadow>
         </object>
-        <!--<object>
+        <object>
             <name>whiteCube</name>
             <mesh>whiteCube</mesh>
             <translate>-1.62921e-007 9.5 -0</translate>
@@ -75,7 +75,7 @@
             <rotate>0 1 0 180</rotate>
             <culled>true</culled>
             <shadow>true</shadow>
-        </object>-->
+        </object>
     </objects>
     <lights>
         <light type="Spot">
