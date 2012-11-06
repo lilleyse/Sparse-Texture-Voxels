@@ -86,7 +86,7 @@ public:
         debugMipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[voxelTexture->NEGZ]);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[voxelTexture->POSX]);
         
         float voxelScale = 1.0f / voxelTexture->mipMapInfoArray[0].gridLength;
         for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)
