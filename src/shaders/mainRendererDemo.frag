@@ -216,115 +216,113 @@ vec3 findPerpendicular(vec3 v) {
 //---------------------------------------------------------
 
 vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
-  vec3 pos = ro;
-  float dist = 0.0;
-  float pixSizeAtDist = tan(fov);
+    vec3 pos = ro;
+    float dist = 0.0;
+    float pixSizeAtDist = tan(fov);
 
-  vec3 col = vec3(0.0);   // accumulated color
-  float tm = 1.0;         // accumulated transmittance
+    vec3 col = vec3(0.0);   // accumulated color
+    float tm = 1.0;         // accumulated transmittance
 
-  while(tm > TRANSMIT_MIN &&
+    while(tm > TRANSMIT_MIN &&
         pos.x < 1.0 && pos.x > 0.0 &&
         pos.y < 1.0 && pos.y > 0.0 &&
         pos.z < 1.0 && pos.z > 0.0) {
 
-    // calc mip size, clamp min to texelsize
-    float pixSize = max(dist*pixSizeAtDist, gTexelSize);
-    float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-    vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-    if(vcol.a > 0.0)
-    {
-        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
-        tm *= dtm;
+        // calc mip size, clamp min to texelsize
+        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
+        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+        vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
+        if(vcol.a > 0.0)
+        {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+            tm *= dtm;
 
+            //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
 
-        //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
-
-        // render
-        col += (1.0-dtm) * vcol.rgb;
-        //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
-        //vec3 reflectedDir = vnor.xyz;
-        //float LdotN = abs(vnor.w);
-    
-        //#define KD 0.6
-        //#define KS 0.4
-        //#define SPEC 5
-        //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+            // render
+            col += (1.0-dtm) * vcol.rgb;
+            //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
+            //vec3 reflectedDir = vnor.xyz;
+            //float LdotN = abs(vnor.w);
+        
+            //#define KD 0.6
+            //#define KS 0.4
+            //#define SPEC 5
+            //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+        }
+          
+        // increment
+        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        //stepSize += gRandVal*pixSize*JITTER_K;
+        dist += stepSize;
+        pos += stepSize*rd;
     }
-      
-    // increment
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    //stepSize += gRandVal*pixSize*JITTER_K;
-    dist += stepSize;
-    pos += stepSize*rd;
-  }
-
-  
-  return col;
+    
+    return col;
 }
 
 vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
-  vec3 pos = ro;
-  float dist = 0.0;
-  float pixSizeAtDist = tan(fov);
+    vec3 pos = ro;
+    float dist = 0.0;
+    float pixSizeAtDist = tan(fov);
 
-  vec4 col = vec4(0.0);   // accumulated color
-  float tm = 1.0;         // accumulated transmittance
+    vec4 col = vec4(0.0);   // accumulated color
+    float tm = 1.0;         // accumulated transmittance
 
-  while(tm > TRANSMIT_MIN &&
+    while(tm > TRANSMIT_MIN &&
         pos.x < 1.0 && pos.x > 0.0 &&
         pos.y < 1.0 && pos.y > 0.0 &&
         pos.z < 1.0 && pos.z > 0.0) {
 
-    // calc mip size, clamp min to texelsize
-    float pixSize = max(dist*pixSizeAtDist, gTexelSize);
-    float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+        // calc mip size, clamp min to texelsize
+        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
+        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-    vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-    if(vcol.a > 0.0)
-    {
-        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
-        tm *= dtm;
+        vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
+        if(vcol.a > 0.0)
+        {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+            tm *= dtm;
 
-        // calc local illumination
-        vec3 lightCol = (1.0-dtm) * vcol.rgb;
-        vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
-        vec3 localColor = gDiffuse*lightCol*max(dot(-lightDir, gNormal),0.0);
-        localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
-        col.rgb += localColor;
-        // gDiffuse can be factored out, but here for now for clarity
+            // calc local illumination
+            vec3 lightCol = (1.0-dtm) * vcol.rgb;
+            vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
+            vec3 localColor = gDiffuse*lightCol*max(dot(-lightDir, gNormal),0.0);
+            localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
+            col.rgb += localColor;
+            // gDiffuse can be factored out, but here for now for clarity
+        }
+        
+        // increment
+        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        stepSize += gRandVal*pixSize*JITTER_K;
+        dist += stepSize;
+        pos += stepSize*rd;
     }
-    
-    // increment
-    float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-    stepSize += gRandVal*pixSize*JITTER_K;
-    dist += stepSize;
-    pos += stepSize*rd;
-  }
   
-  // weight AO by distance f(r) = 1/(1+K*r)
-  float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
+    // weight AO by distance f(r) = 1/(1+K*r)
+    float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
 
-  return vec4(INDIR_K*col.rgb, visibility);
+    return vec4(INDIR_K*col.rgb, visibility);
 }
 
 float getVisibility()
 {
-	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
+    vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
     float fragLightDepth = fragLightPos.z;
     vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
-    	
-	// Surface is fully lit.
-	if (fragLightDepth <= moments.x)
-		return 1.0;
-	
-	// How likely this pixel is to be lit (p_max)
-	float variance = moments.y - (moments.x*moments.x);
-	variance = max(variance,0.00002);
-	
-	float d = moments.x - fragLightDepth;
-	float p_max = variance / (variance + d*d);
-	return p_max;
+
+    // Surface is fully lit.
+    if (fragLightDepth <= moments.x)
+        return 1.0;
+    
+    // How likely this pixel is to be lit (p_max)
+    float variance = moments.y - (moments.x*moments.x);
+    variance = max(variance,0.00002);
+    
+    float d = moments.x - fragLightDepth;
+    float p_max = variance / (variance + d*d);
+    return p_max;
 }
 
 void main()
