@@ -147,7 +147,7 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     // get scaling factors for each axis
     dir = abs(dir);
 
-    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel) / ROOTTHREE;
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel) / (dir.x+dir.y+dir.z);
 }
 
 // transmittance accumulation
