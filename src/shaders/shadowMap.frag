@@ -83,5 +83,11 @@ void main()
 {    
     float depth = vertOutput.depth;
     float depth2 = depth * depth;
+
+    // Adjusting moments (this is sort of bias per pixel) using partial derivative
+	// float dx = dFdx(depth);
+	// float dy = dFdy(depth);
+	// depth2 += 0.25*(dx*dx+dy*dy) ;
+
     fragColor = vec4(depth, depth2, 0.0, 0.0);
 }

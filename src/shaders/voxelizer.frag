@@ -124,7 +124,9 @@ float getVisibility()
 	
 	float d = moments.x - fragLightDepth;
 	float p_max = variance / (variance + d*d);
-	return p_max;
+	
+    // clamp and scale shadow range to prevent light leaking
+    return clamp((p_max - 0.6)/(1.0 - 0.6), 0.0, 1.0);
 }
 
 void main()
