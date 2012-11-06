@@ -31,7 +31,7 @@ namespace
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0f;
-    float specularAmount = 0.0f;
+    float specularAmount = 0.1f;
 
     // Demo settings
     bool loadAllDemos = true;
@@ -158,6 +158,11 @@ void GLFWCALL keyPress(int k, int action)
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
 
+        // Trigger voxel texture update
+        if (k == 'C') 
+            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                voxelDebug->voxelTextureUpdate();
+
         //Switch between light and regular camera
         if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
     }
@@ -267,7 +272,7 @@ void begin()
     lightCamera->setFarNearPlanes(.01f, 100.0f);
     lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
-    lightCamera->rotate(0.2f, 0.0f);
+    //lightCamera->rotate(0.2f, 0.0f);
 
     // set up miscellaneous things
     Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);

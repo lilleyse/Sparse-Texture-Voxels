@@ -95,9 +95,6 @@ layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, rgba8) writeonly uniform image3D t
 
 flat in int slice;
 
-#define TRANSMIT_K  3.0
-#define TRANSMIT_MIN 0.05
-
 // alpha blend RGB, average Alpha
 vec4 alphaBlend(vec4 front, vec4 back)
 {

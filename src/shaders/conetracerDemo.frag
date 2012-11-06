@@ -91,7 +91,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout(location = 0, index = 0) out vec4 fragColor;
-layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColor;
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
 layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
 layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
 layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
@@ -135,7 +135,7 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tVoxColorNegX, pos, mipLevel) : 
-        textureLod(tVoxColor, pos, mipLevel);
+        textureLod(tVoxColorPosX, pos, mipLevel);
 
     vec4 ytexel = dir.y > 0.0 ? 
         textureLod(tVoxColorNegY, pos, mipLevel) : 
@@ -181,7 +181,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
     
     // sample texture
-    float vocclusion = textureLod(tVoxColor, pos, mipLevel).a;
+    float vocclusion = textureLod(tVoxColorPosX, pos, mipLevel).a;
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
