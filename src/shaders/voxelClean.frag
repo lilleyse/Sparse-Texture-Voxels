@@ -96,7 +96,7 @@ flat in int slice;
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-    vec4 finalColor = vec4(0.0,0.0,0.0,0.0);
+    vec4 finalColor = vec4(0.0);
     imageStore(tVoxColorPosX, globalId, finalColor);
     imageStore(tVoxColorNegX, globalId, finalColor);
     imageStore(tVoxColorPosY, globalId, finalColor);

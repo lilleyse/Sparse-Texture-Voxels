@@ -139,11 +139,11 @@ layout(location = 0) out vec4 fragColor;
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColor;
-layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorTextureNegX;
-layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorTexturePosY;
-layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorTextureNegY;
-layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorTexturePosZ;
-layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorTextureNegZ;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
