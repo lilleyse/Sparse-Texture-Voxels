@@ -35,7 +35,7 @@ public:
 
         // Bind the six texture directions for writing
         for(uint i = 0; i < voxelTexture->NUM_DIRECTIONS; i++)
-            glBindImageTexture(voxelTexture->firstDirectionBindingPoint + i, voxelTexture->colorTextures[i], 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+            glBindImageTexture(COLOR_IMAGE_POSX_3D_BINDING + i, voxelTexture->colorTextures[i], 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
         
         glUseProgram(voxelizerProgram);
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);

@@ -20,7 +20,7 @@ const uint POSITION_ARRAY_BINDING           = 3;
 const uint NON_USED_TEXTURE                         = 0; // Used for modifying textures that shouldn't be bound to a binding point
 const uint COLOR_TEXTURE_POSX_3D_BINDING            = 1; // right direction
 const uint COLOR_TEXTURE_NEGX_3D_BINDING            = 2; // left direction
-const uint COLOR_TEXTURE_POSY_3D_BINDING            = 3; // up direction
+const uint COLOR_TEXTURE_POSY_3D_BINDING            = 3; // up direc tion
 const uint COLOR_TEXTURE_NEGY_3D_BINDING            = 4; // down direction
 const uint COLOR_TEXTURE_POSZ_3D_BINDING            = 5; // front direction
 const uint COLOR_TEXTURE_NEGZ_3D_BINDING            = 6; // back direction
@@ -53,7 +53,7 @@ const int POSITION_INDEX        = 0;
 const int MATERIAL_INDEX        = 1;
 
 // Max values
-const uint MAX_TEXTURE_ARRAYS               = 10;
+const uint MAX_TEXTURE_ARRAYS               = 2;
 const uint NUM_OBJECTS_MAX                  = 500;
 const uint NUM_MESHES_MAX                   = 500;
 const uint MAX_POINT_LIGHTS                 = 8;
@@ -81,4 +81,5 @@ struct PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };

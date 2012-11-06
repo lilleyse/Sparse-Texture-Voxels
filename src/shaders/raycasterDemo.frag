@@ -68,6 +68,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 
@@ -88,11 +89,13 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER VARS
 //---------------------------------------------------------
 
-#define TEXTURE_TYPE colorTexture
-
 layout (location = 0, index = 0) out vec4 fragColor;
-layout (binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
-
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColor;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorTextureNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorTexturePosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorTextureNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorTexturePosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorTextureNegZ;
 in vec2 vUV;
 uniform float uMipLevel;
 
@@ -177,7 +180,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
 
-    vec4 src = textureLod(TEXTURE_TYPE, pos, uMipLevel);
+    vec4 src = textureLod(tVoxColor, pos, uMipLevel);
     src.a *= gStepSize;  // factor by how steps per voxel diag
 
 
@@ -207,7 +210,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, uMipLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColor, pos, uMipLevel).a );
 
     pos += step;
     
@@ -230,7 +233,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, uMipLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColor, pos, uMipLevel).a );
 
     pos += step;
 
@@ -251,7 +254,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = textureLod(TEXTURE_TYPE, pos, uMipLevel);
+    vec4 texel = textureLod(tVoxColor, pos, uMipLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );

@@ -275,9 +275,9 @@ void begin()
     coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
-    mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelClean->begin(voxelTexture, fullScreenQuad);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
+    mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);
     shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
 
     // blank slate

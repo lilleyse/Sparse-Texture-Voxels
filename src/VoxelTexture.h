@@ -18,7 +18,6 @@ public:
     // Samplers
     enum VoxelDirections {POSX, NEGX, POSY, NEGY, POSZ, NEGZ, NUM_DIRECTIONS};
     enum SamplerType {LINEAR, NEAREST, MAX_SAMPLER_TYPES};
-    uint firstDirectionBindingPoint;
     GLuint textureNearestSampler;
     GLuint textureLinearSampler;
     SamplerType currentSamplerType;
@@ -69,10 +68,9 @@ public:
 
         // Create a dense 3D color texture
         colorTextures.resize(NUM_DIRECTIONS);
-        this->firstDirectionBindingPoint = GL_TEXTURE0 + POSX;
         for (uint i = 0; i < NUM_DIRECTIONS; i++)
         {
-            glActiveTexture(firstDirectionBindingPoint + i);
+            glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_POSX_3D_BINDING + i);
             glGenTextures(1, &colorTextures[i]);
             glBindTexture(GL_TEXTURE_3D, colorTextures[i]);
             glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
@@ -102,9 +100,9 @@ public:
         for (uint i = 0; i < NUM_DIRECTIONS; i++)
         {
             if (currentSamplerType == LINEAR)
-                glBindSampler(firstDirectionBindingPoint + i, textureLinearSampler);
+                glBindSampler(COLOR_TEXTURE_POSX_3D_BINDING + i, textureLinearSampler);
             else if (currentSamplerType == NEAREST)
-                glBindSampler(firstDirectionBindingPoint + i, textureNearestSampler);
+                glBindSampler(COLOR_TEXTURE_POSX_3D_BINDING + i, textureNearestSampler);
         }
     }
     void changeSamplerType()

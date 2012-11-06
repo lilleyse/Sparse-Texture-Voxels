@@ -68,6 +68,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 //---------------------------------------------------------
@@ -95,10 +96,11 @@ flat in int slice;
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
-    imageStore(tVoxColorPosX, globalId, vec4(0.0));
-    imageStore(tVoxColorNegX, globalId, vec4(0.0));
-    imageStore(tVoxColorPosY, globalId, vec4(0.0));
-    imageStore(tVoxColorNegY, globalId, vec4(0.0));
-    imageStore(tVoxColorPosZ, globalId, vec4(0.0));
-    imageStore(tVoxColorNegZ, globalId, vec4(0.0));
+    vec4 finalColor = vec4(0.0,0.0,0.0,0.0);
+    imageStore(tVoxColorPosX, globalId, finalColor);
+    imageStore(tVoxColorNegX, globalId, finalColor);
+    imageStore(tVoxColorPosY, globalId, finalColor);
+    imageStore(tVoxColorNegY, globalId, finalColor);
+    imageStore(tVoxColorPosZ, globalId, finalColor);
+    imageStore(tVoxColorNegZ, globalId, finalColor);
 }

@@ -68,6 +68,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
@@ -143,29 +144,20 @@ void main()
     vec3 outColor = diffuse.rgb*uLightColor*visibility*LdotN;
 
     // six directions
-    float AdotNPosX = max(dot(vec3(1.0,0.0,0.0),normal),0.0);
-    float AdotNNegX = max(dot(vec3(-1.0,0.0,0.0),normal),0.0);
-    float AdotNPosY = max(dot(vec3(0.0,1.0,0.0),normal),0.0);
+    float AdotNPosX = max(dot(vec3(-1.0,0.0,0.0), normal),0.0);
+    float AdotNNegX = max(dot(vec3(1.0,0.0,0.0),normal),0.0);
+    float AdotNPosY = max(dot(vec3(0.0,1.0,0.0), normal),0.0);
     float AdotNNegY = max(dot(vec3(0.0,-1.0,0.0),normal),0.0);
-    float AdotNPosZ = max(dot(vec3(0.0,0.0,1.0),normal),0.0);
-    float AdotNNegZ = max(dot(vec3(0.0,0.0,-1.0),normal),0.0);
-
-    // six colors
-    float vec3 outColorPosX = outColor*AdotNPosX;
-    float vec3 outColorNegX = outColor*AdotNNegX;
-    float vec3 outColorPosY = outColor*AdotNPosY;
-    float vec3 outColorNegY = outColor*AdotNNegY;
-    float vec3 outColorPosZ = outColor*AdotNPosZ;
-    float vec3 outColorNegZ = outColor*AdotNNegZ;
+    float AdotNPosZ = max(dot(vec3(0.0,0.0,-1.0), normal),0.0);
+    float AdotNNegZ = max(dot(vec3(0.0,0.0,1.0),normal),0.0);
 
     // write to image
-    // should we only write alpha to one of the textures to save space?
     vec3 position = vertexData.position;
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColorPosX, voxelPos, vec4(outColorPosX, diffuse.a));
-    imageStore(tVoxColorNegX, voxelPos, vec4(outColorNegX, diffuse.a));
-    imageStore(tVoxColorPosY, voxelPos, vec4(outColorPosY, diffuse.a));
-    imageStore(tVoxColorNegY, voxelPos, vec4(outColorNegY, diffuse.a));
-    imageStore(tVoxColorPosZ, voxelPos, vec4(outColorPosZ, diffuse.a));
-    imageStore(tVoxColorNegZ, voxelPos, vec4(outColorNegZ, diffuse.a));
+    imageStore(tVoxColorPosX, voxelPos, vec4(outColor*AdotNPosX, diffuse.a));
+    imageStore(tVoxColorNegX, voxelPos, vec4(outColor*AdotNNegX, diffuse.a));
+    imageStore(tVoxColorPosY, voxelPos, vec4(outColor*AdotNPosY, diffuse.a));
+    imageStore(tVoxColorNegY, voxelPos, vec4(outColor*AdotNNegY, diffuse.a));
+    imageStore(tVoxColorPosZ, voxelPos, vec4(outColor*AdotNPosZ, diffuse.a));
+    imageStore(tVoxColorNegZ, voxelPos, vec4(outColor*AdotNNegZ, diffuse.a));
 }

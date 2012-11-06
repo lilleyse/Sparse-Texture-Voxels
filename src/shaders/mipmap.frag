@@ -68,6 +68,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 
@@ -77,12 +78,12 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 
 layout(location = 0) out vec4 fragColor;
 
-layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler2D tVoxColorTexturePosX;
-layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler2D tVoxColorTextureNegX;
-layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler2D tVoxColorTexturePosY;
-layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler2D tVoxColorTextureNegY;
-layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler2D tVoxColorTexturePosZ;
-layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler2D tVoxColorTextureNegZ;
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorTexturePosX;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorTextureNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorTexturePosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorTextureNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorTexturePosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorTextureNegZ;
 
 layout(binding = COLOR_IMAGE_POSX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosX;
 layout(binding = COLOR_IMAGE_NEGX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegX;
@@ -93,32 +94,121 @@ layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, rgba8) writeonly uniform image3D t
 
 flat in int slice;
 
-// typically use memoryBarrier to do all mipmaps at once, but it's not working right now
+#define TRANSMIT_K  3.0
+#define TRANSMIT_MIN 0.05
+
+vec4 calcTransmittance(vec4 front, vec4 back)
+{
+    float dtm = exp(-TRANSMIT_K * front.a);
+    vec3 color = (1.0 - dtm) * front.rgb;
+    float tm = dtm;
+    if (tm > TRANSMIT_MIN)
+    {
+        dtm = exp(-TRANSMIT_K * back.a);
+        color += (1.0 - dtm) * back.rgb;
+        tm *= dtm;
+    }
+    else
+    {
+        tm = 0.0;
+    }
+    float alpha = (1.0 - tm);
+    return vec4(color, alpha);
+}
+
+vec4 calcDirectionalColor(vec4 front1, vec4 front2, vec4 front3, vec4 front4, vec4 back1, vec4 back2, vec4 back3, vec4 back4)
+{
+    vec4 color1 = calcTransmittance(front1, back1);
+    vec4 color2 = calcTransmittance(front2, back2);
+    vec4 color3 = calcTransmittance(front3, back3);
+    vec4 color4 = calcTransmittance(front4, back4);
+    color1.rgb *= color1.a;
+    color2.rgb *= color2.a;
+    color3.rgb *= color3.a;
+    color4.rgb *= color4.a;
+    vec4 color = color1 + color2 + color3 + color4;
+    color.rgb /= color.a;
+    color.a /= 4.0;
+    return color;
+}
+
 void main()
 {
     ivec3 globalId = ivec3(ivec2(gl_FragCoord.xy), slice);
 
-    vec3 directValue1 = vec3(0.0);
-    vec3 directValue2 = vec3(0.0);
-    vec3 directValue3 = vec3(0.0);
-    vec3 directValue4 = vec3(0.0);
-
     // posx direction
-    directValue1 = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(0,0,0), i);
+    vec4 posXFront1 = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(1,0,0), uCurrentMipLevel-1);
+    vec4 posXFront2 = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(1,0,1), uCurrentMipLevel-1);
+    vec4 posXFront3 = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(1,1,0), uCurrentMipLevel-1);
+    vec4 posXFront4 = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(1,1,1), uCurrentMipLevel-1);
+    vec4 posXBack1  = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(0,0,0), uCurrentMipLevel-1);
+    vec4 posXBack2  = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(0,0,1), uCurrentMipLevel-1);
+    vec4 posXBack3  = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(0,1,0), uCurrentMipLevel-1);
+    vec4 posXBack4  = texelFetch(tVoxColorTexturePosX, globalId*2 + ivec3(0,1,1), uCurrentMipLevel-1);
 
+    // negx direction
+    vec4 negXFront1 = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(0,0,0), uCurrentMipLevel-1);
+    vec4 negXFront2 = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(0,0,1), uCurrentMipLevel-1);
+    vec4 negXFront3 = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(0,1,0), uCurrentMipLevel-1);
+    vec4 negXFront4 = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(0,1,1), uCurrentMipLevel-1);
+    vec4 negXBack1  = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(1,0,0), uCurrentMipLevel-1);
+    vec4 negXBack2  = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(1,0,1), uCurrentMipLevel-1);
+    vec4 negXBack3  = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(1,1,0), uCurrentMipLevel-1);
+    vec4 negXBack4  = texelFetch(tVoxColorTextureNegX, globalId*2 + ivec3(1,1,1), uCurrentMipLevel-1);
 
-    //vec4 avgColor = vec4(0.0);
-     //
-    //for(int i = 0; i < 2; i++)
-    //for(int j = 0; j < 2; j++)
-    //for(int k = 0; k < 2; k++)
-    //{
-        //ivec3 neighbor = globalId*2 + ivec3(i,j,k);
-        //vec4 neighborColor = imageLoad(tColorMipCurr, neighbor);
-        //neighborColor.rgb *= neighborColor.a;
-        //avgColor += neighborColor;
-    //}
-    //avgColor.rgb /= avgColor.a;
-    //avgColor.a /= 8.0;
-    //imageStore(tColorMipNext, globalId, avgColor);
+    // posy direction
+    vec4 posYFront1 = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(0,1,0), uCurrentMipLevel-1);
+    vec4 posYFront2 = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(1,1,0), uCurrentMipLevel-1);
+    vec4 posYFront3 = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(0,1,1), uCurrentMipLevel-1);
+    vec4 posYFront4 = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(1,1,1), uCurrentMipLevel-1);
+    vec4 posYBack1  = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(0,0,0), uCurrentMipLevel-1);
+    vec4 posYBack2  = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(1,0,0), uCurrentMipLevel-1);
+    vec4 posYBack3  = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(0,0,1), uCurrentMipLevel-1);
+    vec4 posYBack4  = texelFetch(tVoxColorTexturePosY, globalId*2 + ivec3(1,0,1), uCurrentMipLevel-1);
+
+    // negy direction
+    vec4 negYFront1 = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(0,0,0), uCurrentMipLevel-1);
+    vec4 negYFront2 = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(1,0,0), uCurrentMipLevel-1);
+    vec4 negYFront3 = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(0,0,1), uCurrentMipLevel-1);
+    vec4 negYFront4 = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(1,0,1), uCurrentMipLevel-1);
+    vec4 negYBack1  = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(0,1,0), uCurrentMipLevel-1);
+    vec4 negYBack2  = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(1,1,0), uCurrentMipLevel-1);
+    vec4 negYBack3  = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(0,1,1), uCurrentMipLevel-1);
+    vec4 negYBack4  = texelFetch(tVoxColorTextureNegY, globalId*2 + ivec3(1,1,1), uCurrentMipLevel-1);
+
+    // posz direction
+    vec4 posZFront1 = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(0,0,1), uCurrentMipLevel-1);
+    vec4 posZFront2 = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(0,1,1), uCurrentMipLevel-1);
+    vec4 posZFront3 = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(1,0,1), uCurrentMipLevel-1);
+    vec4 posZFront4 = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(1,1,1), uCurrentMipLevel-1);
+    vec4 posZBack1  = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(0,0,0), uCurrentMipLevel-1);
+    vec4 posZBack2  = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(0,1,0), uCurrentMipLevel-1);
+    vec4 posZBack3  = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(1,0,0), uCurrentMipLevel-1);
+    vec4 posZBack4  = texelFetch(tVoxColorTexturePosZ, globalId*2 + ivec3(1,1,0), uCurrentMipLevel-1);
+    
+    // negz direction
+    vec4 negZFront1 = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(0,0,0), uCurrentMipLevel-1);
+    vec4 negZFront2 = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(0,1,0), uCurrentMipLevel-1);
+    vec4 negZFront3 = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(1,0,0), uCurrentMipLevel-1);
+    vec4 negZFront4 = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(1,1,0), uCurrentMipLevel-1);
+    vec4 negZBack1  = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(0,0,1), uCurrentMipLevel-1);
+    vec4 negZBack2  = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(0,1,1), uCurrentMipLevel-1);
+    vec4 negZBack3  = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(1,0,1), uCurrentMipLevel-1);
+    vec4 negZBack4  = texelFetch(tVoxColorTextureNegZ, globalId*2 + ivec3(1,1,1), uCurrentMipLevel-1);
+    
+    // calculate the composite color values
+    vec4 finalPosX = calcDirectionalColor(posXFront1, posXFront2, posXFront3, posXFront4, posXBack1, posXBack2, posXBack3, posXBack4);
+    vec4 finalNegX = calcDirectionalColor(negXFront1, negXFront2, negXFront3, negXFront4, negXBack1, negXBack2, negXBack3, negXBack4);
+    vec4 finalPosY = calcDirectionalColor(posYFront1, posYFront2, posYFront3, posYFront4, posYBack1, posYBack2, posYBack3, posYBack4);
+    vec4 finalNegY = calcDirectionalColor(negYFront1, negYFront2, negYFront3, negYFront4, negYBack1, negYBack2, negYBack3, negYBack4);
+    vec4 finalPosZ = calcDirectionalColor(posZFront1, posZFront2, posZFront3, posZFront4, posZBack1, posZBack2, posZBack3, posZBack4);
+    vec4 finalNegZ = calcDirectionalColor(negZFront1, negZFront2, negZFront3, negZFront4, negZBack1, negZBack2, negZBack3, negZBack4);
+
+    // fill the color values
+    imageStore(tVoxColorPosX, globalId, finalPosX);
+    imageStore(tVoxColorNegX, globalId, finalNegX);
+    imageStore(tVoxColorPosY, globalId, finalPosY);
+    imageStore(tVoxColorNegY, globalId, finalNegY);
+    imageStore(tVoxColorPosZ, globalId, finalPosZ);
+    imageStore(tVoxColorNegZ, globalId, finalNegZ);
 }
