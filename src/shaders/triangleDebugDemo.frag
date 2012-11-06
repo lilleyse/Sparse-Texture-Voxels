@@ -113,21 +113,11 @@ layout (location = 0, index = 0) out vec4 fragColor;
 float getVisibility()
 {
 	float fragLightDepth = vertexData.shadowMapPos.z;
-    vec2 moments = texture(shadowMap, vertexData.shadowMapPos.xy).rg;
-    	
-	// Surface is fully lit.
-	if (fragLightDepth <= moments.x)
-		return 1.0;
+    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
 
-	// How likely this pixel is to be lit (p_max)
-	float variance = moments.y - (moments.x*moments.x);
-	variance = max(variance,0.00002);
-	
-	float d = moments.x - fragLightDepth;
-	float p_max = variance / (variance + d*d);
-
-    // clamp and scale shadow range to prevent light leaking
-    return clamp((p_max - 0.6)/(1.0 - 0.6), 0.0, 1.0);
+    // Less darknessFactor means lighter shadows
+    float darknessFactor = 50.0;
+    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 void main()

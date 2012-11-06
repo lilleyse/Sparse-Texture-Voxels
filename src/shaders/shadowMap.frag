@@ -81,13 +81,12 @@ layout (location = 0) out vec4 fragColor;
 
 void main()
 {    
-    float depth = vertOutput.depth;
-    float depth2 = depth * depth;
+    float depth = vertOutput.depth + .01;
 
-    // Adjusting moments (this is sort of bias per pixel) using partial derivative
-	// float dx = dFdx(depth);
-	// float dy = dFdy(depth);
-	// depth2 += 0.25*(dx*dx+dy*dy) ;
+    // Apply depth bias to avoid some z-fighting (maybe optional);
+    //float dx = dFdx(depth);
+	//float dy = dFdy(depth);
+    //depth += abs(dx) + abs(dy);
 
-    fragColor = vec4(depth, depth2, 0.0, 0.0);
+    fragColor = vec4(depth, 0.0, 0.0, 0.0);
 }

@@ -48,7 +48,7 @@ struct ShadowMap
         {
             // Create texture
             glBindTexture(GL_TEXTURE_2D, shadowMapTextures[i]);
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG32F, shadowMapResolution, shadowMapResolution);
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_R32F, shadowMapResolution, shadowMapResolution);
 
             // Create FBO
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowMapBlurFBO[i]);
@@ -127,15 +127,12 @@ struct ShadowMap
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         // Generate shadow map
-        //glEnable(GL_POLYGON_OFFSET_FILL);
-        //glPolygonOffset(1.0, 4.0);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowMapGenFBO);
         Utils::OpenGL::setViewport(shadowMapResolution, shadowMapResolution);
         Utils::OpenGL::clearColorAndDepth();
         Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(shadowMapProgram);
         coreEngine->display();
-        //glDisable(GL_POLYGON_OFFSET_FILL);
 
         // Do the gaussian blur
         glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_BINDING);
