@@ -267,6 +267,7 @@ void begin()
     lightCamera->setFarNearPlanes(.01f, 100.0f);
     lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
+    lightCamera->rotate(0.2f, 0.0f);
 
     // set up miscellaneous things
     Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);

@@ -53,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -98,11 +99,20 @@ out gl_PerVertex
     vec4 gl_Position;
 };
 
+out block
+{
+    float depth;
+} vertOutput;
 
 void main()
 {    
     mat4 modelMatrix = getObjectPosition().modelMatrix; 
     vec4 worldPosition = modelMatrix * vec4(position, 1.0);
-    gl_Position = uViewProjection * worldPosition;
+    vec4 viewPosition = uLightView * worldPosition;
+    gl_Position = uLightProj * viewPosition;
+
+    // Export depth pre-projection. Also apply scale of 0.1.
+    vertOutput.depth = -viewPosition.z;
+
 }
 

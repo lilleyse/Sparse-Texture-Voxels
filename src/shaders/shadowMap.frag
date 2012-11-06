@@ -53,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -71,11 +72,21 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     int uCurrentMipLevel;
 };
 
+in block
+{
+    float depth;
+} vertOutput;
+
 layout (location = 0) out vec4 fragColor;
 
 void main()
 {    
-    float depth = gl_FragCoord.z;
-    float depth2 = depth * depth;
-    fragColor = vec4(depth, depth2, 0.0, 0.0);
+    float depth = vertOutput.depth + .01;
+
+    // Apply depth bias to avoid some z-fighting (maybe optional);
+    //float dx = dFdx(depth);
+	//float dy = dFdy(depth);
+    //depth += abs(dx) + abs(dy);
+
+    fragColor = vec4(depth, 0.0, 0.0, 0.0);
 }

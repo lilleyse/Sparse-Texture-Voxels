@@ -53,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -82,7 +83,7 @@ in block
 {
     vec3 position;
     vec3 normal;
-    vec4 shadowMapPos;
+    vec3 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -267,6 +268,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
 
             // render
             col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
+
             //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
             //vec3 reflectedDir = vnor.xyz;
             //float LdotN = abs(vnor.w);
@@ -313,11 +315,12 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
             // calc local illumination
             vec3 lightCol = (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
             vec3 localColor = gDiffuse*lightCol;
+
             localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
             col.rgb += localColor;
             // gDiffuse can be factored out, but here for now for clarity
         }
-    
+
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
         stepSize += gRandVal*pixSize*JITTER_K;
@@ -333,21 +336,15 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
 float getVisibility()
 {
-    vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
-    float fragLightDepth = fragLightPos.z;
-    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
-        
-    // Surface is fully lit.
-    if (fragLightDepth <= moments.x)
+    float fragLightDepth = vertexData.shadowMapPos.z;
+    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
+
+    if(fragLightDepth <= shadowMapDepth)
         return 1.0;
-    
-    // How likely this pixel is to be lit (p_max)
-    float variance = moments.y - (moments.x*moments.x);
-    variance = max(variance,0.00002);
-    
-    float d = moments.x - fragLightDepth;
-    float p_max = variance / (variance + d*d);
-    return p_max;
+
+    // Less darknessFactor means lighter shadows
+    float darknessFactor = 50.0;
+    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 void main()
@@ -407,7 +404,7 @@ void main()
     #endif
     #ifdef PASS_INDIR
     cout += indir.rgb;
-    cout *= indir.a;
+    //cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);

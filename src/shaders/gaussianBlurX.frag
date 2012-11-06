@@ -53,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -74,11 +75,6 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 in vec2 vUV;
 layout (binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap; 
 layout (location = 0) out vec4 fragColor;
-
-//void main()
-//{
-    //fragColor = texture(shadowMap, vUV);
-//}
 
 uniform float offset[3] = float[]( 0.0, 1.3846153846, 3.2307692308 );
 uniform float weight[3] = float[]( 0.2270270270, 0.3162162162, 0.0702702703 );
