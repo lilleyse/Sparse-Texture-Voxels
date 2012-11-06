@@ -36,7 +36,7 @@ namespace
     // Demo settings
     bool loadAllDemos = true;
     enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
-    DemoType currentDemoType = MAIN_RENDERER;
+    DemoType currentDemoType = VOXELCONETRACER;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();

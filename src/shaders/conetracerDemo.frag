@@ -131,6 +131,25 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
+vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
+    vec4 xtexel = dir.x > 0.0 ? 
+        textureLod(tVoxColorNegX, pos, mipLevel) : 
+        textureLod(tVoxColor, pos, mipLevel);
+
+    vec4 ytexel = dir.y > 0.0 ? 
+        textureLod(tVoxColorNegY, pos, mipLevel) : 
+        textureLod(tVoxColorPosY, pos, mipLevel);
+
+    vec4 ztexel = dir.z > 0.0 ? 
+        textureLod(tVoxColorNegZ, pos, mipLevel) : 
+        textureLod(tVoxColorPosZ, pos, mipLevel);
+
+    // get scaling factors for each axis
+    dir = abs(dir);
+
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel) / ROOTTHREE;
+}
+
 // transmittance accumulation
 vec4 conetraceAccum(vec3 ro, vec3 rd) {
   vec3 pos = ro;
@@ -159,11 +178,9 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
 
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
-    // DEBUG: mipmap level 0.0 for now to make this work.
-
+    
     // sample texture
-    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+    vec4 texel = sampleAnisotropic(pos, rd, mipLevel);
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -174,12 +191,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // delta transmittance
     float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
     tm *= dtm;
-    //col += (1.0 - dtm)*texel.rgb;
-
-    // compute lighting
-    {
-        col += (1.0-dtm)*texel.rgb;
-    }
+    col += (1.0 - dtm)*texel.rgb;
 
     pos += stepSize*rd;
     
