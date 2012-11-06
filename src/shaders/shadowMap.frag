@@ -54,7 +54,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -71,11 +72,16 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uSpecularAmount;
 };
 
+in block
+{
+    float depth;
+} vertOutput;
+
 layout (location = 0) out vec4 fragColor;
 
 void main()
 {    
-    float depth = gl_FragCoord.z;
+    float depth = vertOutput.depth;
     float depth2 = depth * depth;
     fragColor = vec4(depth, depth2, 0.0, 0.0);
 }

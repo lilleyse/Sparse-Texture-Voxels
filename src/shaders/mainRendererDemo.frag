@@ -50,7 +50,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -78,7 +79,7 @@ in block
 {
     vec3 position;
     vec3 normal;
-    vec4 shadowMapPos;
+    vec3 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -310,9 +311,8 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
 float getVisibility()
 {
-	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
-    float fragLightDepth = fragLightPos.z;
-    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    float fragLightDepth = vertexData.shadowMapPos.z;
+    vec2 moments = texture(shadowMap, vertexData.shadowMapPos.xy).rg;
     	
 	// Surface is fully lit.
 	if (fragLightDepth <= moments.x)

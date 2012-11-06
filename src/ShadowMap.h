@@ -113,14 +113,14 @@ struct ShadowMap
     void display()
     {
         // Get light matrices
-        glm::mat4 worldToLight = lightCamera->createOrthrographicProjectionMatrix() * lightCamera->createViewMatrix();
-        glm::mat4 offsetMatrix(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
-        glm::mat4 worldToShadowMap = offsetMatrix * worldToLight;
+        //glm::mat4 worldToLight = lightCamera->createOrthrographicProjectionMatrix() * lightCamera->createViewMatrix();
+        //glm::mat4 offsetMatrix(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
+        //glm::mat4 worldToShadowMap = offsetMatrix * worldToLight;
        
         // Set UBO with light matrices
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        perFrame->uViewProjection = worldToLight;
-        perFrame->uWorldToShadowMap = worldToShadowMap;
+        perFrame->uLightView = lightCamera->createViewMatrix();
+        perFrame->uLightProj = lightCamera->createOrthrographicProjectionMatrix();
         perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
         perFrame->uLightDir = -lightCamera->lookDir;
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
