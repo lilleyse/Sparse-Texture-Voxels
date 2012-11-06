@@ -407,7 +407,7 @@ void main()
     #endif
     #ifdef PASS_INDIR
     cout += indir.rgb;
-    //cout *= indir.a;
+    cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);

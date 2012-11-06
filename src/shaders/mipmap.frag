@@ -97,10 +97,12 @@ flat in int slice;
 #define TRANSMIT_K  3.0
 #define TRANSMIT_MIN 0.05
 
+// alpha blend RGB, average Alpha
 vec4 alphaBlend(vec4 front, vec4 back)
 {
     front.rgb += (1.0-front.a)*back.rgb;
-    front.a +=   (1.0-front.a)*back.a;
+    //front.a += (1.0-front.a)*back.a;
+    front.a = (front.a+back.a)/2.0; // alpha not blended, just averaged
     return front;
 }
 
