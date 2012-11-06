@@ -239,6 +239,7 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     // get scaling factors for each axis
     dir = abs(dir);
 
+    // TODO: correctly weight averaged output color
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
 }
 
@@ -260,21 +261,10 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
         float vocc = textureLod(tVoxColor, pos, mipLevel).a;
-        if(vocc > 0.0)
-        {
+        if(vocc > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
             tm *= dtm;
-
-            // render
             col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
-            //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
-            //vec3 reflectedDir = vnor.xyz;
-            //float LdotN = abs(vnor.w);
-        
-            //#define KD 0.6
-            //#define KS 0.4
-            //#define SPEC 5
-            //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
         }
           
         // increment
@@ -305,8 +295,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
         float vocc = textureLod(tVoxColor, pos, mipLevel).a;
-        if(vocc > 0.0)
-        {
+        if(vocc > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
             tm *= dtm;
 
