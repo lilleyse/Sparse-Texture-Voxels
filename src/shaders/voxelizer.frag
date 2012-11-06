@@ -144,12 +144,12 @@ void main()
     vec3 outColor = diffuse.rgb*uLightColor*visibility*LdotN;
 
     // six directions
-    float AdotNPosX = max(dot(vec3(1.0,0.0,0.0), normal),0.0);
-    float AdotNNegX = max(dot(vec3(-1.0,0.0,0.0),normal),0.0);
-    float AdotNPosY = max(dot(vec3(0.0,1.0,0.0), normal),0.0);
-    float AdotNNegY = max(dot(vec3(0.0,-1.0,0.0),normal),0.0);
-    float AdotNPosZ = max(dot(vec3(0.0,0.0,1.0), normal),0.0);
-    float AdotNNegZ = max(dot(vec3(0.0,0.0,-1.0),normal),0.0);
+    float AdotNPosX = max(normal.x, 0.0);
+    float AdotNNegX = max(-normal.x, 0.0);
+    float AdotNPosY = max(normal.y, 0.0);
+    float AdotNNegY = max(-normal.y, 0.0);
+    float AdotNPosZ = max(normal.z, 0.0);
+    float AdotNNegZ = max(-normal.z, 0.0);
 
     // write to image
     vec3 position = vertexData.position;
