@@ -82,6 +82,7 @@ layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 vec3 gNormal, gDiffuse;
 float gTexelSize, gRandVal;
 
+
 //---------------------------------------------------------
 // UTILITIES
 //---------------------------------------------------------

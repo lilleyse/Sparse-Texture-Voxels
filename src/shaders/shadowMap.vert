@@ -48,6 +48,5 @@ void main()
 
     // Export depth pre-projection. Also apply scale of 0.1.
     vertOutput.depth = -viewPosition.z;
-
 }
 
