@@ -19,42 +19,42 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4     
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3
-
-// Framebuffer object outputs
-#define DEFERRED_POSITIONS_FBO_BINDING       0
-#define DEFERRED_COLORS_FBO_BINDING          1
-#define DEFERRED_NORMALS_FBO_BINDING         2
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
 #define MATERIAL_INDEX        1
 
 // Max values
-#define MAX_TEXTURE_ARRAYS              10
-#define FBO_BINDING_POINT_ARRAY_SIZE    4
-#define NUM_OBJECTS_MAX                 500
-#define NUM_MESHES_MAX                  500
-#define MAX_POINT_LIGHTS                8
+#define MAX_TEXTURE_ARRAYS               10
+#define NUM_OBJECTS_MAX                  500
+#define NUM_MESHES_MAX                   500
+#define MAX_POINT_LIGHTS                 8
 
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -69,13 +69,24 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
+
+in block
+{
+    float depth;
+} vertOutput;
 
 layout (location = 0) out vec4 fragColor;
 
 void main()
 {    
-    float depth = gl_FragCoord.z;
-    float depth2 = depth * depth;
-    fragColor = vec4(depth, depth2, 0.0, 0.0);
+    float depth = vertOutput.depth + .01;
+
+    // Apply depth bias to avoid some z-fighting (maybe optional);
+    //float dx = dFdx(depth);
+	//float dy = dFdy(depth);
+    //depth += abs(dx) + abs(dy);
+
+    fragColor = vec4(depth, 0.0, 0.0, 0.0);
 }

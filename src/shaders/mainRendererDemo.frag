@@ -19,23 +19,26 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -50,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -65,6 +69,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 
@@ -78,7 +83,7 @@ in block
 {
     vec3 position;
     vec3 normal;
-    vec4 shadowMapPos;
+    vec3 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -134,9 +139,13 @@ vec4 getDiffuseColor(MeshMaterial material)
 layout(location = 0) out vec4 fragColor;
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
-layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
-layout(binding = NOISE_TEXTURE_2D_BINDING) uniform sampler2D tNoise;
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
+
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
@@ -215,6 +224,26 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
+vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
+    vec4 xtexel = dir.x > 0.0 ? 
+        textureLod(tVoxColorNegX, pos, mipLevel) : 
+        textureLod(tVoxColorPosX, pos, mipLevel);
+
+    vec4 ytexel = dir.y > 0.0 ? 
+        textureLod(tVoxColorNegY, pos, mipLevel) : 
+        textureLod(tVoxColorPosY, pos, mipLevel);
+
+    vec4 ztexel = dir.z > 0.0 ? 
+        textureLod(tVoxColorNegZ, pos, mipLevel) : 
+        textureLod(tVoxColorPosZ, pos, mipLevel);
+
+    // get scaling factors for each axis
+    dir = abs(dir);
+
+    // TODO: correctly weight averaged output color
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
+}
+
 vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     vec3 pos = ro;
     float dist = 0.0;
@@ -231,24 +260,12 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         // calc mip size, clamp min to texelsize
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
-        vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-        if(vcol.a > 0.0)
-        {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+
+        float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
+        if(vocc > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
             tm *= dtm;
-
-            //vec4 vnor = textureLod(tVoxNormal, pos, mipLevel);
-
-            // render
-            col += (1.0-dtm) * vcol.rgb;
-            //vec3 difflight = (1.0 - dtm)*vcol.rgb;// diffuseCol*lightCol
-            //vec3 reflectedDir = vnor.xyz;
-            //float LdotN = abs(vnor.w);
-        
-            //#define KD 0.6
-            //#define KS 0.4
-            //#define SPEC 5
-            //col += KD*difflight*LdotN + KS*pow(max(dot(reflectedDir,-rd), 0.0), SPEC);
+            col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
         }
           
         // increment
@@ -278,21 +295,19 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        vec4 vcol = textureLod(tVoxColor, pos, mipLevel);
-        if(vcol.a > 0.0)
-        {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vcol.a );
+        float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
+        if(vocc > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
             tm *= dtm;
 
             // calc local illumination
-            vec3 lightCol = (1.0-dtm) * vcol.rgb;
-            vec3 lightDir = normalize(textureLod(tVoxNormal, pos, mipLevel).xyz);
-            vec3 localColor = gDiffuse*lightCol*max(dot(-lightDir, gNormal),0.0);
+            vec3 lightCol = (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
+            vec3 localColor = gDiffuse*lightCol;
             localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
             col.rgb += localColor;
             // gDiffuse can be factored out, but here for now for clarity
         }
-        
+
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
         stepSize += gRandVal*pixSize*JITTER_K;
@@ -308,21 +323,15 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
 float getVisibility()
 {
-    vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
-    float fragLightDepth = fragLightPos.z;
-    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
+    float fragLightDepth = vertexData.shadowMapPos.z;
+    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
 
-    // Surface is fully lit.
-    if (fragLightDepth <= moments.x)
+    if(fragLightDepth <= shadowMapDepth)
         return 1.0;
-    
-    // How likely this pixel is to be lit (p_max)
-    float variance = moments.y - (moments.x*moments.x);
-    variance = max(variance,0.00002);
-    
-    float d = moments.x - fragLightDepth;
-    float p_max = variance / (variance + d*d);
-    return p_max;
+
+    // Less darknessFactor means lighter shadows
+    float darknessFactor = 50.0;
+    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 void main()
@@ -334,11 +343,9 @@ void main()
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
     
     // calc globals
-    gRandVal = 0.0;
-    //gRandVal = texture(tNoise, pos.xy*1234.5+pos.z*321.4).r;
-    //gRandVal = rand(pos.xy);
+    gRandVal = 0.0;//rand(pos.xy);
     gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize*2.5;
+    float voxelOffset = gTexelSize*2.0;
 
     #define PASS_DIFFUSE
     #define PASS_INDIR
@@ -378,7 +385,7 @@ void main()
 
     #ifdef PASS_DIFFUSE
     float visibility = getVisibility();
-    float LdotN = pow(max(dot(uLightDir, gNormal), 0.0), 0.5);
+    float LdotN = max(dot(uLightDir, gNormal), 0.0);
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     cout += diffuse.rgb * uLightColor * LdotN * visibility;
     #endif

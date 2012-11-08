@@ -19,23 +19,26 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -50,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -65,6 +69,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 
@@ -85,12 +90,13 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 // SHADER VARS
 //---------------------------------------------------------
 
-#define TEXTURE_TYPE colorTexture
-
 layout (location = 0, index = 0) out vec4 fragColor;
-layout (binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D colorTexture;
-layout (binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D normalTexture;
-
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 in vec2 vUV;
 uniform float uMipLevel;
 
@@ -175,7 +181,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
 
-    vec4 src = textureLod(TEXTURE_TYPE, pos, uMipLevel);
+    vec4 src = textureLod(tVoxColorPosX, pos, uMipLevel);
     src.a *= gStepSize;  // factor by how steps per voxel diag
 
 
@@ -205,7 +211,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, uMipLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColorPosX, pos, uMipLevel).a );
 
     pos += step;
     
@@ -228,7 +234,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(TEXTURE_TYPE, pos, uMipLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColorPosX, pos, uMipLevel).a );
 
     pos += step;
 
@@ -249,7 +255,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = textureLod(TEXTURE_TYPE, pos, uMipLevel);
+    vec4 texel = textureLod(tVoxColorPosX, pos, uMipLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );

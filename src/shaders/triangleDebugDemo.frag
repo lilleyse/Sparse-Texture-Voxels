@@ -19,23 +19,26 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -50,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -65,17 +69,17 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 
-
 in block
 {
     vec3 position;
     vec3 normal;
-    vec4 shadowMapPos;
+    vec3 shadowMapPos;
     vec2 uv;
     flat ivec2 propertyIndex;
 } vertexData;
@@ -91,7 +95,6 @@ layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
 {
     MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
 };
-
 
 MeshMaterial getMeshMaterial()
 {
@@ -111,29 +114,20 @@ layout (location = 0, index = 0) out vec4 fragColor;
 
 float getVisibility()
 {
-	vec4 fragLightPos = vertexData.shadowMapPos / vertexData.shadowMapPos.w;
-    float fragLightDepth = fragLightPos.z;
-    vec2 moments = texture(shadowMap, fragLightPos.xy).rg;
-    	
-	// Surface is fully lit.
-	if (fragLightDepth <= moments.x)
-		return 1.0;
-	
-	// How likely this pixel is to be lit (p_max)
-	float variance = moments.y - (moments.x*moments.x);
-	variance = max(variance,0.00002);
-	
-	float d = moments.x - fragLightDepth;
-	float p_max = variance / (variance + d*d);
-	return p_max;
+	float fragLightDepth = vertexData.shadowMapPos.z;
+    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
+
+    if(fragLightDepth <= shadowMapDepth)
+        return 1.0;
+
+    // Less darknessFactor means lighter shadows
+    float darknessFactor = 50.0;
+    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 void main()
 {    
     float visibility = getVisibility();
-    vec4 positionOut = vec4(vertexData.position, 1.0);
     vec4 colorOut = getDiffuseColor(getMeshMaterial());
-    vec4 normalOut = vec4(normalize(vertexData.normal), 1.0);
-
     fragColor = visibility*colorOut;
 }

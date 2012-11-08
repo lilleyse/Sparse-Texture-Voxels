@@ -19,20 +19,26 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    4
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING                  3
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -47,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -62,16 +69,13 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 in vec2 vUV;
 layout (binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap; 
 layout (location = 0) out vec4 fragColor;
 
-//void main()
-//{
-    //fragColor = texture(shadowMap, vUV);
-//}
 
 uniform float offset[3] = float[]( 0.0, 1.3846153846, 3.2307692308 );
 uniform float weight[3] = float[]( 0.2270270270, 0.3162162162, 0.0702702703 );

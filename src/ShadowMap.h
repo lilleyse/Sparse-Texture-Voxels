@@ -48,7 +48,7 @@ struct ShadowMap
         {
             // Create texture
             glBindTexture(GL_TEXTURE_2D, shadowMapTextures[i]);
-            glTexStorage2D(GL_TEXTURE_2D, 1, GL_RG32F, shadowMapResolution, shadowMapResolution);
+            glTexStorage2D(GL_TEXTURE_2D, 1, GL_R32F, shadowMapResolution, shadowMapResolution);
 
             // Create FBO
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowMapBlurFBO[i]);
@@ -113,29 +113,26 @@ struct ShadowMap
     void display()
     {
         // Get light matrices
-        glm::mat4 worldToLight = lightCamera->createOrthrographicProjectionMatrix() * lightCamera->createViewMatrix();
-        glm::mat4 offsetMatrix(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
-        glm::mat4 worldToShadowMap = offsetMatrix * worldToLight;
+        //glm::mat4 worldToLight = lightCamera->createOrthrographicProjectionMatrix() * lightCamera->createViewMatrix();
+        //glm::mat4 offsetMatrix(0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 0.5f, 0.0f, 0.5f, 0.5f, 0.5f, 1.0f);
+        //glm::mat4 worldToShadowMap = offsetMatrix * worldToLight;
        
         // Set UBO with light matrices
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        perFrame->uViewProjection = worldToLight;
-        perFrame->uWorldToShadowMap = worldToShadowMap;
+        perFrame->uLightView = lightCamera->createViewMatrix();
+        perFrame->uLightProj = lightCamera->createOrthrographicProjectionMatrix();
         perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
         perFrame->uLightDir = -lightCamera->lookDir;
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         // Generate shadow map
-        //glEnable(GL_POLYGON_OFFSET_FILL);
-        //glPolygonOffset(1.0, 4.0);
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowMapGenFBO);
         Utils::OpenGL::setViewport(shadowMapResolution, shadowMapResolution);
         Utils::OpenGL::clearColorAndDepth();
         Utils::OpenGL::setRenderState(true, true, true);
         glUseProgram(shadowMapProgram);
         coreEngine->display();
-        //glDisable(GL_POLYGON_OFFSET_FILL);
 
         // Do the gaussian blur
         glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_BINDING);
@@ -162,7 +159,5 @@ struct ShadowMap
         
         // Unbind FBO
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-        
     }
-
 };

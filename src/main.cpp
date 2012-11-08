@@ -1,13 +1,11 @@
 #include "Utils.h"
 #include "ShaderConstants.h"
 #include "Camera.h"
-#include "VoxelTextureGenerator.h"
 #include "Voxelizer.h"
 #include "Passthrough.h"
 #include "MipMapGenerator.h"
 #include "VoxelClean.h"
 #include "ShadowMap.h"
-#include "NoiseTexture.h"
 #include "engine/CoreEngine.h"
 #include "demos/VoxelDebug.h"
 #include "demos/VoxelRaycaster.h"
@@ -33,14 +31,7 @@ namespace
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0f;
-    float specularAmount = 0.0f;
-    bool loadTextures = false;
-    const std::string voxelTextures[] = {
-        VoxelTextureGenerator::CORNELL_BOX,
-        VoxelTextureGenerator::SPHERE,
-        VoxelTextureGenerator::CUBE,
-        DATA_DIRECTORY + "Bucky.raw",
-    };
+    float specularAmount = 0.1f;
 
     // Demo settings
     bool loadAllDemos = true;
@@ -62,7 +53,6 @@ namespace
     ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
     ThirdPersonCamera* currentCamera = viewCamera;
-    VoxelTextureGenerator* voxelTextureGenerator = new VoxelTextureGenerator();
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
     VoxelClean* voxelClean = new VoxelClean();
@@ -73,7 +63,6 @@ namespace
     Passthrough* passthrough = new Passthrough();
     PerFrameUBO* perFrame = new PerFrameUBO();
     ShadowMap* shadowMap = new ShadowMap();
-    NoiseTexture* noiseTexture = new NoiseTexture();
     GLuint perFrameUBO;
 }
 
@@ -169,18 +158,13 @@ void GLFWCALL keyPress(int k, int action)
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
 
+        // Trigger voxel texture update
+        if (k == 'C') 
+            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                voxelDebug->voxelTextureUpdate();
+
         //Switch between light and regular camera
         if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
-
-        // Changing textures
-        if (loadTextures)
-        {
-            bool setsNextTexture = k == ';' && voxelTextureGenerator->setNextTexture();
-            bool setsPreviousTexture = k == '\'' && voxelTextureGenerator->setPreviousTexture();
-            if (setsNextTexture || setsPreviousTexture)
-                if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                    voxelDebug->voxelTextureUpdate();
-        }
     }
 }
 
@@ -224,7 +208,7 @@ void GLFWCALL resize(int w, int h)
 void setUBO()
 {
     // Update the per frame UBO
-    perFrame->uViewProjection = currentCamera->createProjectionMatrix() * currentCamera->createViewMatrix();    
+    perFrame->uViewProjection = currentCamera->createPerspectiveProjectionMatrix() * currentCamera->createViewMatrix();    
     perFrame->uCamLookAt = currentCamera->lookAt;
     perFrame->uCamPos = currentCamera->position;
     perFrame->uCamUp = currentCamera->upDir;
@@ -288,19 +272,18 @@ void begin()
     lightCamera->setFarNearPlanes(.01f, 100.0f);
     lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
+    //lightCamera->rotate(0.2f, 0.0f);
 
     // set up miscellaneous things
     Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
     timer->begin();
-    noiseTexture->begin();
     fullScreenQuad->begin();
     coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
-    mipMapGenerator->begin(voxelTexture, fullScreenQuad);
     voxelClean->begin(voxelTexture, fullScreenQuad);
-    voxelTextureGenerator->begin(voxelTexture, mipMapGenerator);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
+    mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);
     shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
 
     // blank slate
@@ -312,21 +295,6 @@ void begin()
     voxelClean->clean();
     voxelizer->voxelizeScene();
     mipMapGenerator->generateMipMapGPU();
-
-    // mipmap
-    if (loadTextures)
-    {
-        // create procedural textures
-        uint numInitialTextures = sizeof(voxelTextures) / sizeof(voxelTextures[0]);
-        for (uint i = 0; i < numInitialTextures; i++)
-            voxelTextureGenerator->createTexture(voxelTextures[i]);
-
-        // Load scene texture onto cpu
-        voxelTextureGenerator->createTextureFromVoxelTexture(sceneFile);
-        voxelTextureGenerator->setTexture(sceneFile);
-    }
-    else 
-        mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -370,7 +338,6 @@ void display()
         voxelClean->clean();
         voxelizer->voxelizeScene();
         mipMapGenerator->generateMipMapGPU();
-        Utils::OpenGL::clearColorAndDepth();
         setUBO();
         mainRenderer->display();
     }
@@ -405,7 +372,6 @@ int main(int argc, char* argv[])
     glfwSetMousePosCallback(mouseMove);
     glfwSetMouseButtonCallback(mouseClick);
     glfwSetKeyCallback(keyPress);
-    glfwEnable(GLFW_AUTO_POLL_EVENTS);
     glfwSwapInterval(vsync ? 1 : 0);
     glfwSetTime(0.0);
 
