@@ -1,3 +1,5 @@
+// The shader version of this file is in src/shaders/globals
+
 #pragma once
 
 #include "Utils.h"

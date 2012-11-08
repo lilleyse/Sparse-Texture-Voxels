@@ -309,7 +309,8 @@ namespace Utils
 
             if(!Source.empty())
             {
-                std::string SourceContent = Utils::loadFile(Source);
+                std::string globalsShader = SHADER_DIRECTORY + "globals"; //should probably offload the globals loading to a different place
+                std::string SourceContent = Utils::loadFile(globalsShader) + '\n' + Utils::loadFile(Source);
                 char const * SourcePointer = SourceContent.c_str();
                 Name = glCreateShader(Type);
                 glShaderSource(Name, 1, &SourcePointer, NULL);
