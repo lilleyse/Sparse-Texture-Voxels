@@ -19,23 +19,26 @@
 #define POSITION_ARRAY_BINDING           3
 
 // Sampler binding points
-#define COLOR_TEXTURE_3D_BINDING                 1
-#define NORMAL_TEXTURE_3D_BINDING                2
-#define SHADOW_MAP_BINDING                       3
-#define NOISE_TEXTURE_2D_BINDING                 4
-#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    5
+#define COLOR_TEXTURE_POSX_3D_BINDING            1 // right direction
+#define COLOR_TEXTURE_NEGX_3D_BINDING            2 // left direction
+#define COLOR_TEXTURE_POSY_3D_BINDING            3 // up direction
+#define COLOR_TEXTURE_NEGY_3D_BINDING            4 // down direction
+#define COLOR_TEXTURE_POSZ_3D_BINDING            5 // front direction
+#define COLOR_TEXTURE_NEGZ_3D_BINDING            6 // back direction
+#define SHADOW_MAP_BINDING                       7
+#define DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    8
 
 // Image binding points
-#define COLOR_IMAGE_3D_BINDING_BASE              0
-#define COLOR_IMAGE_3D_BINDING_CURR              1
-#define COLOR_IMAGE_3D_BINDING_NEXT              2
-#define NORMAL_IMAGE_3D_BINDING_BASE             3
-#define NORMAL_IMAGE_3D_BINDING_CURR             4
-#define NORMAL_IMAGE_3D_BINDING_NEXT             5
+#define COLOR_IMAGE_POSX_3D_BINDING              0 // right direction
+#define COLOR_IMAGE_NEGX_3D_BINDING              1 // left direction
+#define COLOR_IMAGE_POSY_3D_BINDING              2 // up direction
+#define COLOR_IMAGE_NEGY_3D_BINDING              3 // down direction
+#define COLOR_IMAGE_POSZ_3D_BINDING              4 // front direction
+#define COLOR_IMAGE_NEGZ_3D_BINDING              5 // back direction
 
 // Shadow Map FBO
-#define SHADOW_MAP_FBO_BINDING      0
-#define BLURRED_MAP_FBO_BINDING     1
+#define SHADOW_MAP_FBO_BINDING     0
+#define BLURRED_MAP_FBO_BINDING    1
 
 // Object properties
 #define POSITION_INDEX        0
@@ -50,7 +53,8 @@
 layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 {
     mat4 uViewProjection;
-    mat4 uWorldToShadowMap;
+    mat4 uLightView;
+    mat4 uLightProj;
     vec3 uCamLookAt;
     vec3 uCamPos;
     vec3 uCamUp;
@@ -65,6 +69,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;
+    int uCurrentMipLevel;
 };
 
 
@@ -86,8 +91,12 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
 //---------------------------------------------------------
 
 layout(location = 0, index = 0) out vec4 fragColor;
-layout(binding = COLOR_TEXTURE_3D_BINDING) uniform sampler3D tVoxColor;
-layout(binding = NORMAL_TEXTURE_3D_BINDING) uniform sampler3D tVoxNormal;
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 
 in vec2 vUV;
 
@@ -123,6 +132,26 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
+vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
+    vec4 xtexel = dir.x > 0.0 ? 
+        textureLod(tVoxColorNegX, pos, mipLevel) : 
+        textureLod(tVoxColorPosX, pos, mipLevel);
+
+    vec4 ytexel = dir.y > 0.0 ? 
+        textureLod(tVoxColorNegY, pos, mipLevel) : 
+        textureLod(tVoxColorPosY, pos, mipLevel);
+
+    vec4 ztexel = dir.z > 0.0 ? 
+        textureLod(tVoxColorNegZ, pos, mipLevel) : 
+        textureLod(tVoxColorPosZ, pos, mipLevel);
+
+    // get scaling factors for each axis
+    dir = abs(dir);
+
+    // TODO: correctly weight for any arbitrary directions
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);//  / ROOTTHREE;// / (dir.x+dir.y+dir.z);
+}
+
 // transmittance accumulation
 vec4 conetraceAccum(vec3 ro, vec3 rd) {
   vec3 pos = ro;
@@ -151,11 +180,9 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
 
     // take step relative to the interpolated size
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-
-    // DEBUG: mipmap level 0.0 for now to make this work.
-
+    
     // sample texture
-    vec4 texel = textureLod(tVoxColor, pos, mipLevel);
+    float vocclusion = textureLod(tVoxColorPosX, pos, mipLevel).a;
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 
@@ -164,19 +191,10 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     // but need to weight by stepsize within texel
 
     // delta transmittance
-    float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*texel.a );
-    tm *= dtm;
-    //col += (1.0 - dtm)*texel.rgb;
-
-    // compute lighting
-    {
-        vec3 C = (1.0-dtm)*texel.rgb;
-        vec3 R = textureLod(tVoxNormal, pos, 0.0).rgb; // change 0.0 to mipLevel
-
-        #define KD 0.6
-        #define KS 0.4
-        #define SPEC 10
-        col += KD*C + KS*pow(max(dot(R,-rd), 0.0), SPEC);
+    if (vocclusion > 0.0) {
+        float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL*vocclusion );
+        tm *= dtm;
+        col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
     }
 
     pos += stepSize*rd;
