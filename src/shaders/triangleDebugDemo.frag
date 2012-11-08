@@ -125,9 +125,24 @@ float getVisibility()
     return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
+#define KD 0.6
+#define KA 0.1
+#define KS 0.3
+#define SPEC 20
 void main()
-{    
+{
+    vec3 position = vertexData.position;
+    vec3 normal = normalize(vertexData.normal);
+    vec3 color = getDiffuseColor(getMeshMaterial()).rgb;    
     float visibility = getVisibility();
-    vec4 colorOut = getDiffuseColor(getMeshMaterial());
-    fragColor = visibility*colorOut;
+
+    vec3 R = reflect(uLightDir, normal);
+    vec3 V = normalize(position-uCamPos);
+
+    vec3 cout = 
+        KA * color + 
+        KD * visibility*color*uLightColor*max(dot(uLightDir, normal), 0.0) + 
+        KS * visibility*uLightColor*pow( max(dot(R,V), 0.0), SPEC );
+
+    fragColor = vec4(cout, 1.0);
 }
