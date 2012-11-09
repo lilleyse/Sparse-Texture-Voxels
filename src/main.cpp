@@ -52,6 +52,7 @@ namespace
     Object* currentSelectedObject;
     ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
+    ThirdPersonCamera* observerCamera = new ThirdPersonCamera();
     ThirdPersonCamera* currentCamera = viewCamera;
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
@@ -61,18 +62,9 @@ namespace
     CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
     Passthrough* passthrough = new Passthrough();
-    PerFrameUBO* perFrame = new PerFrameUBO();
     ShadowMap* shadowMap = new ShadowMap();
+    PerFrameUBO* perFrame = new PerFrameUBO();
     GLuint perFrameUBO;
-}
-
-void setMipMapLevel(int level)
-{
-    currentMipMapLevel = std::max(std::min(level, (int)voxelTexture->numMipMapLevels - 1), 0);    
-    if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-        voxelDebug->setMipMapLevel(currentMipMapLevel);
-    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster->setMipMapLevel(currentMipMapLevel);
 }
 
 void GLFWCALL mouseMove(int x, int y)
@@ -145,26 +137,37 @@ void GLFWCALL keyPress(int k, int action)
 {
     if (action == GLFW_RELEASE)
     {
+        bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
+
         // Changing demo (number keys and numpad)
         if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES)
             currentDemoType = (DemoType)((uint)k - '1');
         if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
+        if (currentDemoType == VOXEL_DEBUG)
+            voxelDebug->voxelTextureUpdate();
 
         // Changing mip map level
-        if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
-        if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
-
+        int increaseMipLevel = int(k == '.');
+        int decreaseMipLevel = int(k == ',');
+        int newMipLevel = glm::clamp(int(currentMipMapLevel + increaseMipLevel - decreaseMipLevel), 0, int(voxelTexture->numMipMapLevels - 1));
+        if (currentMipMapLevel != newMipLevel)
+        {
+            currentMipMapLevel = newMipLevel;
+            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                voxelDebug->setMipMapLevel(currentMipMapLevel);
+        }
+        
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
 
-        // Trigger voxel texture update
-        if (k == 'C') 
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->voxelTextureUpdate();
-
         //Switch between light and regular camera
-        if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
+        if (k == GLFW_KEY_SPACE)
+        {
+            if(currentCamera == viewCamera) currentCamera = shiftDown ? observerCamera : lightCamera;
+            else if(currentCamera == lightCamera) currentCamera = shiftDown ? viewCamera : observerCamera;
+            else if(currentCamera == observerCamera) currentCamera = shiftDown ? lightCamera : viewCamera;
+        }
     }
 }
 
@@ -202,6 +205,7 @@ void GLFWCALL resize(int w, int h)
 {
     Utils::OpenGL::setScreenSize(w, h);
     viewCamera->setAspectRatio(w, h);
+    observerCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
 }
 
@@ -220,6 +224,7 @@ void setUBO()
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
+    perFrame->uCurrentMipLevel = currentMipMapLevel;
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
@@ -260,22 +265,28 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
-void begin()
+void initCameras()
 {
-    initGL();
-
     viewCamera->setFarNearPlanes(.01f, 100.0f);
     viewCamera->zoom(3.0f);
     viewCamera->lookAt = glm::vec3(0.5f);
+
+    observerCamera->setFarNearPlanes(.01f, 100.0f);
+    observerCamera->zoom(1.0f);
+    observerCamera->lookAt = glm::vec3(0.5f);
 
     lightCamera->setAspectRatio(shadowMapResolution, shadowMapResolution);
     lightCamera->setFarNearPlanes(.01f, 100.0f);
     lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
-    //lightCamera->rotate(0.2f, 0.0f);
+}
+
+void begin()
+{
+    initGL();
+    initCameras();
 
     // set up miscellaneous things
-    Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
     timer->begin();
     fullScreenQuad->begin();
     coreEngine->begin(sceneFile);
@@ -285,16 +296,6 @@ void begin()
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);
     shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
-
-    // blank slate
-    Utils::OpenGL::clearColorAndDepth();
-    setUBO();
-
-    // voxelize and light the scene
-    shadowMap->display();
-    voxelClean->clean();
-    voxelizer->voxelizeScene();
-    mipMapGenerator->generateMipMapGPU();
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -307,8 +308,6 @@ void begin()
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == MAIN_RENDERER)
         mainRenderer->begin(coreEngine, passthrough);
-
-    setMipMapLevel(currentMipMapLevel);
 }
 
 void display()
@@ -333,7 +332,6 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == MAIN_RENDERER) {
         // Update the scene
-        // We should move this to mainRenderer->display once lights are self contained and have working matrices
         shadowMap->display();
         voxelClean->clean();
         voxelizer->voxelizeScene();

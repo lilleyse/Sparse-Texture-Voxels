@@ -78,8 +78,6 @@ public:
         std::string vertexShaderSource = SHADER_DIRECTORY + "debugVoxelDemo.vert";
         std::string fragmentShaderSource = SHADER_DIRECTORY + "debugVoxelDemo.frag";
         voxelDebugProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
-        
-        voxelTextureUpdate();
     }
     void voxelTextureUpdate()
     {
@@ -134,6 +132,7 @@ public:
 
         Utils::OpenGL::setScreenSizedViewport();
         Utils::OpenGL::setRenderState(true, true, true);
+
         glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
