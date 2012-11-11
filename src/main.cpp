@@ -293,9 +293,9 @@ void begin()
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     voxelClean->begin(voxelTexture, fullScreenQuad);
-    voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
+    voxelizer->begin(voxelTexture, coreEngine, viewCamera, perFrame, perFrameUBO);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);
-    shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
+    shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, lightCamera, perFrame, perFrameUBO);
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 

@@ -9,15 +9,17 @@ class Voxelizer
 private:
     VoxelTexture* voxelTexture;
     CoreEngine* coreEngine;
+    Camera* viewCamera;
     PerFrameUBO* perFrame;
     GLuint perFrameUBO;
     GLuint voxelizerProgram;
 public:
 
-    void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, PerFrameUBO* perFrame, GLuint perFrameUBO)
+    void begin(VoxelTexture* voxelTexture, CoreEngine* coreEngine, Camera* viewCamera, PerFrameUBO* perFrame, GLuint perFrameUBO)
     {
         this->voxelTexture = voxelTexture;
         this->coreEngine = coreEngine;
+        this->viewCamera = viewCamera;
         this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
 
@@ -41,6 +43,7 @@ public:
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
         perFrame->uResolution = glm::ivec2(voxelGridLength);
         
+        glm::vec3 offset = viewCamera->position;
         // Render down z-axis
         perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
