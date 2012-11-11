@@ -8,7 +8,7 @@
 struct ShadowMap
 {
     CoreEngine* coreEngine;
-    ThirdPersonCamera* lightCamera;
+    Camera* lightCamera;
     FullScreenQuad* fullScreenQuad;
     PerFrameUBO* perFrame;
     GLuint perFrameUBO;
@@ -27,15 +27,15 @@ struct ShadowMap
 
     int shadowMapResolution;
 
-    void begin(int shadowMapResolution, CoreEngine* coreEngine, FullScreenQuad* fullScreenQuad, PerFrameUBO* perFrame, GLuint perFrameUBO, ThirdPersonCamera* lightCamera)
+    void begin(int shadowMapResolution, CoreEngine* coreEngine, FullScreenQuad* fullScreenQuad, Camera* lightCamera, PerFrameUBO* perFrame, GLuint perFrameUBO)
     {
         this->shadowMapResolution = shadowMapResolution;
         this->coreEngine = coreEngine;
         this->fullScreenQuad = fullScreenQuad;
+        this->lightCamera = lightCamera;
         this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
-        this->lightCamera = lightCamera;
-
+        
         //--------------------------------
         // Generate shadow map FBO
         //--------------------------------

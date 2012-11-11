@@ -134,7 +134,7 @@ float getVisibility()
 #define KD 0.6
 #define KA 0.2
 #define KS 0.3
-#define SPEC 20
+#define SPEC 0.2
 
 
 //---------------------------------------------------------
@@ -151,13 +151,24 @@ void main()
 
     float visibility = getVisibility();
 
-    vec3 R = reflect(uLightDir, normal);
-    vec3 V = normalize(position-uCamPos);
+    vec3 reflectedLight = reflect(uLightDir, normal);
+    vec3 view = normalize(position-uCamPos);
+    float diffuseTerm = max(dot(uLightDir, normal), 0.0);
+    
+    //gaussian (might be able to do it faster - unreal slides page 31)
+    vec3 halfAngle = normalize(uLightDir - view);
+    float angleNormalHalf = acos(dot(halfAngle, normal));
+    float exponent = angleNormalHalf / SPEC;
+    exponent = -(exponent * exponent);
+    float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
+
+    //phong
+    //float specularTerm = pow( max(dot(reflectedLight,view), 0.0), SPEC );
 
     vec3 cout = 
         KA * color + 
-        KD * visibility*color*uLightColor*max(dot(uLightDir, normal), 0.0) + 
-        KS * visibility*uLightColor*specularColor*pow( max(dot(R,V), 0.0), SPEC );
+        KD * visibility*color*uLightColor*diffuseTerm +
+        KS * visibility*specularColor*uLightColor*specularTerm;
 
     fragColor = vec4(cout, 1.0);
 }

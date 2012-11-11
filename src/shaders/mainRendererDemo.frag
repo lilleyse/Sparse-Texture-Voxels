@@ -374,10 +374,19 @@ void main()
     #endif
 
     #ifdef PASS_DIFFUSE
+    #define SPEC 0.2
     float visibility = getVisibility();
-    float LdotN = max(dot(uLightDir, gNormal), 0.0);
-    vec4 diffuse = getDiffuseColor(getMeshMaterial());
-    cout += diffuse.rgb * uLightColor * LdotN * visibility;
+    vec4 materialColor = getDiffuseColor(getMeshMaterial());
+    vec3 reflectedLight = reflect(uLightDir, gNormal);
+    vec3 view = normalize(pos-uCamPos);
+    float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
+    vec3 halfAngle = normalize(uLightDir - view);
+    float angleNormalHalf = acos(dot(halfAngle, gNormal));
+    float exponent = angleNormalHalf / SPEC;
+    exponent = -(exponent * exponent);
+    float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
+    cout += materialColor.rgb * uLightColor * diffuseTerm * visibility;
+    cout += uLightColor * specularTerm * visibility;
     #endif
     #ifdef PASS_INDIR
     cout += indir.rgb;

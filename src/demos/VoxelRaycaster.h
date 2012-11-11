@@ -31,14 +31,8 @@ public:
     {
         Utils::OpenGL::setScreenSizedViewport();
         Utils::OpenGL::setRenderState(true, true, true);
+       
         glUseProgram(fullScreenProgram);
         fullScreenQuad->display();
-    }
-
-    void setMipMapLevel(uint mipMapLevel)
-    {
-        glUseProgram(fullScreenProgram);
-        GLuint mipMapLevelUniform = glGetUniformLocation(fullScreenProgram, "uMipLevel");
-        glUniform1f(mipMapLevelUniform, (float)mipMapLevel);
     }
 };

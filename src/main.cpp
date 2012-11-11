@@ -52,6 +52,7 @@ namespace
     Object* currentSelectedObject;
     FirstPersonCamera* viewCamera = new FirstPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
+    ThirdPersonCamera* observerCamera = new ThirdPersonCamera();
     Camera* currentCamera = viewCamera;
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
@@ -61,18 +62,9 @@ namespace
     CoreEngine* coreEngine = new CoreEngine();
     FullScreenQuad* fullScreenQuad = new FullScreenQuad();
     Passthrough* passthrough = new Passthrough();
-    PerFrameUBO* perFrame = new PerFrameUBO();
     ShadowMap* shadowMap = new ShadowMap();
+    PerFrameUBO* perFrame = new PerFrameUBO();
     GLuint perFrameUBO;
-}
-
-void setMipMapLevel(int level)
-{
-    currentMipMapLevel = std::max(std::min(level, (int)voxelTexture->numMipMapLevels - 1), 0);    
-    if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-        voxelDebug->setMipMapLevel(currentMipMapLevel);
-    if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster->setMipMapLevel(currentMipMapLevel);
 }
 
 void GLFWCALL mouseMove(int x, int y)
@@ -81,27 +73,20 @@ void GLFWCALL mouseMove(int x, int y)
     glm::ivec2 mouseDelta = newMousePos - currentMousePos; 
     currentMousePos = newMousePos;
 
-    bool leftPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-    bool rightPress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-    bool middlePress = glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-    if (leftPress || rightPress || middlePress)
+    if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
     {
-        float cameraDistanceFromCenter = glm::length(currentCamera->position);
-        if (leftPress)
-        {
-            float rotateAmount = cameraDistanceFromCenter / 200.0f;
-            currentCamera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
-        }
-        else if (rightPress)
-        {
-            float zoomAmount = cameraDistanceFromCenter / 200.0f;
-            currentCamera->zoom(mouseDelta.y * zoomAmount);
-        }
-        else if (middlePress)
-        {
-            float panAmount = cameraDistanceFromCenter / 500.0f;
-            currentCamera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
-        }
+        float rotateAmount = 0.005f;
+        currentCamera->rotate(-mouseDelta.x * rotateAmount, -mouseDelta.y * rotateAmount);
+    }
+    else if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
+    {
+        float zoomAmount = 0.002f;
+        currentCamera->zoom(mouseDelta.y * zoomAmount);
+    }
+    else if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
+    {
+        float panAmount = 0.002f;
+        currentCamera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
     }
 }
 
@@ -150,26 +135,29 @@ void GLFWCALL keyPress(int k, int action)
             currentDemoType = (DemoType)((uint)k - '1');
         if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
+        if (currentDemoType == VOXEL_DEBUG)
+            voxelDebug->voxelTextureUpdate();
 
         // Changing mip map level
-        if (k == '.') setMipMapLevel((int)currentMipMapLevel + 1);
-        if (k == ',') setMipMapLevel((int)currentMipMapLevel - 1);
-
+        int increaseMipLevel = int(k == '.');
+        int decreaseMipLevel = int(k == ',');
+        int newMipLevel = glm::clamp(int(currentMipMapLevel + increaseMipLevel - decreaseMipLevel), 0, int(voxelTexture->numMipMapLevels - 1));
+        if (currentMipMapLevel != newMipLevel)
+        {
+            currentMipMapLevel = newMipLevel;
+            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
+                voxelDebug->setMipMapLevel(currentMipMapLevel);
+        }
+        
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
-
-        // Trigger voxel texture update
-        if (k == 'C') 
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->voxelTextureUpdate();
 
         //Switch between light and regular camera
         if (k == GLFW_KEY_SPACE)
         {
-            if(currentCamera == viewCamera)
-                currentCamera = lightCamera;
-            else
-                currentCamera = viewCamera;
+            if(currentCamera == viewCamera) currentCamera = lightCamera;
+            else if(currentCamera == lightCamera) currentCamera = observerCamera;
+            else if(currentCamera == observerCamera) currentCamera = viewCamera;
         }
     }
 }
@@ -185,17 +173,26 @@ void processKeyDown()
         float translationAmount = 0.01f;
         float rotationAmount = 0.5f;
         float scaleAmount = 0.01f;
-        if(glfwGetKey('W') == GLFW_PRESS || glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
-        if(glfwGetKey('S') == GLFW_PRESS || glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
-        if(glfwGetKey('A') == GLFW_PRESS || glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
-        if(glfwGetKey('D') == GLFW_PRESS || glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
-        if(glfwGetKey('Q') == GLFW_PRESS || glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
-        if(glfwGetKey('E') == GLFW_PRESS || glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
+        if(glfwGetKey(GLFW_KEY_UP) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, translationAmount, 0.0f));
+        if(glfwGetKey(GLFW_KEY_DOWN) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, -translationAmount, 0.0f));
+        if(glfwGetKey(GLFW_KEY_LEFT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(-translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey(GLFW_KEY_RIGHT) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(translationAmount, 0.0f, 0.0f));
+        if(glfwGetKey(GLFW_KEY_END) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, translationAmount));
+        if(glfwGetKey(GLFW_KEY_HOME) == GLFW_PRESS) currentSelectedObject->translate(glm::vec3(0.0f, 0.0f, -translationAmount));
         if(shiftDown && glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), rotationAmount);
         else if(glfwGetKey('R') == GLFW_PRESS) currentSelectedObject->rotate(glm::vec3(0.0f, 1.0f, 0.0f), -rotationAmount);
         if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
         else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
     }
+    
+
+    float zoomSpeed = 0.001f;
+    float panSpeed = 0.0007f;
+    if(glfwGetKey('W') == GLFW_PRESS) currentCamera->zoom(zoomSpeed);
+    if(glfwGetKey('S') == GLFW_PRESS) currentCamera->zoom(-zoomSpeed);
+    if(glfwGetKey('A') == GLFW_PRESS) currentCamera->pan(-panSpeed,0.0f);
+    if(glfwGetKey('D') == GLFW_PRESS) currentCamera->pan(panSpeed,0.0f);
+
 
     // Changing specular values
     float specularFOVChange = 0.2f;
@@ -208,6 +205,7 @@ void GLFWCALL resize(int w, int h)
 {
     Utils::OpenGL::setScreenSize(w, h);
     viewCamera->setAspectRatio(w, h);
+    observerCamera->setAspectRatio(w, h);
     windowSize = glm::ivec2(w, h);
 }
 
@@ -226,6 +224,7 @@ void setUBO()
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
+    perFrame->uCurrentMipLevel = currentMipMapLevel;
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
@@ -266,41 +265,40 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
-void begin()
+void initCameras()
 {
-    initGL();
-
     viewCamera->setFarNearPlanes(.01f, 100.0f);
-    viewCamera->zoom(3.0f);
-    viewCamera->lookAt = glm::vec3(0.5f);
+    viewCamera->position = glm::vec3(0.5f,0.35f,0.5f);
+    viewCamera->rotate(1.57f,0.0f);
+
+    observerCamera->setFarNearPlanes(.01f, 100.0f);
+    observerCamera->zoom(1.0f);
+    observerCamera->lookAt = glm::vec3(0.5f);
 
     lightCamera->setAspectRatio(shadowMapResolution, shadowMapResolution);
     lightCamera->setFarNearPlanes(.01f, 100.0f);
     lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
-    //lightCamera->rotate(0.2f, 0.0f);
+    lightCamera->rotate(-1.52f,-0.27f);
+    lightCamera->zoom(0.8f);
+    
+}
+
+void begin()
+{
+    initGL();
+    initCameras();
 
     // set up miscellaneous things
-    Utils::OpenGL::setScreenSize(windowSize.x, windowSize.y);
     timer->begin();
     fullScreenQuad->begin();
     coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     voxelClean->begin(voxelTexture, fullScreenQuad);
-    voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
+    voxelizer->begin(voxelTexture, coreEngine, viewCamera, perFrame, perFrameUBO);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);
-    shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, perFrame, perFrameUBO, lightCamera);
-
-    // blank slate
-    Utils::OpenGL::clearColorAndDepth();
-    setUBO();
-
-    // voxelize and light the scene
-    shadowMap->display();
-    voxelClean->clean();
-    voxelizer->voxelizeScene();
-    mipMapGenerator->generateMipMapGPU();
+    shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, lightCamera, perFrame, perFrameUBO);
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
@@ -313,8 +311,6 @@ void begin()
         voxelConetracer->begin(voxelTexture, fullScreenQuad);
     if (loadAllDemos || currentDemoType == MAIN_RENDERER)
         mainRenderer->begin(coreEngine, passthrough);
-
-    setMipMapLevel(currentMipMapLevel);
 }
 
 void display()
@@ -339,7 +335,6 @@ void display()
         voxelConetracer->display();
     else if (currentDemoType == MAIN_RENDERER) {
         // Update the scene
-        // We should move this to mainRenderer->display once lights are self contained and have working matrices
         shadowMap->display();
         voxelClean->clean();
         voxelizer->voxelizeScene();

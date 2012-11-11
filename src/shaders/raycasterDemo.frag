@@ -23,7 +23,6 @@ layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
 layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
 layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 in vec2 vUV;
-uniform float uMipLevel;
 
 const uint MAX_STEPS = 64;
 const float ALPHA_THRESHOLD = 0.95;
@@ -106,7 +105,7 @@ vec4 raymarchSimple(vec3 ro, vec3 rd) {
   
   for (int i=0; i<MAX_STEPS; ++i) {
 
-    vec4 src = textureLod(tVoxColorPosX, pos, uMipLevel);
+    vec4 src = textureLod(tVoxColorPosX, pos, uCurrentMipLevel);
     src.a *= gStepSize;  // factor by how steps per voxel diag
 
 
@@ -136,7 +135,7 @@ float getTransmittance(vec3 ro, vec3 rd) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColorPosX, pos, uMipLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColorPosX, pos, uCurrentMipLevel).a );
 
     pos += step;
     
@@ -159,7 +158,7 @@ float getTransmittanceToDst(vec3 r0, vec3 r1) {
   float tm = 1.0;
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColorPosX, pos, uMipLevel).a );
+    tm *= exp( -TRANSMIT_K*gStepSize*textureLod(tVoxColorPosX, pos, uCurrentMipLevel).a );
 
     pos += step;
 
@@ -180,7 +179,7 @@ vec4 raymarchLight(vec3 ro, vec3 rd) {
   float tm = 1.0;         // accumulated transmittance
   
   for (int i=0; i<MAX_STEPS; ++i) {
-    vec4 texel = textureLod(tVoxColorPosX, pos, uMipLevel);
+    vec4 texel = textureLod(tVoxColorPosX, pos, uCurrentMipLevel);
 
     // delta transmittance
     float dtm = exp( -TRANSMIT_K*gStepSize*texel.a );
