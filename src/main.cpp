@@ -25,7 +25,7 @@ namespace
     bool vsync = false;
     
     // Texture settings
-    std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
+    std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
     uint voxelGridLength = 128;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
@@ -50,9 +50,9 @@ namespace
     glm::ivec2 mouseClickPos;
     glm::ivec2 currentMousePos;
     Object* currentSelectedObject;
-    ThirdPersonCamera* viewCamera = new ThirdPersonCamera();
+    FirstPersonCamera* viewCamera = new FirstPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
-    ThirdPersonCamera* currentCamera = viewCamera;
+    Camera* currentCamera = viewCamera;
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
     VoxelClean* voxelClean = new VoxelClean();
@@ -164,7 +164,13 @@ void GLFWCALL keyPress(int k, int action)
                 voxelDebug->voxelTextureUpdate();
 
         //Switch between light and regular camera
-        if (k == GLFW_KEY_SPACE) currentCamera = (currentCamera == viewCamera) ? lightCamera : viewCamera;
+        if (k == GLFW_KEY_SPACE)
+        {
+            if(currentCamera == viewCamera)
+                currentCamera = lightCamera;
+            else
+                currentCamera = viewCamera;
+        }
     }
 }
 

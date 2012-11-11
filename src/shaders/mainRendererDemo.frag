@@ -1,8 +1,10 @@
 //---------------------------------------------------------
-// TRIANGLE ENGINE
+// MAIN RENDER DEMO
 //---------------------------------------------------------
 
-layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+//---------------------------------------------------------
+// GL IN/OUT
+//---------------------------------------------------------
 
 in block
 {
@@ -13,11 +15,30 @@ in block
     flat ivec2 propertyIndex;
 } vertexData;
 
+layout(location = 0) out vec4 fragColor;
+
+
+//---------------------------------------------------------
+// GLOBAL DATA
+//---------------------------------------------------------
+
+layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
+
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
+
 struct MeshMaterial
 {
     vec4 diffuseColor;
     vec4 specularColor;
-    ivec2 textureLayer;
+    ivec2 diffuseTexture;
+    ivec2 normalTexture;
+    ivec2 specularTexture;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -25,24 +46,96 @@ layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
     MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
 };
 
+
+//---------------------------------------------------------
+// COMMON SHADING
+//---------------------------------------------------------
+
 MeshMaterial getMeshMaterial()
 {
     int index = vertexData.propertyIndex[MATERIAL_INDEX];
     return meshMaterialArray[index];
 }
 
+vec3 getNormal(MeshMaterial material, vec3 vertexNormal)
+{
+    int textureId = material.normalTexture.x;
+    int textureLayer = material.normalTexture.y;
+    
+    if(textureId == -1) // no texture
+        return vertexNormal;
+
+    // Get bump map normal
+    vec3 bumpMapNormal = texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer)).xyz;
+    // Create tangent, bitangent, normal matrix
+    // compute derivations of the texture coordinate
+    vec2 tc_dx = dFdx(vertexData.uv);
+    vec2 tc_dy = dFdy(vertexData.uv);
+    vec3 p_dx  = dFdx(vertexData.position);
+    vec3 p_dy  = dFdy(vertexData.position);
+    // compute initial tangent and bi-tangent
+    vec3 t = normalize( tc_dy.y * p_dx - tc_dx.y * p_dy );
+    vec3 b = normalize( tc_dy.x * p_dx - tc_dx.x * p_dy ); // sign inversion
+    // get new tangent from a given mesh normal
+    vec3 n = vertexNormal;
+    vec3 x = cross(n, t);
+    t = cross(x, n);
+    t = normalize(t);
+    // get updated bi-tangent
+    x = cross(b, n);
+    b = cross(n, x);
+    b = normalize(b);
+    mat3 tbn = mat3(t, b, n);
+
+    // Converted bump map normal to [-1,1] range
+    bumpMapNormal = 2.0 * bumpMapNormal - vec3(1.0, 1.0, 1.0);
+    vec3 newNormal = tbn * bumpMapNormal;
+    newNormal = normalize(newNormal);
+    return newNormal;
+}
+
 vec4 getDiffuseColor(MeshMaterial material)
 {
-    int textureId = material.textureLayer.x;
-    int textureLayer = material.textureLayer.y;
-    return textureId == -1 ? 
-        material.diffuseColor : 
-        texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    int textureId = material.diffuseTexture.x;
+    int textureLayer = material.diffuseTexture.y;
+
+    if(textureId == -1) // no texture
+        return material.diffuseColor;
+    
+    vec4 diffuseColor = texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    
+    if(diffuseColor.a == 0.0) // no alpha = invisible and discarded
+        discard;
+    return diffuseColor;
+}
+
+vec3 getSpecularColor(MeshMaterial material)
+{
+    int textureId = material.specularTexture.x;
+    int textureLayer = material.specularTexture.y;
+
+    if(textureId == -1) // no texture
+        return material.specularColor.rgb;
+    else
+        return texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer)).rgb;
+}
+
+float getVisibility()
+{
+	float fragLightDepth = vertexData.shadowMapPos.z;
+    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
+
+    if(fragLightDepth <= shadowMapDepth)
+        return 1.0;
+
+    // Less darknessFactor means lighter shadows
+    float darknessFactor = 20.0;
+    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 
 //---------------------------------------------------------
-// SHADER CONSTANTS
+// SHADER VARS
 //---------------------------------------------------------
 
 #define EPS       0.0001
@@ -55,21 +148,6 @@ vec4 getDiffuseColor(MeshMaterial material)
 
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 #define EQUALSZERO(A) ( ((A)<EPS) && ((A)>-EPS) )
-
-
-//---------------------------------------------------------
-// SHADER VARS
-//---------------------------------------------------------
-
-layout(location = 0) out vec4 fragColor;
-
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
-layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
-layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
-layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
-layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
-layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
-layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
@@ -244,19 +322,6 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
 
     return vec4(INDIR_K*col.rgb, visibility);
-}
-
-float getVisibility()
-{
-    float fragLightDepth = vertexData.shadowMapPos.z;
-    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
-
-    if(fragLightDepth <= shadowMapDepth)
-        return 1.0;
-
-    // Less darknessFactor means lighter shadows
-    float darknessFactor = 50.0;
-    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 void main()

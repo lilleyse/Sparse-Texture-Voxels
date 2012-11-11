@@ -2,8 +2,8 @@
 
 #include <tinyxml2.h>
 
-#include "../Utils.h"
-#include "../ShaderConstants.h"
+#include "Utils.h"
+#include "ShaderLibrary.h"
 #include "TextureLibrary.h"
 #include "RenderData.h"
 
@@ -16,8 +16,10 @@ struct MaterialLibrary
     {
         glm::vec4 diffuseColor;
         glm::vec4 specularColor;
-        glm::ivec2 textureLayer;
-        float padding[2];
+        glm::ivec2 diffuseTexture;
+        glm::ivec2 normalTexture;
+        glm::ivec2 specularTexture;
+        glm::ivec2 padding;
     };
 
     struct MaterialData
@@ -26,6 +28,8 @@ struct MaterialLibrary
         glm::vec4 diffuseColor;
         glm::vec4 specularColor;
         std::string diffuseTextureName;
+        std::string normalTextureName;
+        std::string specularTextureName;
 
         bool operator==(const MaterialData& other) const
         {
@@ -60,18 +64,36 @@ struct MaterialLibrary
         MeshMaterial materialGL;
         materialGL.diffuseColor = materialData.diffuseColor;
         materialGL.specularColor = materialData.specularColor;
+        materialGL.diffuseTexture = glm::ivec2(-1);
+        materialGL.normalTexture = glm::ivec2(-1);
+        materialGL.specularTexture = glm::ivec2(-1);
 
+
+        // Load diffuse texture
         if(materialData.diffuseTextureName != "")
         {
             // Get the texture meta data for the diffuse texture
             TextureLibrary::TextureMetaData diffuseTextureMetaData = textureLibrary.addTexture(materialData.diffuseTextureName);
-            materialGL.textureLayer.x = diffuseTextureMetaData.textureArrayID;
-            materialGL.textureLayer.y = diffuseTextureMetaData.indexInArray;
+            materialGL.diffuseTexture.x = diffuseTextureMetaData.textureArrayID;
+            materialGL.diffuseTexture.y = diffuseTextureMetaData.indexInArray;
         }
-        else
+
+        // Load normal texture
+        if(materialData.normalTextureName != "")
         {
-            materialGL.textureLayer.x = -1;
-            materialGL.textureLayer.y = -1;
+            // Get the texture meta data for the diffuse texture
+            TextureLibrary::TextureMetaData normalTextureMetaData = textureLibrary.addTexture(materialData.normalTextureName);
+            materialGL.normalTexture.x = normalTextureMetaData.textureArrayID;
+            materialGL.normalTexture.y = normalTextureMetaData.indexInArray;
+        }
+
+        // Load specular texture
+        if(materialData.specularTextureName != "")
+        {
+            // Get the texture meta data for the diffuse texture
+            TextureLibrary::TextureMetaData specularTextureMetaData = textureLibrary.addTexture(materialData.specularTextureName);
+            materialGL.specularTexture.x = specularTextureMetaData.textureArrayID;
+            materialGL.specularTexture.y = specularTextureMetaData.indexInArray;
         }
 
         materials.push_back(materialGL);
@@ -108,6 +130,20 @@ struct MaterialLibrary
             color.b = (float)std::atof(colorComponents[2].c_str());
             color.a = (float)std::atof(colorComponents[3].c_str());
             materialData.diffuseColor = color;
+        }
+
+        // Load normal map
+        XMLElement* normalElement = materialElement->FirstChildElement("normal");
+        if(normalElement)
+        {
+            materialData.normalTextureName = normalElement->Attribute("texture");
+        }
+
+        XMLElement* specularElement = materialElement->FirstChildElement("specular");
+        const char* specularTextureName = specularElement->Attribute("texture");
+        if(specularTextureName != 0)
+        {
+            materialData.specularTextureName = specularTextureName;
         }
 
         materialData.specularColor = glm::vec4(1,1,1,0);
