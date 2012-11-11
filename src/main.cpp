@@ -27,6 +27,7 @@ namespace
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
     uint voxelGridLength = 128;
+    float voxelRegionWorldSize = 20.0f;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -80,12 +81,12 @@ void GLFWCALL mouseMove(int x, int y)
     }
     else if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS)
     {
-        float zoomAmount = 0.002f;
+        float zoomAmount = 0.002f*coreEngine->scene->radius;
         currentCamera->zoom(mouseDelta.y * zoomAmount);
     }
     else if (glfwGetMouseButton(GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS)
     {
-        float panAmount = 0.002f;
+        float panAmount = 0.002f*coreEngine->scene->radius;
         currentCamera->pan(-mouseDelta.x * panAmount, mouseDelta.y * panAmount);
     }
 }
@@ -186,8 +187,8 @@ void processKeyDown()
     }
     
 
-    float zoomSpeed = 0.001f;
-    float panSpeed = 0.0007f;
+    float zoomSpeed = 0.001f*coreEngine->scene->radius;
+    float panSpeed = 0.0007f*coreEngine->scene->radius;
     if(glfwGetKey('W') == GLFW_PRESS) currentCamera->zoom(zoomSpeed);
     if(glfwGetKey('S') == GLFW_PRESS) currentCamera->zoom(-zoomSpeed);
     if(glfwGetKey('A') == GLFW_PRESS) currentCamera->pan(-panSpeed,0.0f);
@@ -216,11 +217,12 @@ void setUBO()
     perFrame->uCamLookAt = currentCamera->lookAt;
     perFrame->uCamPos = currentCamera->position;
     perFrame->uCamUp = currentCamera->upDir;
-    perFrame->uResolution = glm::vec2(windowSize);
+    perFrame->uScreenRes = glm::vec2(windowSize);
     perFrame->uAspect = (float)windowSize.x/windowSize.y;
     perFrame->uTime = frameTime;
     perFrame->uFOV = currentCamera->fieldOfView;
-    perFrame->uTextureRes = (float)voxelTexture->voxelGridLength;
+    perFrame->uVoxelRes = (float)voxelTexture->voxelGridLength;
+    perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
@@ -267,16 +269,16 @@ void initGL()
 
 void initCameras()
 {
-    viewCamera->setFarNearPlanes(.01f, 100.0f);
+    viewCamera->setFarNearPlanes(.01f, 1000.0f);
     viewCamera->position = glm::vec3(0.5f,0.35f,0.5f);
     viewCamera->rotate(1.57f,0.0f);
 
-    observerCamera->setFarNearPlanes(.01f, 100.0f);
+    observerCamera->setFarNearPlanes(.01f, 1000.0f);
     observerCamera->zoom(1.0f);
     observerCamera->lookAt = glm::vec3(0.5f);
 
     lightCamera->setAspectRatio(shadowMapResolution, shadowMapResolution);
-    lightCamera->setFarNearPlanes(.01f, 100.0f);
+    lightCamera->setFarNearPlanes(.01f, 1000.0f);
     lightCamera->zoom(4.0f);
     lightCamera->lookAt = glm::vec3(0.5f);
     lightCamera->rotate(-1.52f,-0.27f);

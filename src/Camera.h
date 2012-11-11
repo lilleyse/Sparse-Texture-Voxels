@@ -43,10 +43,9 @@ struct Camera
         aspectRatio = (float)width/height;
     }
 
-    glm::mat4 createOrthrographicProjectionMatrix()
+    glm::mat4 createOrthrographicProjectionMatrix(float regionSize)
     {
-        float side = 2.0f/2.0f;//-sqrt(3.0f)/2.0f; // diagonal of cube (sqrt(3)) is the greatest length of the scene that the light can witness
-        projectionMatrix = glm::ortho(-side, side, -side, side, 0.0f, 1000.0f);
+        projectionMatrix = glm::ortho(-regionSize/5.0f, regionSize/5.0f, -regionSize/5.0f, regionSize/5.0f, 0.0f, regionSize*10.0f);
         return projectionMatrix;
     }
     glm::mat4 createPerspectiveProjectionMatrix()

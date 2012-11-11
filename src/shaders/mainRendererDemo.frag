@@ -334,7 +334,7 @@ void main()
     
     // calc globals
     gRandVal = 0.0;//rand(pos.xy);
-    gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
+    gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.0;
 
     #define PASS_DIFFUSE

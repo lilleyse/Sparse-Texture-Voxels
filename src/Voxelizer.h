@@ -41,21 +41,21 @@ public:
         
         glUseProgram(voxelizerProgram);
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        perFrame->uResolution = glm::ivec2(voxelGridLength);
         
         glm::vec3 offset = viewCamera->position;
         // Render down z-axis
-        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
+        float amount = 100.0f;
+        perFrame->uViewProjection = glm::ortho(0.0f, amount, 0.0f, amount)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
 
         // Render down y-axis
-        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,-1,0), glm::vec3(1,0,0));
+        perFrame->uViewProjection = glm::ortho(0.0f, amount, 0.0f, amount)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,-1,0), glm::vec3(1,0,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
         
         // Render down x-axis
-        perFrame->uViewProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(-1,0,0), glm::vec3(0,0,1));
+        perFrame->uViewProjection = glm::ortho(0.0f, amount, 0.0f, amount)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(-1,0,0), glm::vec3(0,0,1));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
 

@@ -75,12 +75,13 @@ struct PerFrameUBO
     float padding4;
     glm::vec3 uLightColor;
     float padding5;
-    glm::vec2 uResolution;
+    glm::vec4 uVoxelRegionWorld; //.xyz is origin and .w is size
+    glm::vec2 uScreenRes;
     float uAspect;
     float uTime;
     float uTimestamp;
     float uFOV;
-    float uTextureRes;
+    float uVoxelRes;
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;

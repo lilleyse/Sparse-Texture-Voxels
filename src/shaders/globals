@@ -60,12 +60,13 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamUp;
     vec3 uLightDir;
     vec3 uLightColor;
-    vec2 uResolution;
+    vec4 uVoxelRegionWorld;
+    vec2 uScreenRes;
     float uAspect;
     float uTime;
     float uTimestamp;
     float uFOV;
-    float uTextureRes;
+    float uVoxelRes;
     float uNumMips;
     float uSpecularFOV;
     float uSpecularAmount;

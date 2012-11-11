@@ -12,6 +12,7 @@ struct Scene
     Lighting lighting;
     glm::vec3 minBounds;
     glm::vec3 maxBounds;
+    float radius;
 
     Scene()
     {
@@ -29,16 +30,16 @@ struct Scene
 
     void addObject(RenderData& renderData, Object* object)
     {
-        glm::vec3 translation = object->getTranslation();
-        glm::vec3 scale = object->getScale();
+        //glm::vec3 translation = object->getTranslation();
+        //glm::vec3 scale = object->getScale();
 
         // Adjust object for a unit cube scene
-        glm::vec3 worldSize = maxBounds - minBounds;
-        glm::vec3 normalizedPosition = (translation - minBounds)/worldSize;
-        object->setTranslation(normalizedPosition);
+        //glm::vec3 worldSize = maxBounds - minBounds;
+        //glm::vec3 normalizedPosition = (translation - minBounds)/worldSize;
+        //object->setTranslation(normalizedPosition);
 
-        glm::vec3 normalizedScale = scale/worldSize;
-        object->setScale(normalizedScale);
+        //glm::vec3 normalizedScale = scale/worldSize;
+        //object->setScale(normalizedScale);
 
         // Rotation should be unmodified
 
@@ -73,6 +74,8 @@ struct Scene
         glm::vec3 offset(.1);
         this->minBounds = minBounds - offset;
         this->maxBounds = maxBounds + offset;
+
+        this->radius = glm::length((maxBounds - minBounds)/2.0f);
     }
 
     void display(RenderData& renderData)
