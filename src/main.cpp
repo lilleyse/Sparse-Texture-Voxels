@@ -265,6 +265,11 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
+void updateLightObject()
+{
+    coreEngine->scene->lightObject->setTranslation(lightCamera->getPosition());
+}
+
 void initCameras()
 {
     viewCamera->setFarNearPlanes(.01f, 100.0f);
@@ -284,12 +289,13 @@ void initCameras()
 void begin()
 {
     initGL();
+
+    coreEngine->begin(sceneFile);
     initCameras();
 
     // set up miscellaneous things
     timer->begin();
     fullScreenQuad->begin();
-    coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     voxelClean->begin(voxelTexture, fullScreenQuad);
@@ -315,6 +321,7 @@ void display()
     // blank slate
     Utils::OpenGL::clearColorAndDepth();
     setUBO();
+    updateLightObject();
     coreEngine->updateScene();
 
     // Display demo

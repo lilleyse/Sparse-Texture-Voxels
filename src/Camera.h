@@ -56,6 +56,7 @@ struct Camera
     }
 
     virtual glm::mat4 createViewMatrix() = 0;
+    virtual glm::vec3 getPosition() = 0;
 
     virtual void rotate(float x, float y) = 0;
     virtual void zoom(float delta) = 0;
@@ -113,6 +114,22 @@ struct ThirdPersonCamera : public Camera
         viewMatrix = glm::lookAt(position, position + lookDir, upDir);
         return viewMatrix;
     }
+
+    glm::vec3 getPosition()
+    {
+        float cosa = cosf(currXZRads);
+        float sina = sinf(currXZRads);
+
+        glm::vec3 currPos(sina, 0.0f, cosa);
+        glm::vec3 UpRotAxis(currPos.z, currPos.y, -currPos.x);
+
+        glm::mat4 xRotation = glm::rotate(glm::mat4(1.0f), glm::degrees(currYRads), UpRotAxis);
+        currPos = glm::vec3(xRotation * glm::vec4(currPos, 0.0));
+
+        glm::vec3 tempVec = currPos * float(radius);
+        glm::vec3 pos = tempVec + lookAt;
+        return pos;
+    }
 };
 
 struct FirstPersonCamera : public Camera
@@ -164,5 +181,10 @@ struct FirstPersonCamera : public Camera
 
         viewMatrix = glm::lookAt(position, position + lookDir, upDir);
         return viewMatrix;
+    }
+
+    glm::vec3 getPosition()
+    {
+        return this->position;
     }
 };

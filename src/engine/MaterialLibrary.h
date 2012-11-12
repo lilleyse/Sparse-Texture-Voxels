@@ -17,7 +17,8 @@ struct MaterialLibrary
         glm::vec4 diffuseColor;
         glm::vec4 specularColor;
         glm::ivec2 textureLayer;
-        float padding[2];
+        float emissive;
+        float padding;
     };
 
     struct MaterialData
@@ -60,6 +61,7 @@ struct MaterialLibrary
         MeshMaterial materialGL;
         materialGL.diffuseColor = materialData.diffuseColor;
         materialGL.specularColor = materialData.specularColor;
+        materialGL.emissive = 0.0f;
 
         if(materialData.diffuseTextureName != "")
         {

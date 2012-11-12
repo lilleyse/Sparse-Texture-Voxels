@@ -18,6 +18,7 @@ struct MeshMaterial
     vec4 diffuseColor;
     vec4 specularColor;
     ivec2 textureLayer;
+    float emissive;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -262,10 +263,11 @@ float getVisibility()
 void main()
 {
     // current vertex info
+    MeshMaterial material = getMeshMaterial();
     vec3 pos = vertexData.position;
     vec3 cout = vec3(0.0);
     gNormal = normalize(vertexData.normal);
-    gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
+    gDiffuse = getDiffuseColor(material).rgb;
     
     // calc globals
     gRandVal = 0.0;//rand(pos.xy);
@@ -311,7 +313,6 @@ void main()
     #ifdef PASS_DIFFUSE
     #define SPEC 0.2
     float visibility = getVisibility();
-    vec4 materialColor = getDiffuseColor(getMeshMaterial());
     vec3 reflectedLight = reflect(uLightDir, gNormal);
     vec3 view = normalize(pos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
@@ -320,7 +321,7 @@ void main()
     float exponent = angleNormalHalf / SPEC;
     exponent = -(exponent * exponent);
     float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
-    cout += materialColor.rgb * uLightColor * diffuseTerm * visibility;
+    cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
     cout += uLightColor * specularTerm * visibility;
     #endif
     #ifdef PASS_INDIR
@@ -334,6 +335,9 @@ void main()
     // adjust blown out colors
     float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
     cout = clamp(cout - difference, 0.0, 1.0);
+
+    // If emissive, ignore shading and just draw diffuse color
+    cout = mix(cout, gDiffuse.rgb, material.emissive);
 
     fragColor = vec4(cout.rgb, 1.0);
 }
