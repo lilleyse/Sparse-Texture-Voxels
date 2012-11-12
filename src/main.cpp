@@ -53,7 +53,7 @@ namespace
     Object* currentSelectedObject;
     FirstPersonCamera* viewCamera = new FirstPersonCamera();
     ThirdPersonCamera* lightCamera = new ThirdPersonCamera();
-    ThirdPersonCamera* observerCamera = new ThirdPersonCamera();
+    FirstPersonCamera* observerCamera = new FirstPersonCamera();
     Camera* currentCamera = viewCamera;
     VoxelTexture* voxelTexture = new VoxelTexture();
     Voxelizer* voxelizer = new Voxelizer();
@@ -267,6 +267,11 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
+void updateLightObject()
+{
+    coreEngine->scene->lightObject->setTranslation(lightCamera->getPosition());
+}
+
 void initCameras()
 {
     viewCamera->setFarNearPlanes(.01f, 1000.0f);
@@ -274,8 +279,8 @@ void initCameras()
     viewCamera->rotate(1.57f,0.0f);
 
     observerCamera->setFarNearPlanes(.01f, 1000.0f);
-    observerCamera->zoom(1.0f);
-    observerCamera->lookAt = glm::vec3(0.5f);
+    observerCamera->position = glm::vec3(0.5f,0.35f,0.5f);
+    observerCamera->rotate(1.57f,0.0f);
 
     lightCamera->setAspectRatio(shadowMapResolution, shadowMapResolution);
     lightCamera->setFarNearPlanes(.01f, 1000.0f);
@@ -289,12 +294,13 @@ void initCameras()
 void begin()
 {
     initGL();
+
+    coreEngine->begin(sceneFile);
     initCameras();
 
     // set up miscellaneous things
     timer->begin();
     fullScreenQuad->begin();
-    coreEngine->begin(sceneFile);
     passthrough->begin(coreEngine);
     voxelTexture->begin(voxelGridLength, numMipMapLevels);
     voxelClean->begin(voxelTexture, fullScreenQuad);
@@ -320,6 +326,7 @@ void display()
     // blank slate
     Utils::OpenGL::clearColorAndDepth();
     setUBO();
+    updateLightObject();
     coreEngine->updateScene();
 
     // Display demo

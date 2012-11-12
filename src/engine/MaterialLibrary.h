@@ -19,7 +19,8 @@ struct MaterialLibrary
         glm::ivec2 diffuseTexture;
         glm::ivec2 normalTexture;
         glm::ivec2 specularTexture;
-        glm::ivec2 padding;
+        float emissive;
+        float padding;
     };
 
     struct MaterialData
@@ -67,6 +68,7 @@ struct MaterialLibrary
         materialGL.diffuseTexture = glm::ivec2(-1);
         materialGL.normalTexture = glm::ivec2(-1);
         materialGL.specularTexture = glm::ivec2(-1);
+        materialGL.emissive = 0.0f;
 
 
         // Load diffuse texture

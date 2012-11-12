@@ -10,6 +10,7 @@ struct Scene
 {
     std::vector<Object*> objects;
     Lighting lighting;
+    Object* lightObject;
     glm::vec3 minBounds;
     glm::vec3 maxBounds;
     float radius;

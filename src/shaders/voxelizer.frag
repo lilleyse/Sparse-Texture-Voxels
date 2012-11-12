@@ -36,6 +36,7 @@ struct MeshMaterial
     ivec2 diffuseTexture;
     ivec2 normalTexture;
     ivec2 specularTexture;
+    float emissive;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -87,11 +88,16 @@ float getVisibility()
 
 void main()
 {
+    MeshMaterial material = getMeshMaterial();
+    
     float visibility = getVisibility();
-    vec4 diffuse = getDiffuseColor(getMeshMaterial());
+    vec4 diffuse = getDiffuseColor(material);
     vec3 normal = normalize(vertexData.normal);
     float LdotN = max(dot(uLightDir, normal), 0.0);
     vec4 outColor = vec4(diffuse.rgb*uLightColor,1.0);//*visibility*LdotN;
+
+    // If emissive, ignore shading and just draw diffuse color
+    outColor = mix(outColor, diffuse, material.emissive);
 
     // six directions
     float AdotNPosX = max(normal.x, 0.0);

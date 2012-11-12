@@ -137,7 +137,7 @@ struct ShadowMap
         // Do the gaussian blur
         glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_BINDING);
         glBindSampler(SHADOW_MAP_BINDING, shadowMapBlurSampler);
-        for(int i = 0; i < 1; i++)
+        for(int i = 0; i < 2; i++)
         {
             // Do a y-direction blur on the 0th texture into the 1st
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowMapBlurFBO[1]);
