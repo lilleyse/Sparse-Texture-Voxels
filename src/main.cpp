@@ -27,7 +27,7 @@ namespace
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
     uint voxelGridLength = 128;
-    float voxelRegionWorldSize = 20.0f;
+    float voxelRegionWorldSize = 50.0f;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -37,7 +37,7 @@ namespace
     // Demo settings
     bool loadAllDemos = true;
     enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
-    DemoType currentDemoType = TRIANGLE_DEBUG;
+    DemoType currentDemoType = MAIN_RENDERER;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();

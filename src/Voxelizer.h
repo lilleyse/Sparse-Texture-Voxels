@@ -45,14 +45,15 @@ public:
         float worldSize = perFrame->uVoxelRegionWorld.w;
         float halfSize = worldSize/2.0f;
         float xMin = perFrame->uVoxelRegionWorld.x;
-        float xMax = xMin + worldSize;
-        float xMid = (xMin + xMax)/2.0f;
         float yMin = perFrame->uVoxelRegionWorld.y;
-        float yMax = yMin + worldSize; 
-        float yMid = (yMin + yMax)/2.0f;
         float zMin = perFrame->uVoxelRegionWorld.z;
+        float xMax = xMin + worldSize;
+        float yMax = yMin + worldSize;
         float zMax = zMin + worldSize;
+        float xMid = (xMin + xMax)/2.0f;
+        float yMid = (yMin + yMax)/2.0f;
         float zMid = (zMin + zMax)/2.0f;
+
         glm::mat4 orthoProjection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, worldSize);
 
         // Render down z-axis

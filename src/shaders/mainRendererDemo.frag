@@ -232,18 +232,18 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tVoxColorNegX, pos, mipLevel) : 
         textureLod(tVoxColorPosX, pos, mipLevel);
-
+    
     vec4 ytexel = dir.y > 0.0 ? 
         textureLod(tVoxColorNegY, pos, mipLevel) : 
         textureLod(tVoxColorPosY, pos, mipLevel);
-
+    
     vec4 ztexel = dir.z > 0.0 ? 
         textureLod(tVoxColorNegZ, pos, mipLevel) : 
         textureLod(tVoxColorPosZ, pos, mipLevel);
-
+    
     // get scaling factors for each axis
     dir = abs(dir);
-
+    
     // TODO: correctly weight averaged output color
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
 }
@@ -265,12 +265,13 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
-        if(vocc > 0.0) {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
+        //float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
+        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        //if(vocc > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
-            col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
-        }
+            col += (1.0-dtm) * vocc.rgb;
+        //}
           
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -299,18 +300,17 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
-        if(vocc > 0.0) {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
+        //vec4 vocc = textureLod(tVoxColorPosX, pos, mipLevel);
+        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        //if(vocc.a > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
 
             // calc local illumination
-            vec3 lightCol = (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
-            vec3 localColor = gDiffuse*lightCol;
-            localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
-            col.rgb += localColor;
-            // gDiffuse can be factored out, but here for now for clarity
-        }
+            vec3 lightCol = vocc.rgb * (1.0-dtm) * tm;
+            //lightCol *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
+            col.rgb += lightCol;
+        //}
 
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -320,15 +320,17 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     }
   
     // weight AO by distance f(r) = 1/(1+K*r)
-    float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
+    float visibility = 0.0;//min( tm*(1.0+AO_DIST_K*dist), 1.0);
 
-    return vec4(INDIR_K*col.rgb, visibility);
+    return vec4(col.rgb, visibility);
+    //return vec4(visibility);
 }
 
 void main()
 {
     // current vertex info
-    vec3 pos = (vertexData.position-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
+    vec3 worldPos = vertexData.position;
+    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
     
     vec3 cout = vec3(0.0);
 
@@ -339,7 +341,7 @@ void main()
     // calc globals
     gRandVal = 0.0;//rand(pos.xy);
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize*2.0;
+    float voxelOffset = gTexelSize*2.5;
 
     //#define PASS_DIFFUSE
     #define PASS_INDIR
@@ -371,29 +373,29 @@ void main()
     {    
         // single cone in reflected eye direction
         const float FOV = radians(uSpecularFOV);
-        vec3 rd = normalize(pos-uCamPos);
+        vec3 rd = normalize(worldPos-uCamPos);
         rd = reflect(rd, gNormal);
         spec = conetraceSpec(pos+rd*voxelOffset, rd, FOV);
     }
     #endif
 
     #ifdef PASS_DIFFUSE
-    #define SPEC 0.2
+    //#define SPEC 0.2
     float visibility = getVisibility();
-    vec3 reflectedLight = reflect(uLightDir, gNormal);
-    vec3 view = normalize(pos-uCamPos);
+    //vec3 reflectedLight = reflect(uLightDir, gNormal);
+    //vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
-    vec3 halfAngle = normalize(uLightDir - view);
-    float angleNormalHalf = acos(dot(halfAngle, gNormal));
-    float exponent = angleNormalHalf / SPEC;
-    exponent = -(exponent * exponent);
-    float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
+    //vec3 halfAngle = normalize(uLightDir - view);
+    //float angleNormalHalf = acos(dot(halfAngle, gNormal));
+    //float exponent = angleNormalHalf / SPEC;
+    //exponent = -(exponent * exponent);
+    //float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
     cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
-    cout += uLightColor * specularTerm * visibility;
+    //cout += uLightColor * specularTerm * visibility;
     #endif
     #ifdef PASS_INDIR
-    cout += indir.rgb;
-    cout *= indir.a;
+    cout += indir.rgb*10.0*gDiffuse;
+    //cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
     cout = mix(cout, spec, uSpecularAmount);
@@ -404,7 +406,7 @@ void main()
     cout = clamp(cout - difference, 0.0, 1.0);
 
     // If emissive, ignore shading and just draw diffuse color
-    cout = mix(cout, gDiffuse.rgb, material.emissive);
+    //cout = mix(cout, gDiffuse.rgb, material.emissive);
 
     fragColor = vec4(cout.rgb, 1.0);
 }
