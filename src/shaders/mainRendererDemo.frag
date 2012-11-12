@@ -327,7 +327,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 void main()
 {
     // current vertex info
-    vec3 pos = vertexData.position;
+    vec3 pos = (vertexData.position-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
     vec3 cout = vec3(0.0);
     gNormal = normalize(vertexData.normal);
     gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
@@ -337,7 +337,7 @@ void main()
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.0;
 
-    #define PASS_DIFFUSE
+    //#define PASS_DIFFUSE
     #define PASS_INDIR
     #define PASS_SPEC
 
@@ -400,5 +400,6 @@ void main()
     float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
     cout = clamp(cout - difference, 0.0, 1.0);
 
+    //cout.rgb = textureLod(tVoxColorNegZ, pos, 0.0).a;
     fragColor = vec4(cout.rgb, 1.0);
 }

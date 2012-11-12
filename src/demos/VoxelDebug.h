@@ -14,6 +14,7 @@ private:
     static const uint numElementsCube = 36; 
     VoxelTexture* voxelTexture;
     std::vector<MipMapInfo> debugMipMapInfoArray;
+    PerFrameUBO* perFrame;
 
     struct Voxel
     {
@@ -26,10 +27,11 @@ public:
     VoxelDebug(){}
     virtual ~VoxelDebug(){}
 
-    void begin(VoxelTexture* voxelTexture)
+    void begin(VoxelTexture* voxelTexture, PerFrameUBO* perFrame)
     {
         this->currentMipMapLevel = 0;
         this->voxelTexture = voxelTexture;
+        this->perFrame = perFrame;
 
         // Create buffer objects and vao
         glm::vec3 vertices[numVerticesCube*2] = {glm::vec3(-0.5, -0.5, -0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(-1, 0, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, 0, -1), glm::vec3(0.5, 0.5, -0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, -0.5, 0.5), glm::vec3(1, 0, -0), glm::vec3(0.5, -0.5, -0.5), glm::vec3(1, 0, -0), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 0, 1), glm::vec3(-0.5, -0.5, 0.5), glm::vec3(0, -1, -0), glm::vec3(-0.5, -0.5, -0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, -0.5, -0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, -0.5, 0.5), glm::vec3(0, -1, -0), glm::vec3(0.5, 0.5, 0.5), glm::vec3(0, 1, -0), glm::vec3(0.5, 0.5, -0.5), glm::vec3(0, 1, -0), glm::vec3(-0.5, 0.5, -0.5), glm::vec3(0, 1, -0), glm::vec3(-0.5, 0.5, 0.5), glm::vec3(0, 1, -0)};
@@ -84,9 +86,9 @@ public:
         debugMipMapInfoArray.clear();
         std::vector<Voxel> voxelArray;
 
-        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[voxelTexture->NEGX]);
+        glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[voxelTexture->POSX]);
         
-        float voxelScale = 1.0f / voxelTexture->mipMapInfoArray[0].gridLength;
+        float voxelScale = this->perFrame->uVoxelRegionWorld.w / voxelTexture->mipMapInfoArray[0].gridLength;
         for(uint i = 0; i < voxelTexture->numMipMapLevels; i++)
         {
             MipMapInfo debugMipMapInfo;
@@ -97,7 +99,7 @@ public:
             glGetTexImage(GL_TEXTURE_3D, i, GL_RGBA, GL_UNSIGNED_BYTE, &imageData[0]);
 
             // apply an offset to the position because the origin of the cube model is in its center rather than a corner
-            glm::vec3 offset = glm::vec3(voxelScale/2);
+            glm::vec3 offset = glm::vec3(voxelScale/2) + glm::vec3(perFrame->uVoxelRegionWorld);
 
             uint textureIndex = 0;
             for(uint j = 0; j < mipMapGridLength; j++)
@@ -105,6 +107,7 @@ public:
             for(uint l = 0; l < mipMapGridLength; l++)
             {
                 glm::vec3 position = glm::vec3(l*voxelScale,k*voxelScale,j*voxelScale) + offset;
+                //glm::u8vec4 color = glm::u8vec4(255,0,0,255);
                 glm::u8vec4 color = imageData[textureIndex];
                 if(color.a > 0)
                 {

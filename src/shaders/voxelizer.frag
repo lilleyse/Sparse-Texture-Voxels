@@ -91,7 +91,7 @@ void main()
     vec4 diffuse = getDiffuseColor(getMeshMaterial());
     vec3 normal = normalize(vertexData.normal);
     float LdotN = max(dot(uLightDir, normal), 0.0);
-    vec4 outColor = vec4(1.0,0.0,0.0,1.0);//diffuse.rgb*uLightColor*visibility*LdotN;
+    vec4 outColor = vec4(diffuse.rgb*uLightColor,1.0);//*visibility*LdotN;
 
     // six directions
     float AdotNPosX = max(normal.x, 0.0);
@@ -102,12 +102,13 @@ void main()
     float AdotNNegZ = max(-normal.z, 0.0);
 
     // write to image
-    vec3 position = vertexData.position;
-    ivec3 voxelPos = ivec3(vertexData.position*float(uVoxelRes.x));
-    imageStore(tVoxColorPosX, voxelPos, outColor);
-    imageStore(tVoxColorNegX, voxelPos, outColor);
-    imageStore(tVoxColorPosY, voxelPos, outColor);
-    imageStore(tVoxColorNegY, voxelPos, outColor);
-    imageStore(tVoxColorPosZ, voxelPos, outColor);
-    imageStore(tVoxColorNegZ, voxelPos, outColor);
+    vec3 voxelPosTextureSpace = (vertexData.position-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
+    ivec3 voxelPosImageCoord = ivec3(voxelPosTextureSpace * uVoxelRes);
+
+    imageStore(tVoxColorPosX, voxelPosImageCoord, outColor);
+    imageStore(tVoxColorNegX, voxelPosImageCoord, outColor);
+    imageStore(tVoxColorPosY, voxelPosImageCoord, outColor);
+    imageStore(tVoxColorNegY, voxelPosImageCoord, outColor);
+    imageStore(tVoxColorPosZ, voxelPosImageCoord, outColor);
+    imageStore(tVoxColorNegZ, voxelPosImageCoord, outColor);
 }

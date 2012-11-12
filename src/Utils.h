@@ -267,7 +267,7 @@ namespace Utils
             GLint Result = GL_FALSE;
             glGetProgramiv(ProgramName, GL_LINK_STATUS, &Result);
 
-            fprintf(stdout, "Linking program\n");
+            //fprintf(stdout, "Linking program\n");
             int InfoLogLength;
             glGetProgramiv(ProgramName, GL_INFO_LOG_LENGTH, &InfoLogLength);
             if(InfoLogLength > 0)
@@ -288,7 +288,7 @@ namespace Utils
             GLint Result = GL_FALSE;
             glGetShaderiv(ShaderName, GL_COMPILE_STATUS, &Result);
 
-            fprintf(stdout, "Compiling shader\n");
+            //fprintf(stdout, "Compiling shader\n");
             //fprintf(stdout, "Compiling shader\n%s...\n", Source);
             int InfoLogLength;
             glGetShaderiv(ShaderName, GL_INFO_LOG_LENGTH, &InfoLogLength);
@@ -355,6 +355,7 @@ namespace Utils
         // Returns the shader program
         GLuint createShaderProgram(std::string& vertexShader, std::string& fragmentShader)
         {
+            printf("Compiling:\n%s\n%s\n", vertexShader.c_str(), fragmentShader.c_str());
             GLuint vertexShaderObject = Utils::OpenGL::createShader(GL_VERTEX_SHADER, vertexShader);
             GLuint fragmentShaderObject = Utils::OpenGL::createShader(GL_FRAGMENT_SHADER, fragmentShader);
 

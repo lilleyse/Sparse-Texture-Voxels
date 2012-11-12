@@ -37,7 +37,7 @@ namespace
     // Demo settings
     bool loadAllDemos = true;
     enum DemoType {VOXEL_DEBUG, TRIANGLE_DEBUG, VOXELRAYCASTER, VOXELCONETRACER, MAIN_RENDERER, MAX_DEMO_TYPES};
-    DemoType currentDemoType = MAIN_RENDERER;
+    DemoType currentDemoType = TRIANGLE_DEBUG;
     VoxelDebug* voxelDebug = new VoxelDebug();
     TriangleDebug* triangleDebug = new TriangleDebug();
     VoxelRaycaster* voxelRaycaster = new VoxelRaycaster();
@@ -304,7 +304,7 @@ void begin()
 
     // init demos
     if (loadAllDemos || currentDemoType == VOXEL_DEBUG) 
-        voxelDebug->begin(voxelTexture);
+        voxelDebug->begin(voxelTexture, perFrame);
     if (loadAllDemos || currentDemoType == TRIANGLE_DEBUG)
         triangleDebug->begin(coreEngine);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
@@ -328,8 +328,12 @@ void display()
     else if (currentDemoType == TRIANGLE_DEBUG)
     {
         shadowMap->display();
+        voxelClean->clean();
+        voxelizer->voxelizeScene();
         setUBO();
         triangleDebug->display();
+        voxelDebug->voxelTextureUpdate();
+        voxelDebug->display();
     }
     else if (currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->display(); 
@@ -342,7 +346,7 @@ void display()
         voxelizer->voxelizeScene();
         mipMapGenerator->generateMipMapGPU();
         setUBO();
-        mainRenderer->display();
+        mainRenderer->display(); 
     }
 }
 

@@ -41,21 +41,32 @@ public:
         
         glUseProgram(voxelizerProgram);
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
-        
-        glm::vec3 offset = viewCamera->position;
+
+        float worldSize = perFrame->uVoxelRegionWorld.w;
+        float halfSize = worldSize/2.0f;
+        float xMin = perFrame->uVoxelRegionWorld.x;
+        float xMax = xMin + worldSize;
+        float xMid = (xMin + xMax)/2.0f;
+        float yMin = perFrame->uVoxelRegionWorld.y;
+        float yMax = yMin + worldSize; 
+        float yMid = (yMin + yMax)/2.0f;
+        float zMin = perFrame->uVoxelRegionWorld.z;
+        float zMax = zMin + worldSize;
+        float zMid = (zMin + zMax)/2.0f;
+        glm::mat4 orthoProjection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, worldSize);
+
         // Render down z-axis
-        float amount = 100.0f;
-        perFrame->uViewProjection = glm::ortho(0.0f, amount, 0.0f, amount)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,0,-1), glm::vec3(0,1,0));
+        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(xMid,yMid,zMin), glm::vec3(xMid,yMid,zMax), glm::vec3(0,1,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
 
         // Render down y-axis
-        perFrame->uViewProjection = glm::ortho(0.0f, amount, 0.0f, amount)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(0,-1,0), glm::vec3(1,0,0));
+        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(xMid,yMin,zMid), glm::vec3(xMid,yMax,zMid), glm::vec3(1,0,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
         
         // Render down x-axis
-        perFrame->uViewProjection = glm::ortho(0.0f, amount, 0.0f, amount)*glm::lookAt(glm::vec3(0,0,0), glm::vec3(-1,0,0), glm::vec3(0,0,1));
+        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(xMin,yMid,zMid), glm::vec3(xMax,yMid,zMid), glm::vec3(0,0,1));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
 
