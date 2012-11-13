@@ -96,7 +96,7 @@ void main()
     vec3 normal = normalize(vertexData.normal);
     float LdotN = max(dot(uLightDir, normal), 0.0);
     vec3 outColor = diffuse.rgb*uLightColor*visibility*LdotN;
-
+	//vec4 outColor = vec4(diffuse.rgb*uLightColor,1.0);
     // If emissive, ignore shading and just draw diffuse color
     outColor = mix(outColor, diffuse.rgb, material.emissive);
 
@@ -109,4 +109,10 @@ void main()
     imageStore(tVoxColorNegY, voxelPosImageCoord, vec4(outColor*max(-normal.y, 0.0), alpha));
     imageStore(tVoxColorPosZ, voxelPosImageCoord, vec4(outColor*max(normal.z, 0.0),  alpha));
     imageStore(tVoxColorNegZ, voxelPosImageCoord, vec4(outColor*max(-normal.z, 0.0), alpha));
+	//imageStore(tVoxColorPosX, voxelPosImageCoord, outColor);
+    //imageStore(tVoxColorNegX, voxelPosImageCoord, outColor);
+    //imageStore(tVoxColorPosY, voxelPosImageCoord, outColor);
+    //imageStore(tVoxColorNegY, voxelPosImageCoord, outColor);
+    //imageStore(tVoxColorPosZ, voxelPosImageCoord, outColor);
+    //imageStore(tVoxColorNegZ, voxelPosImageCoord, outColor);
 }

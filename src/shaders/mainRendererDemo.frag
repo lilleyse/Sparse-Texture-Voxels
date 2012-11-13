@@ -158,7 +158,7 @@ float getVisibility()
 #define AO_DIST_K 0.3
 #define JITTER_K 0.025
 
-vec3 gNormal, gDiffuse;
+vec3 gNormal, gDiffuse, gSpecular;
 float gTexelSize, gRandVal;
 
 
@@ -335,15 +335,16 @@ void main()
     vec3 cout = vec3(0.0);
 
     MeshMaterial material = getMeshMaterial();
-    gNormal = normalize(vertexData.normal);
+    gNormal = getNormal(material, normalize(vertexData.normal));
     gDiffuse = getDiffuseColor(material).rgb;
-    
+    gSpecular = getSpecularColor(material);
+
     // calc globals
     gRandVal = 0.0;//rand(pos.xy);
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;
 
-    //#define PASS_DIFFUSE
+    #define PASS_DIFFUSE
     #define PASS_INDIR
     #define PASS_SPEC
 
@@ -380,18 +381,18 @@ void main()
     #endif
 
     #ifdef PASS_DIFFUSE
-    //#define SPEC 0.2
+    #define SPEC 0.2
     float visibility = getVisibility();
-    //vec3 reflectedLight = reflect(uLightDir, gNormal);
-    //vec3 view = normalize(worldPos-uCamPos);
+    vec3 reflectedLight = reflect(uLightDir, gNormal);
+    vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
-    //vec3 halfAngle = normalize(uLightDir - view);
-    //float angleNormalHalf = acos(dot(halfAngle, gNormal));
-    //float exponent = angleNormalHalf / SPEC;
-    //exponent = -(exponent * exponent);
-    //float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
+    vec3 halfAngle = normalize(uLightDir - view);
+    float angleNormalHalf = acos(dot(halfAngle, gNormal));
+    float exponent = angleNormalHalf / SPEC;
+    exponent = -(exponent * exponent);
+    float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
     cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
-    //cout += uLightColor * specularTerm * visibility;
+    cout += uLightColor * gSpecular * specularTerm * visibility;
     #endif
     #ifdef PASS_INDIR
     cout += indir.rgb*10.0*gDiffuse;

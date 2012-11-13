@@ -103,6 +103,13 @@ struct TextureLibrary
         GLuint* textureArraysGL = new GLuint[numTextureArrays];
         glGenTextures(numTextureArrays, textureArraysGL);
 
+		// Create the texture sampler
+		GLuint textureSampler;
+		glGenSamplers(1, &textureSampler);
+        glBindSampler(NON_USED_TEXTURE, textureSampler);
+        glSamplerParameteri(textureSampler, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glSamplerParameteri(textureSampler, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
         // Loop over the texture arrays
         for(uint i = 0; i < textureArrays.size(); i++)
         {
@@ -111,6 +118,7 @@ struct TextureLibrary
             // Set active texture and bind texture
             glActiveTexture(GL_TEXTURE0 + DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING + i);
             glBindTexture(GL_TEXTURE_2D_ARRAY, textureArraysGL[i]);
+			glBindSampler(DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING + i, textureSampler);
 
             // Get the gli format to a proper opengl format
             GLuint textureInternalformat;
