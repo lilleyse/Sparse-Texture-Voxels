@@ -346,9 +346,9 @@ void displayFPS()
     frameCount += 1;
     double currentTime = glfwGetTime();
     if(currentTime >= 1.0)
-    {	
+    {
         std::ostringstream ss;
-		ss << applicationName << " (fps: " << (frameCount/currentTime) << " )";
+        ss << applicationName << " (fps: " << (frameCount/currentTime) << " )";
         glfwSetWindowTitle(ss.str().c_str());
         glfwSetTime(0.0);
         frameCount = 0;

@@ -59,7 +59,7 @@ layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, rgba8) writeonly uniform image3D t
 
 float getVisibility()
 {
-	float fragLightDepth = vertexData.shadowMapPos.z;
+    float fragLightDepth = vertexData.shadowMapPos.z;
     float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
 
     if(fragLightDepth <= shadowMapDepth)
@@ -89,10 +89,17 @@ void main()
     // write to image
     vec3 position = vertexData.position;
     ivec3 voxelPos = ivec3(vertexData.position*float(uResolution.x));
-    imageStore(tVoxColorPosX, voxelPos, vec4(outColor*AdotNPosX, diffuse.a));
-    imageStore(tVoxColorNegX, voxelPos, vec4(outColor*AdotNNegX, diffuse.a));
-    imageStore(tVoxColorPosY, voxelPos, vec4(outColor*AdotNPosY, diffuse.a));
-    imageStore(tVoxColorNegY, voxelPos, vec4(outColor*AdotNNegY, diffuse.a));
-    imageStore(tVoxColorPosZ, voxelPos, vec4(outColor*AdotNPosZ, diffuse.a));
-    imageStore(tVoxColorNegZ, voxelPos, vec4(outColor*AdotNNegZ, diffuse.a));
+    //imageStore(tVoxColorPosX, voxelPos, vec4(outColor*AdotNPosX, diffuse.a));
+    //imageStore(tVoxColorNegX, voxelPos, vec4(outColor*AdotNNegX, diffuse.a));
+    //imageStore(tVoxColorPosY, voxelPos, vec4(outColor*AdotNPosY, diffuse.a));
+    //imageStore(tVoxColorNegY, voxelPos, vec4(outColor*AdotNNegY, diffuse.a));
+    //imageStore(tVoxColorPosZ, voxelPos, vec4(outColor*AdotNPosZ, diffuse.a));
+    //imageStore(tVoxColorNegZ, voxelPos, vec4(outColor*AdotNNegZ, diffuse.a));
+
+    imageStore(tVoxColorPosX, voxelPos, vec4(outColor, diffuse.a));
+    imageStore(tVoxColorNegX, voxelPos, vec4(outColor, diffuse.a));
+    imageStore(tVoxColorPosY, voxelPos, vec4(outColor, diffuse.a));
+    imageStore(tVoxColorNegY, voxelPos, vec4(outColor, diffuse.a));
+    imageStore(tVoxColorPosZ, voxelPos, vec4(outColor, diffuse.a));
+    imageStore(tVoxColorNegZ, voxelPos, vec4(outColor, diffuse.a));
 }
