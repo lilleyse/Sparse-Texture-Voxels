@@ -222,7 +222,11 @@ void setUBO()
     perFrame->uTime = frameTime;
     perFrame->uFOV = currentCamera->fieldOfView;
     perFrame->uVoxelRes = (float)voxelTexture->voxelGridLength;
+
+    float myvoxelSize = voxelRegionWorldSize/perFrame->uVoxelRes;
     perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
+    perFrame->uVoxelRegionWorld = glm::vec4( glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/myvoxelSize)*myvoxelSize ), perFrame->uVoxelRegionWorld.w);
+
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;

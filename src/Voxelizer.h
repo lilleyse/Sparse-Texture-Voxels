@@ -44,30 +44,27 @@ public:
 
         float worldSize = perFrame->uVoxelRegionWorld.w;
         float halfSize = worldSize/2.0f;
-        float xMin = perFrame->uVoxelRegionWorld.x;
-        float yMin = perFrame->uVoxelRegionWorld.y;
-        float zMin = perFrame->uVoxelRegionWorld.z;
-        float xMax = xMin + worldSize;
-        float yMax = yMin + worldSize;
-        float zMax = zMin + worldSize;
-        float xMid = (xMin + xMax)/2.0f;
-        float yMid = (yMin + yMax)/2.0f;
-        float zMid = (zMin + zMax)/2.0f;
 
+        float voxelSize = worldSize/perFrame->uVoxelRes;
+
+        glm::vec3 bMin = glm::vec3(perFrame->uVoxelRegionWorld);//glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/voxelSize)*voxelSize );
+        glm::vec3 bMax = bMin + worldSize;
+        glm::vec3 bMid = (bMin+bMax)/2.0f;
+        
         glm::mat4 orthoProjection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, worldSize);
 
         // Render down z-axis
-        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(xMid,yMid,zMin), glm::vec3(xMid,yMid,zMax), glm::vec3(0,1,0));
+        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(bMid.x,bMid.y,bMin.z), glm::vec3(bMid.x,bMid.y,bMax.z), glm::vec3(0,1,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
 
         // Render down y-axis
-        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(xMid,yMin,zMid), glm::vec3(xMid,yMax,zMid), glm::vec3(1,0,0));
+        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(bMid.x,bMin.y,bMid.z), glm::vec3(bMid.x,bMax.y,bMid.z), glm::vec3(1,0,0));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
         
         // Render down x-axis
-        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(xMin,yMid,zMid), glm::vec3(xMax,yMid,zMid), glm::vec3(0,0,1));
+        perFrame->uViewProjection = orthoProjection*glm::lookAt(glm::vec3(bMin.x,bMid.y,bMid.z), glm::vec3(bMax.x,bMid.y,bMid.z), glm::vec3(0,0,1));
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
         coreEngine->display();
 
