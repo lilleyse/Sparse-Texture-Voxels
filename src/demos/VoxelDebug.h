@@ -131,6 +131,8 @@ public:
         uint voxelGridLength = voxelTexture->voxelGridLength;
         std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
 
+        glActiveTexture(NON_USED_TEXTURE);
+
         for(uint i = 0; i < VoxelTexture::NUM_DIRECTIONS; i++)
         {
             glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[i]);

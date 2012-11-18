@@ -26,7 +26,7 @@ namespace
     
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 128;
+    uint voxelGridLength = 64;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
