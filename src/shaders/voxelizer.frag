@@ -36,7 +36,7 @@ struct MeshMaterial
     ivec2 diffuseTexture;
     ivec2 normalTexture;
     ivec2 specularTexture;
-    float emissive;
+    float emission;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -98,7 +98,7 @@ void main()
     vec3 outColor = diffuse.rgb*uLightColor*visibility*LdotN;
 	//vec4 outColor = vec4(diffuse.rgb*uLightColor,1.0);
     // If emissive, ignore shading and just draw diffuse color
-    outColor = mix(outColor, diffuse.rgb, material.emissive);
+    outColor = mix(outColor, diffuse.rgb, material.emission);
 
     vec3 voxelPosTextureSpace = (vertexData.position-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
     ivec3 voxelPosImageCoord = ivec3(voxelPosTextureSpace * uVoxelRes);
