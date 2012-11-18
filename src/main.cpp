@@ -239,8 +239,7 @@ void setUBO()
 
 void initGL()
 {
-    glewExperimental = GL_TRUE;
-    glewInit();
+    gl3wInit();
 
     // Debug output
     if(showDebugOutput && Utils::OpenGL::checkExtension("GL_ARB_debug_output"))
