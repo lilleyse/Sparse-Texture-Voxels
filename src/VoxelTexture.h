@@ -24,6 +24,7 @@ public:
 
     uint voxelGridLength;
     uint numMipMapLevels;
+    uint totalVoxels;
     std::vector<MipMapInfo> mipMapInfoArray;
 
     void begin(uint voxelGridLength, uint numMipMapLevels)
@@ -92,6 +93,8 @@ public:
             mipMapSideLength /= 2;
             numVoxels += mipMapInfo.numVoxels;
         }
+
+        this->totalVoxels = numVoxels;
     }
 
     void setSamplerType(SamplerType samplerType)

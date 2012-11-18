@@ -10,7 +10,7 @@ const uint NORMAL_ATTR              = 1;
 const uint UV_ATTR                  = 2;
 const uint PROPERTY_INDEX_ATTR      = 3;
 const uint DEBUG_TRANSFORM_ATTR     = 4;
-const uint DEBUG_COLOR_ATTR         = 5;
+const uint DEBUG_COLOR_ATTR  [6]    = {5,6,7,8,9,10};
 
 // Uniform buffer objects binding points
 const uint PER_FRAME_UBO_BINDING            = 0;
@@ -19,24 +19,16 @@ const uint MESH_MATERIAL_ARRAY_BINDING      = 2;
 const uint POSITION_ARRAY_BINDING           = 3;
 
 // Sampler binding points
-const uint NON_USED_TEXTURE                         = 0; // Used for modifying textures that shouldn't be bound to a binding point
-const uint COLOR_TEXTURE_POSX_3D_BINDING            = 1; // right direction
-const uint COLOR_TEXTURE_NEGX_3D_BINDING            = 2; // left direction
-const uint COLOR_TEXTURE_POSY_3D_BINDING            = 3; // up direc tion
-const uint COLOR_TEXTURE_NEGY_3D_BINDING            = 4; // down direction
-const uint COLOR_TEXTURE_POSZ_3D_BINDING            = 5; // front direction
-const uint COLOR_TEXTURE_NEGZ_3D_BINDING            = 6; // back direction
-const uint SHADOW_MAP_BINDING                       = 7;
-const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING    = 8;
-const uint RESERVED_TEXTURE_ARRAY_1                 = 9;
-const uint RESERVED_TEXTURE_ARRAY_2                 = 10;
-const uint RESERVED_TEXTURE_ARRAY_3                 = 11;
-const uint RESERVED_TEXTURE_ARRAY_4                 = 12;
-const uint RESERVED_TEXTURE_ARRAY_5                 = 13;
-const uint RESERVED_TEXTURE_ARRAY_6                 = 14;
-const uint RESERVED_TEXTURE_ARRAY_7                 = 15;
-const uint RESERVED_TEXTURE_ARRAY_8                 = 16;
-const uint RESERVED_TEXTURE_ARRAY_9                 = 17;
+const uint NON_USED_TEXTURE                             = 0; // Used for modifying textures that shouldn't be bound to a binding point
+const uint COLOR_TEXTURE_POSX_3D_BINDING                = 1; // right direction
+const uint COLOR_TEXTURE_NEGX_3D_BINDING                = 2; // left direction
+const uint COLOR_TEXTURE_POSY_3D_BINDING                = 3; // up direc tion
+const uint COLOR_TEXTURE_NEGY_3D_BINDING                = 4; // down direction
+const uint COLOR_TEXTURE_POSZ_3D_BINDING                = 5; // front direction
+const uint COLOR_TEXTURE_NEGZ_3D_BINDING                = 6; // back direction
+const uint SHADOW_MAP_BINDING                           = 7;
+const uint DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING[10]    = {8,9,10,11,12,13,14,15,16,17};
+
 
 // Image binding points
 const uint COLOR_IMAGE_POSX_3D_BINDING              = 0; // right direction 

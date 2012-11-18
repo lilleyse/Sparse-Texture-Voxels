@@ -141,11 +141,15 @@ void GLFWCALL keyPress(int k, int action)
 
         // Changing demo (number keys and numpad)
         if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES)
+        {
             currentDemoType = (DemoType)((uint)k - '1');
+            if(currentDemoType == VOXEL_DEBUG) voxelDebug->voxelTextureUpdate();
+        }
         if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
+        {
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
-        if (currentDemoType == VOXEL_DEBUG)
-            voxelDebug->voxelTextureUpdate();
+            if(currentDemoType == VOXEL_DEBUG) voxelDebug->voxelTextureUpdate();
+        }            
 
         // Changing mip map level
         int increaseMipLevel = int(k == '.');
