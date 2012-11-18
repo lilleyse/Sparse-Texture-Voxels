@@ -6,10 +6,7 @@ layout (location = 0, index = 0) out vec4 fragColor;
 
 in block
 {
-    vec3 position;
-    vec4 color;
-    vec3 normal;
-
+    vec3 color;
 } vertexData;
 
 
@@ -19,5 +16,5 @@ in block
 
 void main()
 {
-    fragColor = vertexData.color;
+    fragColor = vec4(vertexData.color, 1.0);
 }

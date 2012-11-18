@@ -26,7 +26,7 @@ namespace
     
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "cornell.xml";
-    uint voxelGridLength = 128;
+    uint voxelGridLength = 64;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -141,11 +141,15 @@ void GLFWCALL keyPress(int k, int action)
 
         // Changing demo (number keys and numpad)
         if (loadAllDemos && k >= '1' && k < '1' + MAX_DEMO_TYPES)
+        {
             currentDemoType = (DemoType)((uint)k - '1');
+            if(currentDemoType == VOXEL_DEBUG) voxelDebug->voxelTextureUpdate();
+        }
         if (loadAllDemos && k >= GLFW_KEY_KP_1 && k < GLFW_KEY_KP_1 + MAX_DEMO_TYPES)
+        {
             currentDemoType = (DemoType)((uint)k - GLFW_KEY_KP_1);
-        if (currentDemoType == VOXEL_DEBUG)
-            voxelDebug->voxelTextureUpdate();
+            if(currentDemoType == VOXEL_DEBUG) voxelDebug->voxelTextureUpdate();
+        }            
 
         // Changing mip map level
         int increaseMipLevel = int(k == '.');
@@ -346,9 +350,9 @@ void displayFPS()
     frameCount += 1;
     double currentTime = glfwGetTime();
     if(currentTime >= 1.0)
-    {	
+    {
         std::ostringstream ss;
-		ss << applicationName << " (fps: " << (frameCount/currentTime) << " )";
+        ss << applicationName << " (fps: " << (frameCount/currentTime) << " )";
         glfwSetWindowTitle(ss.str().c_str());
         glfwSetTime(0.0);
         frameCount = 0;
