@@ -32,7 +32,7 @@ struct MeshMaterial
     ivec2 diffuseTexture;
     ivec2 normalTexture;
     ivec2 specularTexture;
-    float emissive;
+    float emission;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -172,7 +172,7 @@ void main()
         KS * visibility*specularColor*uLightColor*specularTerm;
 
     // If emissive, ignore shading and just draw diffuse color
-    cout = mix(cout, color, material.emissive);
+    cout = mix(cout, color, material.emission);
 
     fragColor = vec4(cout, 1.0);
 }

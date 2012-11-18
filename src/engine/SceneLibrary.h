@@ -98,11 +98,6 @@ struct SceneLibrary
         std::string lightName = "lightMesh";
         std::string lightFileName = MESH_DIRECTORY + lightName + ".xml";
         Mesh* lightMesh = meshLibrary.loadMeshFile(lightFileName, lightFileName); 
-        
-        // Set light material to emmissive
-        std::string lightMaterialName = "light-material";
-        int lightMaterialIndex = meshLibrary.materialLibrary.getMaterial(lightMaterialName);
-        meshLibrary.materialLibrary.materials[lightMaterialIndex].emissive = 1.0f;
 
         // Create light object
         Object* lightObject = new Object(lightMesh, shaderLibrary.voxelDebugShader);

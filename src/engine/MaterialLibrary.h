@@ -19,7 +19,7 @@ struct MaterialLibrary
         glm::ivec2 diffuseTexture;
         glm::ivec2 normalTexture;
         glm::ivec2 specularTexture;
-        float emissive;
+        float emission;
         float padding;
     };
 
@@ -31,6 +31,7 @@ struct MaterialLibrary
         std::string diffuseTextureName;
         std::string normalTextureName;
         std::string specularTextureName;
+        float emission;
 
         bool operator==(const MaterialData& other) const
         {
@@ -68,8 +69,7 @@ struct MaterialLibrary
         materialGL.diffuseTexture = glm::ivec2(-1);
         materialGL.normalTexture = glm::ivec2(-1);
         materialGL.specularTexture = glm::ivec2(-1);
-        materialGL.emissive = 0.0f;
-
+        materialGL.emission = materialData.emission;
 
         // Load diffuse texture
         if(materialData.diffuseTextureName != "")
@@ -114,42 +114,72 @@ struct MaterialLibrary
         MaterialLibrary::MaterialData materialData;
         materialData.materialName = materialName;
 
+        // Load diffuse
         XMLElement* diffuseElement = materialElement->FirstChildElement("diffuse");
-        const char* diffuseTextureName = diffuseElement->Attribute("texture");
-        if(diffuseTextureName != 0)
+        if(diffuseElement != 0)
         {
-            materialData.diffuseTextureName = diffuseTextureName;
-            materialData.diffuseColor = glm::vec4(1,0,0,1);
+            const char* diffuseTextureName = diffuseElement->Attribute("texture");
+            if(diffuseTextureName != 0)
+            {
+                // Get diffuse texture
+                materialData.diffuseTextureName = diffuseTextureName;
+                materialData.diffuseColor = glm::vec4(1,0,0,1);
+            }
+            else
+            {
+                // Get diffuse color
+                const char* diffuseColor = diffuseElement->Attribute("color");
+                std::vector<std::string> colorComponents = Utils::parseSpaceSeparatedString(std::string(diffuseColor));
+                glm::vec4 color;
+                color.r = (float)std::atof(colorComponents[0].c_str());
+                color.g = (float)std::atof(colorComponents[1].c_str());
+                color.b = (float)std::atof(colorComponents[2].c_str());
+                color.a = (float)std::atof(colorComponents[3].c_str());
+                materialData.diffuseColor = color;
+            }
         }
 
-        const char* diffuseColor = diffuseElement->Attribute("color");
-        if(diffuseColor != 0)
-        {
-            std::vector<std::string> colorComponents = Utils::parseSpaceSeparatedString(std::string(diffuseColor));
-            glm::vec4 color;
-            color.r = (float)std::atof(colorComponents[0].c_str());
-            color.g = (float)std::atof(colorComponents[1].c_str());
-            color.b = (float)std::atof(colorComponents[2].c_str());
-            color.a = (float)std::atof(colorComponents[3].c_str());
-            materialData.diffuseColor = color;
-        }
 
         // Load normal map
         XMLElement* normalElement = materialElement->FirstChildElement("normal");
         if(normalElement)
         {
+            // Get normal texture
             materialData.normalTextureName = normalElement->Attribute("texture");
         }
 
+        // Load specular
         XMLElement* specularElement = materialElement->FirstChildElement("specular");
-        const char* specularTextureName = specularElement->Attribute("texture");
-        if(specularTextureName != 0)
+        if(specularElement != 0)
         {
-            materialData.specularTextureName = specularTextureName;
+            const char* specularTextureName = specularElement->Attribute("texture");
+            if(specularTextureName != 0)
+            {
+                // Get specular texture
+                materialData.specularTextureName = specularTextureName;
+            }
+            else
+            {
+                // Get specular color
+                const char* specularColor = specularElement->Attribute("color");
+                std::vector<std::string> colorComponents = Utils::parseSpaceSeparatedString(std::string(specularColor));
+                glm::vec4 color;
+                color.r = (float)std::atof(colorComponents[0].c_str());
+                color.g = (float)std::atof(colorComponents[1].c_str());
+                color.b = (float)std::atof(colorComponents[2].c_str());
+                color.a = (float)std::atof(colorComponents[3].c_str());
+                materialData.specularColor = color;
+            }
         }
 
-        materialData.specularColor = glm::vec4(1,1,1,0);
-            
+        // Load emission
+        XMLElement* emissionElement = materialElement->FirstChildElement("emission");
+        if(emissionElement != 0)
+        {
+            float emissionAmount = (float)std::atof(emissionElement->Attribute("color"));
+            materialData.emission = emissionAmount;
+        }
+
         addMaterial(materialData);
     }
 

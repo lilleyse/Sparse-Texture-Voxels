@@ -29,7 +29,7 @@ struct MeshMaterial
     vec4 diffuseColor;
     vec4 specularColor;
     ivec2 textureLayer;
-    float emissive;
+    float emission;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -68,7 +68,7 @@ void main()
     // If the object is emissive, set is clip space w to 0 so that the vertex will be clipped
     // and so will not be rendered into shadow map
 
-    gl_Position.w *= (1.0 - getMeshMaterial().emissive);
+    gl_Position.w *= (1.0 - getMeshMaterial().emission);
 
     // Export depth pre-projection. Also apply scale of 0.1.
     vertOutput.depth = -viewPosition.z;
