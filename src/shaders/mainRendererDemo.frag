@@ -243,6 +243,7 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     
     // get scaling factors for each axis
     dir = abs(dir);
+    //dir = dir/( dir.x + dir.y + dir.z);
     
     // TODO: correctly weight averaged output color
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
@@ -330,8 +331,13 @@ void main()
 {
     // current vertex info
     vec3 worldPos = vertexData.position;
-    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
-    
+    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;    // in text coords
+    float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
+    float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
+    float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
+    float fade = min(fadeX, min(fadeY, fadeZ));
+    fade = min(fade * 5.0, 1.0);
+
     vec3 cout = vec3(0.0);
 
     MeshMaterial material = getMeshMaterial();
@@ -381,25 +387,28 @@ void main()
     #endif
 
     #ifdef PASS_DIFFUSE
-    #define SPEC 0.2
+
     float visibility = getVisibility();
-    vec3 reflectedLight = reflect(uLightDir, gNormal);
     vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
+    cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
+        
+    #define SPEC 0.2
+    vec3 reflectedLight = reflect(uLightDir, gNormal);
     vec3 halfAngle = normalize(uLightDir - view);
     float angleNormalHalf = acos(dot(halfAngle, gNormal));
     float exponent = angleNormalHalf / SPEC;
     exponent = -(exponent * exponent);
-    float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
-    cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
+    float specularTerm = exp(exponent);
     cout += uLightColor * gSpecular * specularTerm * visibility;
+
     #endif
     #ifdef PASS_INDIR
-    cout += indir.rgb*10.0*gDiffuse;
+    cout += indir.rgb*10.0*gDiffuse*fade;
     //cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
-    cout = mix(cout, spec, uSpecularAmount);
+    cout = mix(cout, spec*fade, uSpecularAmount);
     #endif
 
     // adjust blown out colors
@@ -409,5 +418,5 @@ void main()
     // If emissive, ignore shading and just draw diffuse color
     cout = mix(cout, gDiffuse.rgb, material.emission);
 
-    fragColor = vec4(cout.rgb, 1.0);
+    fragColor = vec4(cout, 1.0);
 }
