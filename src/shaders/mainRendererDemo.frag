@@ -271,12 +271,12 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         //if(vocc > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
-            col += (1.0-dtm) * vocc.rgb;
+            col += (1.0-dtm) * vocc.rgb * tm * 10.0;
         //}
           
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
-        //stepSize += gRandVal*pixSize*JITTER_K;
+        stepSize += gRandVal*pixSize*JITTER_K;
         dist += stepSize;
         pos += stepSize*rd;
     }
@@ -321,7 +321,7 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     }
   
     // weight AO by distance f(r) = 1/(1+K*r)
-    float visibility = 0.0;//min( tm*(1.0+AO_DIST_K*dist), 1.0);
+    float visibility = min( tm*(1.0+AO_DIST_K*dist*dist)*5.0, 1.0);
 
     return vec4(col.rgb, visibility);
     //return vec4(visibility);
@@ -331,7 +331,7 @@ void main()
 {
     // current vertex info
     vec3 worldPos = vertexData.position;
-    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;    // in text coords
+    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;    // in tex coords
     float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
     float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
     float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
@@ -388,10 +388,11 @@ void main()
 
     #ifdef PASS_DIFFUSE
 
-    float visibility = getVisibility();
+    float visibility = min(getVisibility(), 1.0);
     vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
-    cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
+    cout += gDiffuse.rgb * 0.8 * uLightColor * diffuseTerm * visibility * min(1.0-fade,1.0);
+    cout += gDiffuse.rgb * 0.2 * min(1.0-fade,1.0);
         
     #define SPEC 0.2
     vec3 reflectedLight = reflect(uLightDir, gNormal);
@@ -400,7 +401,7 @@ void main()
     float exponent = angleNormalHalf / SPEC;
     exponent = -(exponent * exponent);
     float specularTerm = exp(exponent);
-    cout += uLightColor * gSpecular * specularTerm * visibility;
+    cout += uLightColor * gSpecular * specularTerm * visibility * min(1.2-fade,1.0);
 
     #endif
     #ifdef PASS_INDIR
@@ -412,8 +413,8 @@ void main()
     #endif
 
     // adjust blown out colors
-    float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
-    cout = clamp(cout - difference, 0.0, 1.0);
+    //float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
+    //cout = clamp(cout - difference, 0.0, 1.0);
 
     // If emissive, ignore shading and just draw diffuse color
     cout = mix(cout, gDiffuse.rgb, material.emission);
