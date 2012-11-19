@@ -22,12 +22,12 @@ in block
 layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
 
-layout(binding = COLOR_IMAGE_POSX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosX;
-layout(binding = COLOR_IMAGE_NEGX_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegX;
-layout(binding = COLOR_IMAGE_POSY_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosY;
-layout(binding = COLOR_IMAGE_NEGY_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegY;
-layout(binding = COLOR_IMAGE_POSZ_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorPosZ;
-layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, rgba8) writeonly uniform image3D tVoxColorNegZ;
+layout(binding = COLOR_IMAGE_POSX_3D_BINDING, r32ui) uniform uimage3D tVoxColorPosX;
+layout(binding = COLOR_IMAGE_NEGX_3D_BINDING, r32ui) uniform uimage3D tVoxColorNegX;
+layout(binding = COLOR_IMAGE_POSY_3D_BINDING, r32ui) uniform uimage3D tVoxColorPosY;
+layout(binding = COLOR_IMAGE_NEGY_3D_BINDING, r32ui) uniform uimage3D tVoxColorNegY;
+layout(binding = COLOR_IMAGE_POSZ_3D_BINDING, r32ui) uniform uimage3D tVoxColorPosZ;
+layout(binding = COLOR_IMAGE_NEGZ_3D_BINDING, r32ui) uniform uimage3D tVoxColorNegZ;
 
 struct MeshMaterial
 {
@@ -86,6 +86,12 @@ float getVisibility()
 // PROGRAM
 //---------------------------------------------------------
 
+uint packColor(vec4 color)
+{
+    uvec4 cb = uvec4(color*255.0);
+    return (cb.a << 24U) | (cb.b << 16U) | (cb.g << 8U) | cb.r;
+}
+
 void main()
 {
     MeshMaterial material = getMeshMaterial();
@@ -96,23 +102,23 @@ void main()
     vec3 normal = normalize(vertexData.normal);
     float LdotN = max(dot(uLightDir, normal), 0.0);
     vec3 outColor = diffuse.rgb*uLightColor*visibility*LdotN;
-	//vec4 outColor = vec4(diffuse.rgb*uLightColor,1.0);
     // If emissive, ignore shading and just draw diffuse color
     outColor = mix(outColor, diffuse.rgb, material.emission);
 
     vec3 voxelPosTextureSpace = (vertexData.position-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;
     ivec3 voxelPosImageCoord = ivec3(voxelPosTextureSpace * uVoxelRes);
 
-    imageStore(tVoxColorPosX, voxelPosImageCoord, vec4(outColor*max(normal.x, 0.0),  alpha));
-    imageStore(tVoxColorNegX, voxelPosImageCoord, vec4(outColor*max(-normal.x, 0.0), alpha));
-    imageStore(tVoxColorPosY, voxelPosImageCoord, vec4(outColor*max(normal.y, 0.0),  alpha));
-    imageStore(tVoxColorNegY, voxelPosImageCoord, vec4(outColor*max(-normal.y, 0.0), alpha));
-    imageStore(tVoxColorPosZ, voxelPosImageCoord, vec4(outColor*max(normal.z, 0.0),  alpha));
-    imageStore(tVoxColorNegZ, voxelPosImageCoord, vec4(outColor*max(-normal.z, 0.0), alpha));
-	//imageStore(tVoxColorPosX, voxelPosImageCoord, outColor);
-    //imageStore(tVoxColorNegX, voxelPosImageCoord, outColor);
-    //imageStore(tVoxColorPosY, voxelPosImageCoord, outColor);
-    //imageStore(tVoxColorNegY, voxelPosImageCoord, outColor);
-    //imageStore(tVoxColorPosZ, voxelPosImageCoord, outColor);
-    //imageStore(tVoxColorNegZ, voxelPosImageCoord, outColor);
+    //imageStore(tVoxColorPosX, voxelPosImageCoord, vec4(outColor*max(normal.x, 0.0),  alpha));
+    //imageStore(tVoxColorNegX, voxelPosImageCoord, vec4(outColor*max(-normal.x, 0.0), alpha));
+    //imageStore(tVoxColorPosY, voxelPosImageCoord, vec4(outColor*max(normal.y, 0.0),  alpha));
+    //imageStore(tVoxColorNegY, voxelPosImageCoord, vec4(outColor*max(-normal.y, 0.0), alpha));
+    //imageStore(tVoxColorPosZ, voxelPosImageCoord, vec4(outColor*max(normal.z, 0.0),  alpha));
+    //imageStore(tVoxColorNegZ, voxelPosImageCoord, vec4(outColor*max(-normal.z, 0.0), alpha));
+    
+    imageAtomicMax(tVoxColorPosX, voxelPosImageCoord, packColor(vec4(outColor*max(normal.x, 0.0),  alpha)));
+    imageAtomicMax(tVoxColorNegX, voxelPosImageCoord, packColor(vec4(outColor*max(-normal.x, 0.0), alpha)));
+    imageAtomicMax(tVoxColorPosY, voxelPosImageCoord, packColor(vec4(outColor*max(normal.y, 0.0),  alpha)));
+    imageAtomicMax(tVoxColorNegY, voxelPosImageCoord, packColor(vec4(outColor*max(-normal.y, 0.0), alpha)));
+    imageAtomicMax(tVoxColorPosZ, voxelPosImageCoord, packColor(vec4(outColor*max(normal.z, 0.0),  alpha)));
+    imageAtomicMax(tVoxColorNegZ, voxelPosImageCoord, packColor(vec4(outColor*max(-normal.z, 0.0), alpha)));
 }
