@@ -26,8 +26,8 @@ namespace
     
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
-    uint voxelGridLength = 128;
-    float voxelRegionWorldSize = 50.0f;
+    uint voxelGridLength = 256;
+    float voxelRegionWorldSize = 100.0f;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -342,12 +342,12 @@ void display()
     else if (currentDemoType == TRIANGLE_DEBUG)
     {
         shadowMap->display();
-        voxelClean->clean();
-        voxelizer->voxelizeScene();
-        setUBO();
+        //voxelClean->clean();
+        //voxelizer->voxelizeScene();
+        //setUBO();
         triangleDebug->display();
-        voxelDebug->voxelTextureUpdate();
-        voxelDebug->display();
+        //voxelDebug->voxelTextureUpdate();
+        //voxelDebug->display();
     }
     else if (currentDemoType == VOXELRAYCASTER)
         voxelRaycaster->display(); 

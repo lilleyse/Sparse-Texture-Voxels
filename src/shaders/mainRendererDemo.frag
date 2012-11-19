@@ -391,17 +391,17 @@ void main()
     float visibility = min(getVisibility(), 1.0);
     vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
-    cout += gDiffuse.rgb * 0.8 * uLightColor * diffuseTerm * visibility * min(1.0-fade,1.0);
+    cout += gDiffuse.rgb * 0.4 * uLightColor * diffuseTerm * visibility * min(1.0-fade,1.0);
     cout += gDiffuse.rgb * 0.2 * min(1.0-fade,1.0);
         
-    #define SPEC 0.2
+    #define SPEC 0.1
     vec3 reflectedLight = reflect(uLightDir, gNormal);
     vec3 halfAngle = normalize(uLightDir - view);
     float angleNormalHalf = acos(dot(halfAngle, gNormal));
     float exponent = angleNormalHalf / SPEC;
     exponent = -(exponent * exponent);
     float specularTerm = exp(exponent);
-    cout += uLightColor * gSpecular * specularTerm * visibility * min(1.2-fade,1.0);
+    cout += uLightColor * gSpecular * specularTerm * visibility * min(1.0-fade,1.0) * 0.2;
 
     #endif
     #ifdef PASS_INDIR
