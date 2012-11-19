@@ -1,8 +1,7 @@
 #pragma once
 
 // GLEW and GLFW headers
-#include <GL/glew.h>
-#include <GL/wglew.h>
+#include <GL3/gl3w.h>
 #include <GL/glfw.h>
 
 // GLM libraries
