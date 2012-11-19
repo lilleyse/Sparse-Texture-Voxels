@@ -3,15 +3,12 @@
 //---------------------------------------------------------
 
 layout(location = POSITION_ATTR) in vec3 position;
-layout(location = NORMAL_ATTR) in vec3 normal;
 layout(location = DEBUG_TRANSFORM_ATTR) in vec4 transformation;
-layout(location = DEBUG_COLOR_ATTR) in vec4 color;
+layout(location = DEBUG_COLOR_ATTR) in vec3 color[6];
 
 out block
 {
-    vec3 position;
-    vec4 color;
-    vec3 normal;
+    vec3 color;
 
 } vertexData;
 
@@ -37,7 +34,5 @@ void main()
     // Caluclate the clip space position
     gl_Position = uViewProjection * worldPosition;
     
-    vertexData.position = vec3(worldPosition);
-    vertexData.color = color;
-    vertexData.normal = normal;
+    vertexData.color = color[gl_VertexID/4];
 }

@@ -109,7 +109,7 @@ struct TextureLibrary
             TextureArray& textureArray = textureArrays[i];
 
             // Set active texture and bind texture
-            glActiveTexture(GL_TEXTURE0 + DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING + i);
+            glActiveTexture(GL_TEXTURE0 + DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING[i]);
             glBindTexture(GL_TEXTURE_2D_ARRAY, textureArraysGL[i]);
 
             // Get the gli format to a proper opengl format
