@@ -29,7 +29,7 @@ namespace
     uint voxelGridLength = 128;
     float voxelRegionWorldSize = 50.0f;
     uint shadowMapResolution = 1024;
-    uint numMipMapLevels = 0; // If 0, then calculate the number based on the grid length
+    uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
     float specularFOV = 5.0f;
     float specularAmount = 0.1f;
@@ -227,7 +227,7 @@ void setUBO()
     perFrame->uFOV = currentCamera->fieldOfView;
     perFrame->uVoxelRes = (float)voxelTexture->voxelGridLength;
 
-    float myvoxelSize = voxelRegionWorldSize/perFrame->uVoxelRes;
+    float myvoxelSize = 16*voxelRegionWorldSize/perFrame->uVoxelRes;
     perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
     perFrame->uVoxelRegionWorld = glm::vec4( glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/myvoxelSize)*myvoxelSize ), perFrame->uVoxelRegionWorld.w);
 
