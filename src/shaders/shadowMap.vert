@@ -24,6 +24,25 @@ ObjectPosition getObjectPosition()
     return positionArray[index];
 }
 
+struct MeshMaterial
+{
+    vec4 diffuseColor;
+    vec4 specularColor;
+    ivec2 textureLayer;
+    float emission;
+};
+
+layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
+{
+    MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
+};
+
+MeshMaterial getMeshMaterial()
+{
+    int index = indexes[MATERIAL_INDEX];
+    return meshMaterialArray[index];
+}
+
 out gl_PerVertex
 {
     vec4 gl_Position;
@@ -45,6 +64,11 @@ void main()
     vec4 worldPosition = modelMatrix * vec4(position, 1.0);
     vec4 viewPosition = uLightView * worldPosition;
     gl_Position = uLightProj * viewPosition;
+
+    // If the object is emissive, set is clip space w to 0 so that the vertex will be clipped
+    // and so will not be rendered into shadow map
+
+    gl_Position.w *= (1.0 - getMeshMaterial().emission);
 
     // Export depth pre-projection. Also apply scale of 0.1.
     vertOutput.depth = -viewPosition.z;

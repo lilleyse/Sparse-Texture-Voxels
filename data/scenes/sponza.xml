@@ -1,0 +1,311 @@
+<?xml version="1.0" ?>
+<Scene>
+    <info>
+        <name>sponza_scene</name>
+        <bottom_corner>-64.252 -64.252 -64.262</bottom_corner>
+        <top_corner>64.252 64.252 64.262</top_corner>
+    </info>
+    <meshes>
+        <mesh name="lion_statue" />
+        <mesh name="green_curtain" />
+        <mesh name="blue_curtain" />
+        <mesh name="red_curtain" />
+        <mesh name="vase_hanging" />
+        <mesh name="plant" />
+        <mesh name="fabric_blue" />
+        <mesh name="fabric_green" />
+        <mesh name="fabric_red" />
+        <mesh name="sponza_empty" />
+    </meshes>
+    <objects>
+        <object>
+            <name>lion_statue</name>
+            <mesh>lion_statue</mesh>
+            <translate>46.3422 -16.9616 0.125313</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>green_curtain</name>
+            <mesh>green_curtain</mesh>
+            <translate>12.8739 -17.73 8.875</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>green_curtain_001</name>
+            <mesh>green_curtain</mesh>
+            <translate>-26.0082 -17.73 8.875</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>green_curtain_002</name>
+            <mesh>green_curtain</mesh>
+            <translate>-0.0799388 -17.73 -8.45</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>blue_curtain</name>
+            <mesh>blue_curtain</mesh>
+            <translate>-13.0803 -17.73 -8.45036</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>blue_curtain_001</name>
+            <mesh>blue_curtain</mesh>
+            <translate>25.7608 -17.73 -8.45036</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>blue_curtain_002</name>
+            <mesh>blue_curtain</mesh>
+            <translate>-0.111851 -17.73 8.85774</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>red_curtain</name>
+            <mesh>red_curtain</mesh>
+            <translate>-26.0211 -17.7334 -8.45036</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>red_curtain_001</name>
+            <mesh>red_curtain</mesh>
+            <translate>12.8931 -17.7334 -8.45036</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>red_curtain_002</name>
+            <mesh>red_curtain</mesh>
+            <translate>-13.0903 -17.7334 8.875</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>red_curtain_003</name>
+            <mesh>red_curtain</mesh>
+            <translate>25.7642 -17.7334 8.875</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>vase_hanging</name>
+            <mesh>vase_hanging</mesh>
+            <translate>19.3061 -17.292 6.54286</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>vase_hanging_001</name>
+            <mesh>vase_hanging</mesh>
+            <translate>-19.5751 -17.292 6.54286</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>vase_hanging_002</name>
+            <mesh>vase_hanging</mesh>
+            <translate>-19.5751 -17.292 -6.36578</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 0 1 360</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>vase_hanging_003</name>
+            <mesh>vase_hanging</mesh>
+            <translate>19.3376 -17.292 -6.36578</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 0 1 360</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant</name>
+            <mesh>plant</mesh>
+            <translate>-31.7835 -21.6367 -6.43162</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_001</name>
+            <mesh>plant</mesh>
+            <translate>-6.44268 -21.6367 -6.43162</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_002</name>
+            <mesh>plant</mesh>
+            <translate>6.36178 -21.6367 -6.43162</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_003</name>
+            <mesh>plant</mesh>
+            <translate>31.4326 -21.6367 -6.43162</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_004</name>
+            <mesh>plant</mesh>
+            <translate>31.4326 -21.6367 6.65931</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_005</name>
+            <mesh>plant</mesh>
+            <translate>6.36178 -21.6367 6.65931</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_006</name>
+            <mesh>plant</mesh>
+            <translate>-6.44268 -21.6367 6.65931</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>plant_007</name>
+            <mesh>plant</mesh>
+            <translate>-31.7835 -21.6367 6.65931</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_blue</name>
+            <mesh>fabric_blue</mesh>
+            <translate>-6.61926 -7.77073 8.48218</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_blue_001</name>
+            <mesh>fabric_blue</mesh>
+            <translate>-19.7207 -7.70898 -8.35835</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 0 1 360</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_blue_002</name>
+            <mesh>fabric_blue</mesh>
+            <translate>19.2093 -7.70898 -8.35835</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 0 1 360</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_green</name>
+            <mesh>fabric_green</mesh>
+            <translate>6.22498 -6.62259 -7.79375</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 0 1 360</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_green_001</name>
+            <mesh>fabric_green</mesh>
+            <translate>19.1795 -6.59585 7.92631</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_green_002</name>
+            <mesh>fabric_green</mesh>
+            <translate>-19.6248 -6.59585 7.92631</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_red</name>
+            <mesh>fabric_red</mesh>
+            <translate>6.46877 -7.75354 8.42911</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>fabric_red_001</name>
+            <mesh>fabric_red</mesh>
+            <translate>-6.74039 -7.7201 -8.37976</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 0 1 360</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+        <object>
+            <name>sponza_empty</name>
+            <mesh>sponza_empty</mesh>
+            <translate>0 0 -0</translate>
+            <scale>1 1 1</scale>
+            <rotate>0 1 0 180</rotate>
+            <culled>true</culled>
+            <shadow>true</shadow>
+        </object>
+    </objects>
+    <lights />
+</Scene>

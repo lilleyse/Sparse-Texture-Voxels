@@ -166,10 +166,10 @@ void main()
     //-----------------------------------------------------
 
     // size of one texel in normalized texture coords
-    gTexelSize = 1.0/uTextureRes;
+    gTexelSize = 1.0/uVoxelRes;
     
     // size of pixel at dist d=1.0
-    gPixSizeAtDist = tanFOV / (uResolution.x/8.0);   // should be /2.0
+    gPixSizeAtDist = tanFOV / (uScreenRes.x/8.0);   // should be /2.0
 
     
     //-----------------------------------------------------

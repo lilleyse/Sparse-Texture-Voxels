@@ -21,15 +21,17 @@ private:
     static const uint numElementsCube = 36; 
     VoxelTexture* voxelTexture;
     std::vector<MipMapInfo> debugMipMapInfoArray;
+    PerFrameUBO* perFrame;
 
 public:
     VoxelDebug(){}
     virtual ~VoxelDebug(){}
 
-    void begin(VoxelTexture* voxelTexture)
+    void begin(VoxelTexture* voxelTexture, PerFrameUBO* perFrame)
     {
         this->currentMipMapLevel = 0;
         this->voxelTexture = voxelTexture;
+        this->perFrame = perFrame;
 
         this->debugMipMapInfoArray.resize(voxelTexture->numMipMapLevels);
 
@@ -137,13 +139,13 @@ public:
         {
             glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[i]);
                 
-            float voxelScale = 1.0f / voxelTexture->mipMapInfoArray[0].gridLength;
+            float voxelScale = this->perFrame->uVoxelRegionWorld.w / voxelTexture->mipMapInfoArray[0].gridLength;
             for(uint j = 0; j < voxelTexture->numMipMapLevels; j++)
             {
                 glGetTexImage(GL_TEXTURE_3D, j, GL_RGBA, GL_UNSIGNED_BYTE, &textureData[0]);
 
                 // apply an offset to the position because the origin of the cube model is in its center rather than a corner
-                glm::vec3 offset = glm::vec3(voxelScale/2);
+                glm::vec3 offset = glm::vec3(voxelScale/2) + glm::vec3(perFrame->uVoxelRegionWorld);
 
                 uint mipMapGridLength = voxelTexture->mipMapInfoArray[j].gridLength;
                 uint textureIndex = 0;

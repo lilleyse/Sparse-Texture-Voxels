@@ -94,6 +94,17 @@ struct SceneLibrary
             meshLibrary.loadMeshFile(meshName, meshFilename);
         }
 
+        // Load light mesh
+        std::string lightName = "lightMesh";
+        std::string lightFileName = MESH_DIRECTORY + lightName + ".xml";
+        Mesh* lightMesh = meshLibrary.loadMeshFile(lightFileName, lightFileName); 
+
+        // Create light object
+        Object* lightObject = new Object(lightMesh, shaderLibrary.voxelDebugShader);
+        scene->addObject(renderData, lightObject);
+        scene->lightObject = lightObject;
+        
+
         // Loop over objects and create them
         XMLElement* objectsElement = header->FirstChildElement("objects");
         for(XMLElement* objectElement = objectsElement->FirstChildElement("object"); objectElement != 0; objectElement = objectElement->NextSiblingElement("object"))

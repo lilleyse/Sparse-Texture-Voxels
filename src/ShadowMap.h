@@ -8,7 +8,7 @@
 struct ShadowMap
 {
     CoreEngine* coreEngine;
-    ThirdPersonCamera* lightCamera;
+    Camera* lightCamera;
     FullScreenQuad* fullScreenQuad;
     PerFrameUBO* perFrame;
     GLuint perFrameUBO;
@@ -27,15 +27,15 @@ struct ShadowMap
 
     int shadowMapResolution;
 
-    void begin(int shadowMapResolution, CoreEngine* coreEngine, FullScreenQuad* fullScreenQuad, PerFrameUBO* perFrame, GLuint perFrameUBO, ThirdPersonCamera* lightCamera)
+    void begin(int shadowMapResolution, CoreEngine* coreEngine, FullScreenQuad* fullScreenQuad, Camera* lightCamera, PerFrameUBO* perFrame, GLuint perFrameUBO)
     {
         this->shadowMapResolution = shadowMapResolution;
         this->coreEngine = coreEngine;
         this->fullScreenQuad = fullScreenQuad;
+        this->lightCamera = lightCamera;
         this->perFrame = perFrame;
         this->perFrameUBO = perFrameUBO;
-        this->lightCamera = lightCamera;
-
+        
         //--------------------------------
         // Generate shadow map FBO
         //--------------------------------
@@ -120,7 +120,7 @@ struct ShadowMap
         // Set UBO with light matrices
         glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
         perFrame->uLightView = lightCamera->createViewMatrix();
-        perFrame->uLightProj = lightCamera->createOrthrographicProjectionMatrix();
+        perFrame->uLightProj = lightCamera->createOrthrographicProjectionMatrix(coreEngine->scene->radius);
         perFrame->uLightColor = glm::vec3(1.0f,1.0f,1.0f);
         perFrame->uLightDir = -lightCamera->lookDir;
         glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
@@ -137,7 +137,7 @@ struct ShadowMap
         // Do the gaussian blur
         glActiveTexture(GL_TEXTURE0 + SHADOW_MAP_BINDING);
         glBindSampler(SHADOW_MAP_BINDING, shadowMapBlurSampler);
-        for(int i = 0; i < 3; i++)
+        for(int i = 0; i < 2; i++)
         {
             // Do a y-direction blur on the 0th texture into the 1st
             glBindFramebuffer(GL_DRAW_FRAMEBUFFER, shadowMapBlurFBO[1]);

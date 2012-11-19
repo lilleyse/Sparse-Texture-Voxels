@@ -2,8 +2,8 @@
 
 #include <tinyxml2.h>
 
-#include "../Utils.h"
-#include "../ShaderConstants.h"
+#include "Utils.h"
+#include "ShaderLibrary.h"
 #include "TextureLibrary.h"
 #include "RenderData.h"
 
@@ -16,8 +16,11 @@ struct MaterialLibrary
     {
         glm::vec4 diffuseColor;
         glm::vec4 specularColor;
-        glm::ivec2 textureLayer;
-        float padding[2];
+        glm::ivec2 diffuseTexture;
+        glm::ivec2 normalTexture;
+        glm::ivec2 specularTexture;
+        float emission;
+        float padding;
     };
 
     struct MaterialData
@@ -26,6 +29,9 @@ struct MaterialLibrary
         glm::vec4 diffuseColor;
         glm::vec4 specularColor;
         std::string diffuseTextureName;
+        std::string normalTextureName;
+        std::string specularTextureName;
+        float emission;
 
         bool operator==(const MaterialData& other) const
         {
@@ -60,18 +66,36 @@ struct MaterialLibrary
         MeshMaterial materialGL;
         materialGL.diffuseColor = materialData.diffuseColor;
         materialGL.specularColor = materialData.specularColor;
+        materialGL.diffuseTexture = glm::ivec2(-1);
+        materialGL.normalTexture = glm::ivec2(-1);
+        materialGL.specularTexture = glm::ivec2(-1);
+        materialGL.emission = materialData.emission;
 
+        // Load diffuse texture
         if(materialData.diffuseTextureName != "")
         {
             // Get the texture meta data for the diffuse texture
             TextureLibrary::TextureMetaData diffuseTextureMetaData = textureLibrary.addTexture(materialData.diffuseTextureName);
-            materialGL.textureLayer.x = diffuseTextureMetaData.textureArrayID;
-            materialGL.textureLayer.y = diffuseTextureMetaData.indexInArray;
+            materialGL.diffuseTexture.x = diffuseTextureMetaData.textureArrayID;
+            materialGL.diffuseTexture.y = diffuseTextureMetaData.indexInArray;
         }
-        else
+
+        // Load normal texture
+        if(materialData.normalTextureName != "")
         {
-            materialGL.textureLayer.x = -1;
-            materialGL.textureLayer.y = -1;
+            // Get the texture meta data for the diffuse texture
+            TextureLibrary::TextureMetaData normalTextureMetaData = textureLibrary.addTexture(materialData.normalTextureName);
+            materialGL.normalTexture.x = normalTextureMetaData.textureArrayID;
+            materialGL.normalTexture.y = normalTextureMetaData.indexInArray;
+        }
+
+        // Load specular texture
+        if(materialData.specularTextureName != "")
+        {
+            // Get the texture meta data for the diffuse texture
+            TextureLibrary::TextureMetaData specularTextureMetaData = textureLibrary.addTexture(materialData.specularTextureName);
+            materialGL.specularTexture.x = specularTextureMetaData.textureArrayID;
+            materialGL.specularTexture.y = specularTextureMetaData.indexInArray;
         }
 
         materials.push_back(materialGL);
@@ -90,28 +114,72 @@ struct MaterialLibrary
         MaterialLibrary::MaterialData materialData;
         materialData.materialName = materialName;
 
+        // Load diffuse
         XMLElement* diffuseElement = materialElement->FirstChildElement("diffuse");
-        const char* diffuseTextureName = diffuseElement->Attribute("texture");
-        if(diffuseTextureName != 0)
+        if(diffuseElement != 0)
         {
-            materialData.diffuseTextureName = diffuseTextureName;
-            materialData.diffuseColor = glm::vec4(1,0,0,1);
+            const char* diffuseTextureName = diffuseElement->Attribute("texture");
+            if(diffuseTextureName != 0)
+            {
+                // Get diffuse texture
+                materialData.diffuseTextureName = diffuseTextureName;
+                materialData.diffuseColor = glm::vec4(1,0,0,1);
+            }
+            else
+            {
+                // Get diffuse color
+                const char* diffuseColor = diffuseElement->Attribute("color");
+                std::vector<std::string> colorComponents = Utils::parseSpaceSeparatedString(std::string(diffuseColor));
+                glm::vec4 color;
+                color.r = (float)std::atof(colorComponents[0].c_str());
+                color.g = (float)std::atof(colorComponents[1].c_str());
+                color.b = (float)std::atof(colorComponents[2].c_str());
+                color.a = (float)std::atof(colorComponents[3].c_str());
+                materialData.diffuseColor = color;
+            }
         }
 
-        const char* diffuseColor = diffuseElement->Attribute("color");
-        if(diffuseColor != 0)
+
+        // Load normal map
+        XMLElement* normalElement = materialElement->FirstChildElement("normal");
+        if(normalElement)
         {
-            std::vector<std::string> colorComponents = Utils::parseSpaceSeparatedString(std::string(diffuseColor));
-            glm::vec4 color;
-            color.r = (float)std::atof(colorComponents[0].c_str());
-            color.g = (float)std::atof(colorComponents[1].c_str());
-            color.b = (float)std::atof(colorComponents[2].c_str());
-            color.a = (float)std::atof(colorComponents[3].c_str());
-            materialData.diffuseColor = color;
+            // Get normal texture
+            materialData.normalTextureName = normalElement->Attribute("texture");
         }
 
-        materialData.specularColor = glm::vec4(1,1,1,0);
-            
+        // Load specular
+        XMLElement* specularElement = materialElement->FirstChildElement("specular");
+        if(specularElement != 0)
+        {
+            const char* specularTextureName = specularElement->Attribute("texture");
+            if(specularTextureName != 0)
+            {
+                // Get specular texture
+                materialData.specularTextureName = specularTextureName;
+            }
+            else
+            {
+                // Get specular color
+                const char* specularColor = specularElement->Attribute("color");
+                std::vector<std::string> colorComponents = Utils::parseSpaceSeparatedString(std::string(specularColor));
+                glm::vec4 color;
+                color.r = (float)std::atof(colorComponents[0].c_str());
+                color.g = (float)std::atof(colorComponents[1].c_str());
+                color.b = (float)std::atof(colorComponents[2].c_str());
+                color.a = (float)std::atof(colorComponents[3].c_str());
+                materialData.specularColor = color;
+            }
+        }
+
+        // Load emission
+        XMLElement* emissionElement = materialElement->FirstChildElement("emission");
+        if(emissionElement != 0)
+        {
+            float emissionAmount = (float)std::atof(emissionElement->Attribute("color"));
+            materialData.emission = emissionAmount;
+        }
+
         addMaterial(materialData);
     }
 

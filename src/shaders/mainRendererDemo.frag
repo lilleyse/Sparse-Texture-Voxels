@@ -1,8 +1,10 @@
 //---------------------------------------------------------
-// TRIANGLE ENGINE
+// MAIN RENDER DEMO
 //---------------------------------------------------------
 
-layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+//---------------------------------------------------------
+// GL IN/OUT
+//---------------------------------------------------------
 
 in block
 {
@@ -13,11 +15,31 @@ in block
     flat ivec2 propertyIndex;
 } vertexData;
 
+layout(location = 0) out vec4 fragColor;
+
+
+//---------------------------------------------------------
+// GLOBAL DATA
+//---------------------------------------------------------
+
+layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
+
+layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
+layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
+layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
+layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
+layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
+layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
+
 struct MeshMaterial
 {
     vec4 diffuseColor;
     vec4 specularColor;
-    ivec2 textureLayer;
+    ivec2 diffuseTexture;
+    ivec2 normalTexture;
+    ivec2 specularTexture;
+    float emission;
 };
 
 layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
@@ -25,24 +47,96 @@ layout(std140, binding = MESH_MATERIAL_ARRAY_BINDING) uniform MeshMaterialArray
     MeshMaterial meshMaterialArray[NUM_MESHES_MAX];
 };
 
+
+//---------------------------------------------------------
+// COMMON SHADING
+//---------------------------------------------------------
+
 MeshMaterial getMeshMaterial()
 {
     int index = vertexData.propertyIndex[MATERIAL_INDEX];
     return meshMaterialArray[index];
 }
 
+vec3 getNormal(MeshMaterial material, vec3 vertexNormal)
+{
+    int textureId = material.normalTexture.x;
+    int textureLayer = material.normalTexture.y;
+    
+    if(textureId == -1) // no texture
+        return vertexNormal;
+
+    // Get bump map normal
+    vec3 bumpMapNormal = texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer)).xyz;
+    // Create tangent, bitangent, normal matrix
+    // compute derivations of the texture coordinate
+    vec2 tc_dx = dFdx(vertexData.uv);
+    vec2 tc_dy = dFdy(vertexData.uv);
+    vec3 p_dx  = dFdx(vertexData.position);
+    vec3 p_dy  = dFdy(vertexData.position);
+    // compute initial tangent and bi-tangent
+    vec3 t = normalize( tc_dy.y * p_dx - tc_dx.y * p_dy );
+    vec3 b = normalize( tc_dy.x * p_dx - tc_dx.x * p_dy ); // sign inversion
+    // get new tangent from a given mesh normal
+    vec3 n = vertexNormal;
+    vec3 x = cross(n, t);
+    t = cross(x, n);
+    t = normalize(t);
+    // get updated bi-tangent
+    x = cross(b, n);
+    b = cross(n, x);
+    b = normalize(b);
+    mat3 tbn = mat3(t, b, n);
+
+    // Converted bump map normal to [-1,1] range
+    bumpMapNormal = 2.0 * bumpMapNormal - vec3(1.0, 1.0, 1.0);
+    vec3 newNormal = tbn * bumpMapNormal;
+    newNormal = normalize(newNormal);
+    return newNormal;
+}
+
 vec4 getDiffuseColor(MeshMaterial material)
 {
-    int textureId = material.textureLayer.x;
-    int textureLayer = material.textureLayer.y;
-    return textureId == -1 ? 
-        material.diffuseColor : 
-        texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    int textureId = material.diffuseTexture.x;
+    int textureLayer = material.diffuseTexture.y;
+
+    if(textureId == -1) // no texture
+        return material.diffuseColor;
+    
+    vec4 diffuseColor = texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer));
+    
+    if(diffuseColor.a == 0.0) // no alpha = invisible and discarded
+        discard;
+    return diffuseColor;
+}
+
+vec3 getSpecularColor(MeshMaterial material)
+{
+    int textureId = material.specularTexture.x;
+    int textureLayer = material.specularTexture.y;
+
+    if(textureId == -1) // no texture
+        return material.specularColor.rgb;
+    else
+        return texture(diffuseTextures[textureId], vec3(vertexData.uv, textureLayer)).rgb;
+}
+
+float getVisibility()
+{
+	float fragLightDepth = vertexData.shadowMapPos.z;
+    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
+
+    if(fragLightDepth <= shadowMapDepth)
+        return 1.0;
+
+    // Less darknessFactor means lighter shadows
+    float darknessFactor = 20.0;
+    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
 }
 
 
 //---------------------------------------------------------
-// SHADER CONSTANTS
+// SHADER VARS
 //---------------------------------------------------------
 
 #define EPS       0.0001
@@ -56,21 +150,6 @@ vec4 getDiffuseColor(MeshMaterial material)
 #define EQUALS(A,B) ( abs((A)-(B)) < EPS )
 #define EQUALSZERO(A) ( ((A)<EPS) && ((A)>-EPS) )
 
-
-//---------------------------------------------------------
-// SHADER VARS
-//---------------------------------------------------------
-
-layout(location = 0) out vec4 fragColor;
-
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
-layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
-layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
-layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
-layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
-layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
-layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
-
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K  8.0
@@ -79,7 +158,7 @@ layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
 #define AO_DIST_K 0.3
 #define JITTER_K 0.025
 
-vec3 gNormal, gDiffuse;
+vec3 gNormal, gDiffuse, gSpecular;
 float gTexelSize, gRandVal;
 
 
@@ -153,18 +232,19 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tVoxColorNegX, pos, mipLevel) : 
         textureLod(tVoxColorPosX, pos, mipLevel);
-
+    
     vec4 ytexel = dir.y > 0.0 ? 
         textureLod(tVoxColorNegY, pos, mipLevel) : 
         textureLod(tVoxColorPosY, pos, mipLevel);
-
+    
     vec4 ztexel = dir.z > 0.0 ? 
         textureLod(tVoxColorNegZ, pos, mipLevel) : 
         textureLod(tVoxColorPosZ, pos, mipLevel);
-
+    
     // get scaling factors for each axis
     dir = abs(dir);
-
+    //dir = dir/( dir.x + dir.y + dir.z);
+    
     // TODO: correctly weight averaged output color
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
 }
@@ -186,12 +266,13 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
-        if(vocc > 0.0) {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
+        //float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
+        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        //if(vocc > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
-            col += (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
-        }
+            col += (1.0-dtm) * vocc.rgb;
+        //}
           
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -220,18 +301,17 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
-        if(vocc > 0.0) {
-            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc );
+        //vec4 vocc = textureLod(tVoxColorPosX, pos, mipLevel);
+        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        //if(vocc.a > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
 
             // calc local illumination
-            vec3 lightCol = (1.0-dtm) * sampleAnisotropic(pos, rd, mipLevel).rgb;
-            vec3 localColor = gDiffuse*lightCol;
-            localColor *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
-            col.rgb += localColor;
-            // gDiffuse can be factored out, but here for now for clarity
-        }
+            vec3 lightCol = vocc.rgb * (1.0-dtm) * tm;
+            //lightCol *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
+            col.rgb += lightCol;
+        //}
 
         // increment
         float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
@@ -241,36 +321,34 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     }
   
     // weight AO by distance f(r) = 1/(1+K*r)
-    float visibility = min( tm*(1.0+AO_DIST_K*dist), 1.0);
+    float visibility = 0.0;//min( tm*(1.0+AO_DIST_K*dist), 1.0);
 
-    return vec4(INDIR_K*col.rgb, visibility);
-}
-
-float getVisibility()
-{
-    float fragLightDepth = vertexData.shadowMapPos.z;
-    float shadowMapDepth = texture(shadowMap, vertexData.shadowMapPos.xy).r;
-
-    if(fragLightDepth <= shadowMapDepth)
-        return 1.0;
-
-    // Less darknessFactor means lighter shadows
-    float darknessFactor = 50.0;
-    return clamp(exp(darknessFactor * (shadowMapDepth - fragLightDepth)), 0.0, 1.0);
+    return vec4(col.rgb, visibility);
+    //return vec4(visibility);
 }
 
 void main()
 {
     // current vertex info
-    vec3 pos = vertexData.position;
+    vec3 worldPos = vertexData.position;
+    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;    // in text coords
+    float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
+    float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
+    float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
+    float fade = min(fadeX, min(fadeY, fadeZ));
+    fade = min(fade * 5.0, 1.0);
+
     vec3 cout = vec3(0.0);
-    gNormal = normalize(vertexData.normal);
-    gDiffuse = getDiffuseColor(getMeshMaterial()).rgb;
-    
+
+    MeshMaterial material = getMeshMaterial();
+    gNormal = getNormal(material, normalize(vertexData.normal));
+    gDiffuse = getDiffuseColor(material).rgb;
+    gSpecular = getSpecularColor(material);
+
     // calc globals
     gRandVal = 0.0;//rand(pos.xy);
-    gTexelSize = 1.0/uTextureRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize*2.0;
+    gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
+    float voxelOffset = gTexelSize*2.5;
 
     #define PASS_DIFFUSE
     #define PASS_INDIR
@@ -302,38 +380,43 @@ void main()
     {    
         // single cone in reflected eye direction
         const float FOV = radians(uSpecularFOV);
-        vec3 rd = normalize(pos-uCamPos);
+        vec3 rd = normalize(worldPos-uCamPos);
         rd = reflect(rd, gNormal);
         spec = conetraceSpec(pos+rd*voxelOffset, rd, FOV);
     }
     #endif
 
     #ifdef PASS_DIFFUSE
-    #define SPEC 0.2
+
     float visibility = getVisibility();
-    vec4 materialColor = getDiffuseColor(getMeshMaterial());
-    vec3 reflectedLight = reflect(uLightDir, gNormal);
-    vec3 view = normalize(pos-uCamPos);
+    vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
+    cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
+        
+    #define SPEC 0.2
+    vec3 reflectedLight = reflect(uLightDir, gNormal);
     vec3 halfAngle = normalize(uLightDir - view);
     float angleNormalHalf = acos(dot(halfAngle, gNormal));
     float exponent = angleNormalHalf / SPEC;
     exponent = -(exponent * exponent);
-    float specularTerm = diffuseTerm != 0.0 ? exp(exponent) : 0.0;
-    cout += materialColor.rgb * uLightColor * diffuseTerm * visibility;
-    cout += uLightColor * specularTerm * visibility;
+    float specularTerm = exp(exponent);
+    cout += uLightColor * gSpecular * specularTerm * visibility;
+
     #endif
     #ifdef PASS_INDIR
-    cout += indir.rgb;
-    cout *= indir.a;
+    cout += indir.rgb*10.0*gDiffuse*fade;
+    //cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
-    cout = mix(cout, spec, uSpecularAmount);
+    cout = mix(cout, spec*fade, uSpecularAmount);
     #endif
 
     // adjust blown out colors
     float difference = max(0.0,max(cout.r - 1.0, max(cout.g - 1.0, cout.b - 1.0)));
     cout = clamp(cout - difference, 0.0, 1.0);
 
-    fragColor = vec4(cout.rgb, 1.0);
+    // If emissive, ignore shading and just draw diffuse color
+    cout = mix(cout, gDiffuse.rgb, material.emission);
+
+    fragColor = vec4(cout, 1.0);
 }
