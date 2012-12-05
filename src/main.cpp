@@ -20,18 +20,19 @@ namespace
     glm::ivec2 windowSize(800, 533);
     glm::ivec2 openGLVersion(4, 2);
     bool enableMousePicking = true;
-    bool showDebugOutput = false;
+    bool showDebugOutput = true;
     bool showFPS = true;
     bool vsync = false;
     
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
-    uint voxelGridLength = 256;
-    float voxelRegionWorldSize = 100.0f;
+    uint voxelGridLength = 128;
+    float voxelRegionWorldSize = 50.0f;
+    uint numVoxelCascades = 3;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
-    float specularFOV = 5.0f;
+    float specularFOV = 0.1f;
     float specularAmount = 0.1f;
 
     // Demo settings
@@ -144,15 +145,10 @@ void GLFWCALL keyPress(int k, int action)
         }            
 
         // Changing mip map level
-        int increaseMipLevel = int(k == '.');
-        int decreaseMipLevel = int(k == ',');
-        int newMipLevel = glm::clamp(int(currentMipMapLevel + increaseMipLevel - decreaseMipLevel), 0, int(voxelTexture->numMipMapLevels - 1));
+        int newMipLevel = currentMipMapLevel + int(k == '.') - int(k == ',');
+        newMipLevel = glm::clamp(newMipLevel, 0, int(voxelTexture->numMipMapLevels - 1));
         if (currentMipMapLevel != newMipLevel)
-        {
             currentMipMapLevel = newMipLevel;
-            if (loadAllDemos || currentDemoType == VOXEL_DEBUG)
-                voxelDebug->setMipMapLevel(currentMipMapLevel);
-        }
         
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
@@ -189,7 +185,6 @@ void processKeyDown()
         if(shiftDown && glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f - scaleAmount);
         else if(glfwGetKey('T') == GLFW_PRESS) currentSelectedObject->scale(1.0f + scaleAmount);
     }
-    
 
     float zoomSpeed = 0.001f*coreEngine->scene->radius;
     float panSpeed = 0.0007f*coreEngine->scene->radius;
@@ -197,7 +192,6 @@ void processKeyDown()
     if(glfwGetKey('S') == GLFW_PRESS) currentCamera->zoom(-zoomSpeed);
     if(glfwGetKey('A') == GLFW_PRESS) currentCamera->pan(-panSpeed,0.0f);
     if(glfwGetKey('D') == GLFW_PRESS) currentCamera->pan(panSpeed,0.0f);
-
 
     // Changing specular values
     float specularFOVChange = 0.2f;
@@ -226,19 +220,23 @@ void setUBO()
     perFrame->uTime = frameTime;
     perFrame->uFOV = currentCamera->fieldOfView;
     perFrame->uVoxelRes = (float)voxelTexture->voxelGridLength;
-
-    float myvoxelSize = 16*voxelRegionWorldSize/perFrame->uVoxelRes;
-    perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
-    perFrame->uVoxelRegionWorld = glm::vec4( glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/myvoxelSize)*myvoxelSize ), perFrame->uVoxelRegionWorld.w);
-
     perFrame->uNumMips = (float)voxelTexture->numMipMapLevels;
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
     perFrame->uCurrentMipLevel = currentMipMapLevel;
 
+    //float myvoxelSize = 16.0f*voxelRegionWorldSize/perFrame->uVoxelRes;
+    perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
+    //perFrame->uVoxelRegionWorld = glm::vec4( glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/myvoxelSize)*myvoxelSize ), perFrame->uVoxelRegionWorld.w);
+
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+
+void updateLightObject()
+{
+    coreEngine->scene->lightObject->setTranslation(lightCamera->getPosition());
 }
 
 void initGL()
@@ -274,11 +272,6 @@ void initGL()
     glDepthRange(0.0f, 1.0f);
 }
 
-void updateLightObject()
-{
-    coreEngine->scene->lightObject->setTranslation(lightCamera->getPosition());
-}
-
 void initCameras()
 {
     viewCamera->setFarNearPlanes(.01f, 1000.0f);
@@ -309,9 +302,9 @@ void begin()
     timer->begin();
     fullScreenQuad->begin();
     passthrough->begin(coreEngine);
-    voxelTexture->begin(voxelGridLength, numMipMapLevels);
+    voxelTexture->begin(voxelGridLength, numMipMapLevels, numVoxelCascades);        
     voxelClean->begin(voxelTexture, fullScreenQuad);
-    voxelizer->begin(voxelTexture, coreEngine, viewCamera, perFrame, perFrameUBO);
+    voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);
     shadowMap->begin(shadowMapResolution, coreEngine, fullScreenQuad, lightCamera, perFrame, perFrameUBO);
 
@@ -321,9 +314,9 @@ void begin()
     if (loadAllDemos || currentDemoType == TRIANGLE_DEBUG)
         triangleDebug->begin(coreEngine);
     if (loadAllDemos || currentDemoType == VOXELRAYCASTER)
-        voxelRaycaster->begin(voxelTexture, fullScreenQuad);
+        voxelRaycaster->begin(fullScreenQuad);
     if (loadAllDemos || currentDemoType == VOXELCONETRACER)
-        voxelConetracer->begin(voxelTexture, fullScreenQuad);
+        voxelConetracer->begin(fullScreenQuad);
     if (loadAllDemos || currentDemoType == MAIN_RENDERER)
         mainRenderer->begin(coreEngine, passthrough);
 }
@@ -358,7 +351,7 @@ void display()
         shadowMap->display();
         voxelClean->clean();
         voxelizer->voxelizeScene();
-        mipMapGenerator->generateMipMapGPU();
+        mipMapGenerator->generateMipMap();
         setUBO();
         mainRenderer->display(); 
     }

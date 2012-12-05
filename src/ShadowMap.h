@@ -104,12 +104,6 @@ struct ShadowMap
         gaussianBlurYProgram = Utils::OpenGL::createShaderProgram(vertexShaderSource, fragmentShaderSource);
     }
 
-    ~ShadowMap()
-    {
-        //glDeleteFramebuffers(1, &shadowMapFBO);
-        //glDeleteTextures(1, &shadowMapTexture);
-    }
-
     void display()
     {
         // Get light matrices

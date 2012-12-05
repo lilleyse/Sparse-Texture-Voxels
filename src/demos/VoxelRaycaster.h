@@ -9,16 +9,14 @@ class VoxelRaycaster
 
 private:
     GLuint fullScreenProgram;
-    VoxelTexture* voxelTexture;
     FullScreenQuad* fullScreenQuad;
 
 public:
     VoxelRaycaster(){}
     virtual ~VoxelRaycaster(){}
 
-    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad)
+    void begin(FullScreenQuad* fullScreenQuad)
     {
-        this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
         // Create shader program

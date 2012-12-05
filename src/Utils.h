@@ -35,6 +35,7 @@
 
 typedef unsigned char uchar;
 typedef unsigned int uint;
+typedef unsigned short ushort;
 
 const std::string SOURCE_DIRECTORY = std::string("src/");
 const std::string DATA_DIRECTORY = std::string("data/");

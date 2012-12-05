@@ -16,12 +16,7 @@
 //---------------------------------------------------------
 
 layout(location = 0, index = 0) out vec4 fragColor;
-layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
-layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
-layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
-layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
-layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
-layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
+layout(binding = VOXEL_DIRECTIONS_ARRAY_BINDING) uniform sampler3D tDirectionalVoxels[MAX_VOXEL_TEXTURES];
 
 in vec2 vUV;
 
@@ -57,18 +52,19 @@ bool textureVolumeIntersect(vec3 ro, vec3 rd, out float t) {
     return false;
 }
 
+// only do anisotrop sampling on the first cascade
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     vec4 xtexel = dir.x > 0.0 ? 
-        textureLod(tVoxColorNegX, pos, mipLevel) : 
-        textureLod(tVoxColorPosX, pos, mipLevel);
+        textureLod(tDirectionalVoxels[1], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[0], pos, mipLevel);
 
     vec4 ytexel = dir.y > 0.0 ? 
-        textureLod(tVoxColorNegY, pos, mipLevel) : 
-        textureLod(tVoxColorPosY, pos, mipLevel);
+        textureLod(tDirectionalVoxels[3], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[2], pos, mipLevel);
 
     vec4 ztexel = dir.z > 0.0 ? 
-        textureLod(tVoxColorNegZ, pos, mipLevel) : 
-        textureLod(tVoxColorPosZ, pos, mipLevel);
+        textureLod(tDirectionalVoxels[5], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[4], pos, mipLevel);
 
     // get scaling factors for each axis
     dir = abs(dir);
@@ -107,7 +103,7 @@ vec4 conetraceAccum(vec3 ro, vec3 rd) {
     float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
     
     // sample texture
-    float vocclusion = textureLod(tVoxColorPosX, pos, mipLevel).a;
+    float vocclusion = textureLod(tDirectionalVoxels[0], pos, mipLevel).a;
     
     // alpha normalized to 1 texel, i.e., 1.0 alpha is 1 solid block of texel
     // no need weight by "stepSize" since "pixSize" is size of an imaginary 

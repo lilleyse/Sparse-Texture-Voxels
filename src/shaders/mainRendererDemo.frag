@@ -22,15 +22,9 @@ layout(location = 0) out vec4 fragColor;
 // GLOBAL DATA
 //---------------------------------------------------------
 
-layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
-layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;  
-
-layout(binding = COLOR_TEXTURE_POSX_3D_BINDING) uniform sampler3D tVoxColorPosX;
-layout(binding = COLOR_TEXTURE_NEGX_3D_BINDING) uniform sampler3D tVoxColorNegX;
-layout(binding = COLOR_TEXTURE_POSY_3D_BINDING) uniform sampler3D tVoxColorPosY;
-layout(binding = COLOR_TEXTURE_NEGY_3D_BINDING) uniform sampler3D tVoxColorNegY;
-layout(binding = COLOR_TEXTURE_POSZ_3D_BINDING) uniform sampler3D tVoxColorPosZ;
-layout(binding = COLOR_TEXTURE_NEGZ_3D_BINDING) uniform sampler3D tVoxColorNegZ;
+layout(binding = DIFFUSE_TEXTURE_ARRAY_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap;
+layout(binding = VOXEL_DIRECTIONS_ARRAY_BINDING) uniform sampler3D tDirectionalVoxels[MAX_VOXEL_TEXTURES];
 
 struct MeshMaterial
 {
@@ -229,17 +223,18 @@ vec3 findPerpendicular(vec3 v) {
 //---------------------------------------------------------
 
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
+    int offset = 0*NUM_VOXEL_DIRECTIONS;
     vec4 xtexel = dir.x > 0.0 ? 
-        textureLod(tVoxColorNegX, pos, mipLevel) : 
-        textureLod(tVoxColorPosX, pos, mipLevel);
-    
+        textureLod(tDirectionalVoxels[offset + 1], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[offset + 0], pos, mipLevel);
+
     vec4 ytexel = dir.y > 0.0 ? 
-        textureLod(tVoxColorNegY, pos, mipLevel) : 
-        textureLod(tVoxColorPosY, pos, mipLevel);
-    
+        textureLod(tDirectionalVoxels[offset + 3], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[offset + 2], pos, mipLevel);
+
     vec4 ztexel = dir.z > 0.0 ? 
-        textureLod(tVoxColorNegZ, pos, mipLevel) : 
-        textureLod(tVoxColorPosZ, pos, mipLevel);
+        textureLod(tDirectionalVoxels[offset + 5], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[offset + 4], pos, mipLevel);
     
     // get scaling factors for each axis
     dir = abs(dir);
@@ -266,7 +261,6 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        //float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
         vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
         //if(vocc > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
@@ -301,7 +295,6 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
         float pixSize = max(dist*pixSizeAtDist, gTexelSize);
         float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
 
-        //vec4 vocc = textureLod(tVoxColorPosX, pos, mipLevel);
         vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
         //if(vocc.a > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );

@@ -10,16 +10,14 @@ class VoxelConetracer
 
 private:
     GLuint fullScreenProgram;
-    VoxelTexture* voxelTexture;
     FullScreenQuad* fullScreenQuad;
 
 public:
     VoxelConetracer(){}
     virtual ~VoxelConetracer(){}
 
-    void begin(VoxelTexture* voxelTexture, FullScreenQuad* fullScreenQuad)
+    void begin(FullScreenQuad* fullScreenQuad)
     {
-        this->voxelTexture = voxelTexture;
         this->fullScreenQuad = fullScreenQuad;
 
         // Create shader program

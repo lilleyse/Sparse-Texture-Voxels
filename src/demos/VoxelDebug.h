@@ -9,18 +9,17 @@ struct VoxelInfo
     glm::vec3 sideColors[6];
 };
 
-
 class VoxelDebug
 {
 private:
-    int currentMipMapLevel;
     GLuint vertexArray;
     GLuint voxelBuffer;
     GLuint voxelDebugProgram;
     static const uint numVerticesCube = 24;
-    static const uint numElementsCube = 36; 
-    VoxelTexture* voxelTexture;
+    static const uint numElementsCube = 36;
+    
     std::vector<MipMapInfo> debugMipMapInfoArray;
+    VoxelTexture* voxelTexture;
     PerFrameUBO* perFrame;
 
 public:
@@ -29,7 +28,6 @@ public:
 
     void begin(VoxelTexture* voxelTexture, PerFrameUBO* perFrame)
     {
-        this->currentMipMapLevel = 0;
         this->voxelTexture = voxelTexture;
         this->perFrame = perFrame;
 
@@ -64,8 +62,7 @@ public:
             glm::vec3(-0.5, -0.5, -0.5)
         };
         
-
-        unsigned short elements[numElementsCube] = {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23};
+        ushort elements[numElementsCube] = {0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7, 8, 9, 10, 8, 10, 11, 12, 13, 14, 12, 14, 15, 16, 17, 18, 16, 18, 19, 20, 21, 22, 20, 22, 23};
         
         // Positions
         GLuint vertexBuffer;
@@ -133,9 +130,10 @@ public:
         uint voxelGridLength = voxelTexture->voxelGridLength;
         std::vector<glm::u8vec4> textureData(voxelGridLength*voxelGridLength*voxelGridLength);
 
-        glActiveTexture(NON_USED_TEXTURE);
+        glActiveTexture(GL_TEXTURE0 + NON_USED_TEXTURE);
 
-        for(uint i = 0; i < VoxelTexture::NUM_DIRECTIONS; i++)
+        // only show the first cascade
+        for(uint i = 0; i < NUM_VOXEL_DIRECTIONS; i++)
         {
             glBindTexture(GL_TEXTURE_3D, voxelTexture->colorTextures[i]);
                 
@@ -174,7 +172,6 @@ public:
             }
         }
 
-
         uint numVoxels = 0;
         for(unsigned int i = 0; i < voxelTexture->numMipMapLevels; i++)
         {
@@ -193,18 +190,15 @@ public:
             }
         }
 
-        
-
         glBindBuffer(GL_ARRAY_BUFFER, voxelBuffer);
         glBufferData(GL_ARRAY_BUFFER, sizeof(VoxelInfo)*packed.size(), &packed[0], GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-
     }
 
     void display()
     {
-        uint baseInstance = debugMipMapInfoArray[this->currentMipMapLevel].offset;
-        uint primCount = debugMipMapInfoArray[this->currentMipMapLevel].numVoxels;
+        uint baseInstance = debugMipMapInfoArray[perFrame->uCurrentMipLevel].offset;
+        uint primCount = debugMipMapInfoArray[perFrame->uCurrentMipLevel].numVoxels;
 
         Utils::OpenGL::setScreenSizedViewport();
         Utils::OpenGL::setRenderState(true, true, true);
@@ -212,10 +206,5 @@ public:
         glUseProgram(voxelDebugProgram);
         glBindVertexArray(vertexArray);
         glDrawElementsInstancedBaseInstance(GL_TRIANGLES, numElementsCube, GL_UNSIGNED_SHORT, 0, primCount, baseInstance);
-    }
-
-    void setMipMapLevel(uint mipMapLevel)
-    {
-        this->currentMipMapLevel = mipMapLevel;
     }
 };

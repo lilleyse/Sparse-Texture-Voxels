@@ -29,12 +29,15 @@ public:
         Utils::OpenGL::setViewport(voxelGridLength, voxelGridLength);
         Utils::OpenGL::setRenderState(false, false, false);
 
-        // Bind the six texture directions for writing
-        for(uint i = 0; i < voxelTexture->NUM_DIRECTIONS; i++)
-            glBindImageTexture(COLOR_IMAGE_POSX_3D_BINDING + i, voxelTexture->colorTextures[i], 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
-
-        // Clean the base mip map
         glUseProgram(cleanProgram);
-        fullScreenQuad->displayInstanced(voxelGridLength);
+
+        for(uint i = 0; i < voxelTexture->numCascades; i++)
+        {
+            for(uint j = 0; j < NUM_VOXEL_DIRECTIONS; j++)
+            {
+                glBindImageTexture(VOXEL_DIRECTIONS_IMAGE_ARRAY_BINDING[j], voxelTexture->colorTextures[i*NUM_VOXEL_DIRECTIONS + j], 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+            }
+            fullScreenQuad->displayInstanced(voxelGridLength);
+        }  
     }
 };

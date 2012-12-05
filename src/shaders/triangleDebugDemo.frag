@@ -22,7 +22,7 @@ layout (location = 0, index = 0) out vec4 fragColor;
 // GLOBAL DATA
 //---------------------------------------------------------
 
-layout(binding = DIFFUSE_TEXTURE_ARRAY_SAMPLER_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
+layout(binding = DIFFUSE_TEXTURE_ARRAY_BINDING) uniform sampler2DArray diffuseTextures[MAX_TEXTURE_ARRAYS];
 layout(binding = SHADOW_MAP_BINDING) uniform sampler2D shadowMap; 
 
 struct MeshMaterial

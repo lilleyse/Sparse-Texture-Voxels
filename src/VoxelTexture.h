@@ -12,24 +12,26 @@ struct MipMapInfo
 class VoxelTexture
 {
 public:
-
-    std::vector<GLuint> colorTextures;
-    
     // Samplers
-    enum VoxelDirections {POSX, NEGX, POSY, NEGY, POSZ, NEGZ, NUM_DIRECTIONS};
     enum SamplerType {LINEAR, NEAREST, MAX_SAMPLER_TYPES};
     GLuint textureNearestSampler;
     GLuint textureLinearSampler;
     SamplerType currentSamplerType;
 
-    uint voxelGridLength;
-    uint numMipMapLevels;
-    uint totalVoxels;
+    std::vector<GLuint> colorTextures;
     std::vector<MipMapInfo> mipMapInfoArray;
 
-    void begin(uint voxelGridLength, uint numMipMapLevels)
+    uint voxelGridLength;
+    uint numMipMapLevels;
+    uint numCascades;
+    uint numVoxelTextures;
+    uint totalVoxels;
+    
+    void begin(uint voxelGridLength, uint numMipMapLevels, uint numCascades)
     {
         this->voxelGridLength = voxelGridLength;
+        this->numCascades = numCascades;
+        this->numVoxelTextures = this->numCascades * NUM_VOXEL_DIRECTIONS;
 
         // Set num mipmaps based on the grid length
         if(numMipMapLevels == 0)
@@ -68,10 +70,10 @@ public:
         this->setSamplerType(LINEAR);
 
         // Create a dense 3D color texture
-        colorTextures.resize(NUM_DIRECTIONS);
-        for (uint i = 0; i < NUM_DIRECTIONS; i++)
+        colorTextures.resize(this->numVoxelTextures);
+        for (uint i = 0; i < this->numVoxelTextures; i++)
         {
-            glActiveTexture(GL_TEXTURE0 + COLOR_TEXTURE_POSX_3D_BINDING + i);
+            glActiveTexture(GL_TEXTURE0 + VOXEL_DIRECTIONS_ARRAY_BINDING[i]);
             glGenTextures(1, &colorTextures[i]);
             glBindTexture(GL_TEXTURE_3D, colorTextures[i]);
             glTexStorage3D(GL_TEXTURE_3D, numMipMapLevels, GL_RGBA8, voxelGridLength, voxelGridLength, voxelGridLength);
@@ -100,12 +102,12 @@ public:
     void setSamplerType(SamplerType samplerType)
     {
         this->currentSamplerType = samplerType;
-        for (uint i = 0; i < NUM_DIRECTIONS; i++)
+        for (uint i = 0; i < this->numVoxelTextures; i++)
         {
             if (currentSamplerType == LINEAR)
-                glBindSampler(COLOR_TEXTURE_POSX_3D_BINDING + i, textureLinearSampler);
+                glBindSampler(VOXEL_DIRECTIONS_ARRAY_BINDING[i], textureLinearSampler);
             else if (currentSamplerType == NEAREST)
-                glBindSampler(COLOR_TEXTURE_POSX_3D_BINDING + i, textureNearestSampler);
+                glBindSampler(VOXEL_DIRECTIONS_ARRAY_BINDING[i], textureNearestSampler);
         }
     }
     void changeSamplerType()
