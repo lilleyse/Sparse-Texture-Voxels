@@ -154,7 +154,7 @@ float getVisibility()
 
 vec3 gNormal, gDiffuse, gSpecular;
 float gTexelSize, gRandVal;
-
+int currentCascade;
 
 //---------------------------------------------------------
 // UTILITIES
@@ -223,7 +223,7 @@ vec3 findPerpendicular(vec3 v) {
 //---------------------------------------------------------
 
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
-    int offset = 0*NUM_VOXEL_DIRECTIONS;
+    int offset = currentCascade*NUM_VOXEL_DIRECTIONS;
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tDirectionalVoxels[offset + 1], pos, mipLevel) : 
         textureLod(tDirectionalVoxels[offset + 0], pos, mipLevel);
@@ -322,9 +322,13 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
 void main()
 {
+    currentCascade = 1; //change later
+    float currentCascadeF = float(currentCascade+1);
+
     // current vertex info
     vec3 worldPos = vertexData.position;
-    vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;    // in tex coords
+    vec3 voxelBMin = uVoxelRegionWorld.xyz - uVoxelRegionWorld.w*currentCascadeF/2.0; 
+    vec3 pos = (worldPos-voxelBMin)/(uVoxelRegionWorld.w*currentCascadeF);    // in tex coords
     float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
     float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
     float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));

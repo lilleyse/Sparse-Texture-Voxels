@@ -32,8 +32,9 @@ namespace
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
-    float specularFOV = 0.1f;
-    float specularAmount = 0.1f;
+    uint currentCascade = 0;
+    float specularFOV = 0.01f;
+    float specularAmount = 0.8f;
 
     // Demo settings
     bool loadAllDemos = true;
@@ -130,6 +131,7 @@ void GLFWCALL mouseClick(int button, int action)
 
 void GLFWCALL keyPress(int k, int action)
 {
+    bool shiftDown = glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS || glfwGetKey(GLFW_KEY_RSHIFT) == GLFW_PRESS;
     if (action == GLFW_RELEASE)
     {
         // Changing demo (number keys and numpad)
@@ -147,9 +149,12 @@ void GLFWCALL keyPress(int k, int action)
         // Changing mip map level
         int newMipLevel = currentMipMapLevel + int(k == '.') - int(k == ',');
         newMipLevel = glm::clamp(newMipLevel, 0, int(voxelTexture->numMipMapLevels - 1));
-        if (currentMipMapLevel != newMipLevel)
-            currentMipMapLevel = newMipLevel;
+        currentMipMapLevel = newMipLevel;
         
+        //int newCascade = currentCascade + int(shiftDown)*(int(k == '.') - int(k == ','));
+        //newCascade = glm::clamp(newCascade, 0, int(voxelTexture->numCascades - 1));
+        //currentCascade = newCascade;
+
         // Enable linear sampling
         if (k == 'L') voxelTexture->changeSamplerType();
 
@@ -224,9 +229,11 @@ void setUBO()
     perFrame->uSpecularFOV = specularFOV;
     perFrame->uSpecularAmount = specularAmount;
     perFrame->uCurrentMipLevel = currentMipMapLevel;
+    perFrame->uCurrentCascade = currentCascade;
 
+    perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position, voxelRegionWorldSize);
     //float myvoxelSize = 16.0f*voxelRegionWorldSize/perFrame->uVoxelRes;
-    perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
+    //perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
     //perFrame->uVoxelRegionWorld = glm::vec4( glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/myvoxelSize)*myvoxelSize ), perFrame->uVoxelRegionWorld.w);
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);

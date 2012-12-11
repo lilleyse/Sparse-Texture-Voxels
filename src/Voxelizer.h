@@ -39,6 +39,8 @@ public:
 
         for(uint i = 0; i < voxelTexture->numCascades; i++)
         {
+            perFrame->uCurrentCascade = i;
+
             // Bind the six texture directions for writing
             for(uint j = 0; j < NUM_VOXEL_DIRECTIONS; j++)
                 glBindImageTexture(VOXEL_DIRECTIONS_IMAGE_ARRAY_BINDING[j], voxelTexture->colorTextures[i*NUM_VOXEL_DIRECTIONS + j], 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
@@ -46,9 +48,14 @@ public:
             float worldSize = perFrame->uVoxelRegionWorld.w * (1 << i);
             float halfSize = worldSize/2.0f;
             float voxelSize = worldSize/perFrame->uVoxelRes;
-            glm::vec3 bMin = glm::vec3(perFrame->uVoxelRegionWorld) + glm::vec3(perFrame->uVoxelRegionWorld.w/2.0f - worldSize/2.0f);
-            glm::vec3 bMax = bMin + worldSize;
-            glm::vec3 bMid = (bMin+bMax)/2.0f;
+            //glm::vec3 bMin = glm::vec3(perFrame->uVoxelRegionWorld) + glm::vec3(perFrame->uVoxelRegionWorld.w/2.0f - worldSize/2.0f);
+            //glm::vec3 bMax = bMin + worldSize;
+            //glm::vec3 bMid = (bMin+bMax)/2.0f;
+            glm::vec3 bMid = glm::vec3(perFrame->uVoxelRegionWorld);
+            glm::vec3 bMin = bMid - halfSize;
+            glm::vec3 bMax = bMid + halfSize;
+            
+            
             glm::mat4 orthoProjection = glm::ortho(-halfSize, halfSize, -halfSize, halfSize, 0.0f, worldSize);
 
             // Render down z-axis

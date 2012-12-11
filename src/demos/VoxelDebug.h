@@ -143,7 +143,7 @@ public:
                 glGetTexImage(GL_TEXTURE_3D, j, GL_RGBA, GL_UNSIGNED_BYTE, &textureData[0]);
 
                 // apply an offset to the position because the origin of the cube model is in its center rather than a corner
-                glm::vec3 offset = glm::vec3(voxelScale/2) + glm::vec3(perFrame->uVoxelRegionWorld);
+                glm::vec3 offset = glm::vec3(voxelScale/2) + glm::vec3(perFrame->uVoxelRegionWorld) - glm::vec3(perFrame->uVoxelRegionWorld.w/2.0);
 
                 uint mipMapGridLength = voxelTexture->mipMapInfoArray[j].gridLength;
                 uint textureIndex = 0;
