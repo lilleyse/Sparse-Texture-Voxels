@@ -154,7 +154,7 @@ float getVisibility()
 
 vec3 gNormal, gDiffuse, gSpecular;
 float gTexelSize, gRandVal;
-int currentCascade;
+int gCurrentCascade;
 
 //---------------------------------------------------------
 // UTILITIES
@@ -223,7 +223,7 @@ vec3 findPerpendicular(vec3 v) {
 //---------------------------------------------------------
 
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
-    int offset = currentCascade*NUM_VOXEL_DIRECTIONS;
+    int offset = gCurrentCascade*NUM_VOXEL_DIRECTIONS;
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tDirectionalVoxels[offset + 1], pos, mipLevel) : 
         textureLod(tDirectionalVoxels[offset + 0], pos, mipLevel);
@@ -242,6 +242,17 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     
     // TODO: correctly weight averaged output color
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
+}
+
+int getCascade(vec3 pos) {
+    if ( all(lessThan(pos, uVoxelRegionWorld[0].xyz+uVoxelRegionWorld[0].w/2.0)) && 
+        all(greaterThan(pos, uVoxelRegionWorld[0].xyz-uVoxelRegionWorld[0].w/2.0)) )
+        return 0;
+    else if ( all(lessThan(pos, uVoxelRegionWorld[1].xyz+uVoxelRegionWorld[1].w/2.0)) && 
+        all(greaterThan(pos, uVoxelRegionWorld[1].xyz-uVoxelRegionWorld[1].w/2.0)) )
+        return 1;
+    else
+        return 2;
 }
 
 vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
@@ -322,25 +333,26 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
 void main()
 {
-    currentCascade = 2; //change later
-    float currentCascadeF = float(currentCascade+1);
-
     // current vertex info
     vec3 worldPos = vertexData.position;
-    vec3 voxelBMin = uVoxelRegionWorld[currentCascade].xyz - uVoxelRegionWorld[currentCascade].w/2.0; 
-    vec3 pos = (worldPos-voxelBMin)/(uVoxelRegionWorld[currentCascade].w);    // in tex coords
-    float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
-    float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
-    float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
-    float fade = min(fadeX, min(fadeY, fadeZ));
-    fade = min(fade * 5.0, 1.0);
-
-    vec3 cout = vec3(0.0);
-
     MeshMaterial material = getMeshMaterial();
     gNormal = getNormal(material, normalize(vertexData.normal));
     gDiffuse = getDiffuseColor(material).rgb;
     gSpecular = getSpecularColor(material);
+    
+    //gCurrentCascade = int(mod(int(uTime), 3));
+    gCurrentCascade = getCascade(worldPos);
+        
+    vec3 voxelBMin = uVoxelRegionWorld[gCurrentCascade].xyz - uVoxelRegionWorld[gCurrentCascade].w/2.0; 
+    vec3 pos = (worldPos-voxelBMin)/(uVoxelRegionWorld[gCurrentCascade].w);    // in tex coords
+    
+    //float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
+    //float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
+    //float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
+    //float fade = min(fadeX, min(fadeY, fadeZ));
+    //fade = min(fade * 5.0, 1.0);
+
+    vec3 cout = vec3(0.0);
 
     // calc globals
     gRandVal = 0.0;//rand(pos.xy);
@@ -388,8 +400,7 @@ void main()
     float visibility = min(getVisibility(), 1.0);
     vec3 view = normalize(worldPos-uCamPos);
     float diffuseTerm = max(dot(uLightDir, gNormal), 0.0);
-    cout += gDiffuse.rgb * 0.4 * uLightColor * diffuseTerm * visibility * min(1.0-fade,1.0);
-    cout += gDiffuse.rgb * 0.2 * min(1.0-fade,1.0);
+    cout += gDiffuse.rgb * uLightColor * diffuseTerm * visibility;
         
     #define SPEC 0.1
     vec3 reflectedLight = reflect(uLightDir, gNormal);
@@ -398,15 +409,15 @@ void main()
     float exponent = angleNormalHalf / SPEC;
     exponent = -(exponent * exponent);
     float specularTerm = exp(exponent);
-    cout += uLightColor * gSpecular * specularTerm * visibility * min(1.0-fade,1.0) * 0.2;
+    cout += uLightColor * gSpecular * specularTerm * visibility;
 
     #endif
     #ifdef PASS_INDIR
-    cout += indir.rgb*10.0*gDiffuse*fade;
+    cout += indir.rgb*10.0*gDiffuse;
     //cout *= indir.a;
     #endif
     #ifdef PASS_SPEC
-    cout = mix(cout, spec*fade, uSpecularAmount);
+    cout = mix(cout, spec, uSpecularAmount);
     #endif
 
     // adjust blown out colors
