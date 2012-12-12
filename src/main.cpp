@@ -17,7 +17,7 @@ namespace
 {
     // Window
     std::string applicationName("Sparse Texture Voxels");
-    glm::ivec2 windowSize(800, 533);
+    glm::ivec2 windowSize(800, 600);
     glm::ivec2 openGLVersion(4, 2);
     bool enableMousePicking = true;
     bool showDebugOutput = true;
@@ -28,7 +28,6 @@ namespace
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
     uint voxelGridLength = 128;
     float voxelRegionWorldSize = 50.0f;
-    uint numVoxelCascades = 3;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -213,6 +212,31 @@ void GLFWCALL resize(int w, int h)
     windowSize = glm::ivec2(w, h);
 }
 
+void setCascades()
+{
+    // lock step size, as multiple of 1 voxel size in world coords
+    const float lockedIncrement = 1.0f;
+
+    int multiplier = 1;
+
+    for (int i=0; i<MAX_VOXEL_CASCADES; ++i) 
+    {
+        float voxSize = multiplier * voxelRegionWorldSize/perFrame->uVoxelRes;
+
+        float lockedSize = lockedIncrement * voxSize;   // size of each lock step in world coords
+
+        // TODO: calculate this to be dynamic relative to view dir
+        glm::vec3 voxCenter = viewCamera->position;
+
+        glm::vec3 lockedCenter = glm::vec3( glm::floor(voxCenter/lockedSize)*lockedSize );
+
+        // finally save to UBO
+        perFrame->uVoxelRegionWorld[i] = glm::vec4(lockedCenter, multiplier*voxelRegionWorldSize);
+
+        multiplier <<= 1;
+    }
+}
+
 void setUBO()
 {
     // Update the per frame UBO
@@ -231,10 +255,7 @@ void setUBO()
     perFrame->uCurrentMipLevel = currentMipMapLevel;
     perFrame->uCurrentCascade = currentCascade;
 
-    perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position, voxelRegionWorldSize);
-    //float myvoxelSize = 16.0f*voxelRegionWorldSize/perFrame->uVoxelRes;
-    //perFrame->uVoxelRegionWorld = glm::vec4(viewCamera->position - glm::vec3(voxelRegionWorldSize/2.0f), voxelRegionWorldSize);
-    //perFrame->uVoxelRegionWorld = glm::vec4( glm::vec3( glm::floor(perFrame->uVoxelRegionWorld/myvoxelSize)*myvoxelSize ), perFrame->uVoxelRegionWorld.w);
+    setCascades();
 
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
@@ -309,7 +330,7 @@ void begin()
     timer->begin();
     fullScreenQuad->begin();
     passthrough->begin(coreEngine);
-    voxelTexture->begin(voxelGridLength, numMipMapLevels, numVoxelCascades);        
+    voxelTexture->begin(voxelGridLength, numMipMapLevels, MAX_VOXEL_CASCADES);        
     voxelClean->begin(voxelTexture, fullScreenQuad);
     voxelizer->begin(voxelTexture, coreEngine, perFrame, perFrameUBO);
     mipMapGenerator->begin(voxelTexture, fullScreenQuad, perFrame, perFrameUBO);

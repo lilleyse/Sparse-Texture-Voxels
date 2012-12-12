@@ -100,8 +100,8 @@ void main()
     // If emissive, ignore shading and just draw diffuse color
     outColor = mix(outColor, diffuse.rgb, material.emission);
 
-    vec3 voxelBMin = uVoxelRegionWorld.xyz - uVoxelRegionWorld.w*(uCurrentCascade+1)/2.0; 
-    vec3 voxelPosTextureSpace = (vertexData.position-voxelBMin)/(uVoxelRegionWorld.w*(uCurrentCascade+1));    // in tex coords
+    vec3 voxelBMin = uVoxelRegionWorld[uCurrentCascade].xyz - uVoxelRegionWorld[uCurrentCascade].w/2.0; 
+    vec3 voxelPosTextureSpace = (vertexData.position-voxelBMin)/(uVoxelRegionWorld[uCurrentCascade].w);    // in tex coords
     ivec3 voxelPosImageCoord = ivec3(voxelPosTextureSpace * uVoxelRes);
     
     imageAtomicMax(tDirectionalVoxels[0], voxelPosImageCoord, packColor(vec4(outColor*max(normal.x, 0.0),  alpha)));

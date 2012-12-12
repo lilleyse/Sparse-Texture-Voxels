@@ -53,7 +53,7 @@ layout(std140, binding = PER_FRAME_UBO_BINDING) uniform PerFrameUBO
     vec3 uCamUp;
     vec3 uLightDir;
     vec3 uLightColor;
-    vec4 uVoxelRegionWorld;
+    vec4 uVoxelRegionWorld[MAX_VOXEL_CASCADES];
     vec2 uScreenRes;
     float uAspect;
     float uTime;

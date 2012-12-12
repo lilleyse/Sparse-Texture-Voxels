@@ -59,7 +59,7 @@ struct PerFrameUBO
     float padding4;
     glm::vec3 uLightColor;
     float padding5;
-    glm::vec4 uVoxelRegionWorld; //.xyz is origin and .w is size
+    glm::vec4 uVoxelRegionWorld[MAX_VOXEL_CASCADES]; //.xyz is origin and .w is size
     glm::vec2 uScreenRes;
     float uAspect;
     float uTime;
