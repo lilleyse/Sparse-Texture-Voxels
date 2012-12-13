@@ -302,7 +302,7 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         
         float stepSize;
         if (vocc.a <= 0.0) {
-            float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
+            float lvl = getNonEmptyMipLevel(pos, mipLevel) - 2.0;
             stepSize = texelIntersect(pos, rd, lvl) + EPS;
             //stepSize = pixSize * STEPSIZE_EMPTY_WRT_TEXEL;
         }
@@ -399,8 +399,8 @@ void main()
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;
 
-    //#define PASS_DIFFUSE
-    //#define PASS_INDIR
+    #define PASS_DIFFUSE
+    #define PASS_INDIR
     #define PASS_SPEC
 
     #ifdef PASS_INDIR
