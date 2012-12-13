@@ -371,16 +371,17 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
     vec4 col = vec4(0.0);   // accumulated color
     float tm = 1.0;         // accumulated transmittance
 
-    while(tm > TRANSMIT_MIN &&
-        pos.x < 1.0 && pos.x > 0.0 &&
-        pos.y < 1.0 && pos.y > 0.0 &&
-        pos.z < 1.0 && pos.z > 0.0) {
+    while( tm > TRANSMIT_MIN && allLessThan(pos, gTexbMax) && allMoreThan(pos, gTexbMin) ) {
+            
+        int cascade = getCascade(pos);
+
+        float texelSizeWorld = gTexelSize * uVoxelRegionWorld[cascade].w;
 
         // calc mip size, clamp min to texelsize
-        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
-        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+        float pixSize = max(dist*pixSizeAtDist, texelSizeWorld);
+        float mipLevel = max(log2(pixSize/texelSizeWorld), 0.0);
 
-        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        vec4 vocc = sampleCascadedAnisotropic(pos, rd, mipLevel, cascade);
         //if(vocc.a > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
@@ -436,8 +437,8 @@ void main()
     vec3 cout = vec3(0.0);
 
     //#define PASS_DIFFUSE
-    //#define PASS_INDIR
-    #define PASS_SPEC
+    #define PASS_INDIR
+    //#define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec4 indir = vec4(0.0);
@@ -451,7 +452,8 @@ void main()
         for (float i=0.0; i<NUM_DIRS; i++) {
             vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
             vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
-            indir += conetraceIndir(texPos+rd*voxelOffset, rd, FOV);
+            //indir += conetraceIndir(texPos+rd*voxelOffset, rd, FOV);
+            indir += conetraceIndir(worldPos+rd*voxelOffset*uVoxelRegionWorld[0].w, rd, FOV);
         }
 
         indir /= NUM_DIRS;
