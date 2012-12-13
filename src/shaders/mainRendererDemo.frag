@@ -234,9 +234,10 @@ float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
     float level = ceil(mipLevel);
     float alpha = 0.0;
 
-    while(level < gNumMipMaps && alpha == 0.0) {
-        alpha = textureLod(tVoxColorPosX, pos, ++level).a;
-    }
+    do {
+        ++level;
+        alpha = textureLod(tVoxColorPosX, pos, level).a;
+    } while(level < gNumMipMaps && alpha <= 0.0);
 
     return level;
 }
@@ -398,8 +399,8 @@ void main()
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;
 
-    #define PASS_DIFFUSE
-    #define PASS_INDIR
+    //#define PASS_DIFFUSE
+    //#define PASS_INDIR
     #define PASS_SPEC
 
     #ifdef PASS_INDIR

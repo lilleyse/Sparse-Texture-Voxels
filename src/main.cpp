@@ -31,8 +31,8 @@ namespace
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
-    float specularFOV = 5.0f;
-    float specularAmount = 0.1f;
+    float specularFOV = 0.01f;
+    float specularAmount = 0.99f;
 
     // Demo settings
     bool loadAllDemos = true;
