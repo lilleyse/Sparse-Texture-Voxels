@@ -301,9 +301,9 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
         
         float stepSize;
         if (vocc.a <= 0.0) {
-            //float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
-            //stepSize = texelIntersect(pos, rd, lvl) + EPS;
-            stepSize = pixSize * STEPSIZE_EMPTY_WRT_TEXEL;
+            float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
+            stepSize = texelIntersect(pos, rd, lvl) + EPS;
+            //stepSize = pixSize * STEPSIZE_EMPTY_WRT_TEXEL;
         }
         else {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
