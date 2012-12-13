@@ -27,7 +27,7 @@ namespace
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
     uint voxelGridLength = 128;
-    float voxelRegionWorldSize = 25.0f;
+    float voxelRegionWorldSize = 20.0f;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -217,23 +217,48 @@ void setCascades()
     // lock step size, as multiple of 1 voxel size in world coords
     const float lockedIncrement = 4.0f;
 
-    int multiplier = 1;
+    float voxelRegionSize = voxelRegionWorldSize;
 
     for (int i=0; i<MAX_VOXEL_CASCADES; ++i) 
     {
-        float voxSize = multiplier * voxelRegionWorldSize/perFrame->uVoxelRes;
+        float voxSize = voxelRegionSize/perFrame->uVoxelRes;
 
         float lockedSize = lockedIncrement * voxSize;   // size of each lock step in world coords
 
-        // TODO: calculate this to be dynamic relative to view dir
+        // dynamic relative to view dir
         glm::vec3 voxCenter = viewCamera->position;
+        if (i>0) {
+            glm::vec3 rd = glm::normalize(viewCamera->lookAt - viewCamera->position);
+            float mag = voxelRegionSize/2.0 - voxelRegionWorldSize/2.0;
+            
+            glm::vec3 offsetVec;
+
+            // x-axis
+            float angle = glm::atan(rd.y, rd.x);
+            if      (angle < 1.0/4.0*M_PI && angle > 7.0/4.0*M_PI) offsetVec.x = 1.0f;
+            else if (angle > 3.0/4.0*M_PI && angle < 5.0/4.0*M_PI) offsetVec.x = -1.0f;
+            else    offsetVec.x = glm::cos(angle)/M_SQRT1_2;
+            //y-axis
+            if      (angle > 1.0/4.0*M_PI && angle < 3.0/4.0*M_PI) offsetVec.y = 1.0f;
+            else if (angle > 5.0/4.0*M_PI && angle < 7.0/4.0*M_PI) offsetVec.y = -1.0f;
+            else    offsetVec.y = glm::sin(angle)/M_SQRT1_2;
+            //z-axis
+            angle = glm::atan(rd.z, rd.x);
+            if      (angle > 1.0/4.0*M_PI && angle < 3.0/4.0*M_PI) offsetVec.z = 1.0f;
+            else if (angle > 5.0/4.0*M_PI && angle < 7.0/4.0*M_PI) offsetVec.z = -1.0f;
+            else    offsetVec.z = glm::sin(angle)/M_SQRT1_2;
+
+            voxCenter += mag*offsetVec;
+        }
 
         glm::vec3 lockedCenter = glm::vec3( glm::floor(voxCenter/lockedSize)*lockedSize );
 
         // finally save to UBO
-        perFrame->uVoxelRegionWorld[i] = glm::vec4(lockedCenter, multiplier*voxelRegionWorldSize);
+        perFrame->uVoxelRegionWorld[i] = glm::vec4(lockedCenter, voxelRegionSize);
+        //perFrame->uVoxelRegionWorld[i] = glm::vec4(voxCenter, voxelRegionSize);
 
-        multiplier <<= 1;
+        // increment double size
+        voxelRegionSize *= 2;
     }
 }
 
