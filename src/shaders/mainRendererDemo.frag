@@ -154,7 +154,8 @@ float getVisibility()
 
 vec3 gNormal, gDiffuse, gSpecular;
 float gTexelSize, gRandVal;
-vec3 gTexbMin, gTexbMax;
+vec3 , gTexbMin, gTexbMax;
+int gCurrentCascade;
 
 //---------------------------------------------------------
 // UTILITIES
@@ -229,7 +230,7 @@ bool allLessThan(vec3 a, vec3 b) {
 //---------------------------------------------------------
 
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
-    int offset = 0*NUM_VOXEL_DIRECTIONS;
+    int offset = gCurrentCascade*NUM_VOXEL_DIRECTIONS;
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tDirectionalVoxels[offset + 1], pos, mipLevel) : 
         textureLod(tDirectionalVoxels[offset + 0], pos, mipLevel);
@@ -290,6 +291,40 @@ vec4 sampleCascadedAnisotropic(vec3 worldPos, vec3 dir, float mipLevel, int casc
     // TODO: correctly weight averaged output color
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
 }
+/*
+vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
+    vec3 pos = ro;
+    float dist = 0.0;
+    float pixSizeAtDist = tan(fov);
+
+    vec3 col = vec3(0.0);   // accumulated color
+    float tm = 1.0;         // accumulated transmittance
+
+    while(tm > TRANSMIT_MIN &&
+        pos.x < 1.0 && pos.x > 0.0 &&
+        pos.y < 1.0 && pos.y > 0.0 &&
+        pos.z < 1.0 && pos.z > 0.0) {
+
+        // calc mip size, clamp min to texelsize
+        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
+        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+
+        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        //if(vocc > 0.0) {
+            float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
+            tm *= dtm;
+            col += (1.0-dtm) * vocc.rgb * tm * 10.0;
+        //}
+          
+        // increment
+        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        stepSize += gRandVal*pixSize*JITTER_K;
+        dist += stepSize;
+        pos += stepSize*rd;
+    }
+    
+    return col;
+}*/
 
 // in world pos coords
 vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
@@ -383,6 +418,9 @@ void main()
     gTexbMin = uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].xyz - uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].w/2.0;
     gTexbMax = uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].xyz + uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].w/2.0;
     
+    //gCurrentCascade = getCascade(worldPos);
+    //texPos = worldToTexelPos(worldPos, gCurrentCascade);
+
     //fragColor = vec4(
     //    allLessThan(worldPos, gTexbMax) && allMoreThan(worldPos, gTexbMin) ?
     //    vec3(getCascade(worldPos)/3.0) :
@@ -397,7 +435,7 @@ void main()
     
     vec3 cout = vec3(0.0);
 
-    #define PASS_DIFFUSE
+    //#define PASS_DIFFUSE
     //#define PASS_INDIR
     #define PASS_SPEC
 
@@ -429,6 +467,7 @@ void main()
         const float FOV = radians(uSpecularFOV);
         vec3 rd = normalize(worldPos-uCamPos);
         rd = reflect(rd, gNormal);
+        //spec = conetraceSpec(texPos+rd*voxelOffset, rd, FOV);
         spec = conetraceSpec(worldPos+rd*voxelOffset*uVoxelRegionWorld[0].w, rd, FOV);
     }
     #endif
