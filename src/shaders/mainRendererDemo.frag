@@ -432,13 +432,13 @@ void main()
     // calc globals
     gRandVal = 0.0;//rand(texPos.xy);
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
-    float voxelOffset = gTexelSize*2.5;
+    float voxelOffset = gTexelSize*2.5*uVoxelRegionWorld[0].w;
     
     vec3 cout = vec3(0.0);
 
-    //#define PASS_DIFFUSE
+    #define PASS_DIFFUSE
     #define PASS_INDIR
-    //#define PASS_SPEC
+    #define PASS_SPEC
 
     #ifdef PASS_INDIR
     vec4 indir = vec4(0.0);
@@ -453,7 +453,7 @@ void main()
             vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
             vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
             //indir += conetraceIndir(texPos+rd*voxelOffset, rd, FOV);
-            indir += conetraceIndir(worldPos+rd*voxelOffset*uVoxelRegionWorld[0].w, rd, FOV);
+            indir += conetraceIndir(worldPos+rd*voxelOffset, rd, FOV);
         }
 
         indir /= NUM_DIRS;
@@ -470,7 +470,7 @@ void main()
         vec3 rd = normalize(worldPos-uCamPos);
         rd = reflect(rd, gNormal);
         //spec = conetraceSpec(texPos+rd*voxelOffset, rd, FOV);
-        spec = conetraceSpec(worldPos+rd*voxelOffset*uVoxelRegionWorld[0].w, rd, FOV);
+        spec = conetraceSpec(worldPos+rd*voxelOffset, rd, FOV);
     }
     #endif
 
