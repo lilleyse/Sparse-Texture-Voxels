@@ -154,7 +154,7 @@ float getVisibility()
 
 vec3 gNormal, gDiffuse, gSpecular;
 float gTexelSize, gRandVal;
-int gCurrentCascade;
+vec3 gTexbMin, gTexbMax;
 
 //---------------------------------------------------------
 // UTILITIES
@@ -217,13 +217,19 @@ vec3 findPerpendicular(vec3 v) {
     return normalize( vec3(1.0, 0.0, -v.x/(v.z+EPS8)) );
 }
 
+bool allMoreThan(vec3 a, vec3 b) {
+    return (a.x > b.x) && (a.y > b.y) && (a.z > b.z);
+}
+bool allLessThan(vec3 a, vec3 b) {
+    return (a.x < b.x) && (a.y < b.y) && (a.z < b.z);
+}
 
 //---------------------------------------------------------
 // PROGRAM
 //---------------------------------------------------------
 
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
-    int offset = gCurrentCascade*NUM_VOXEL_DIRECTIONS;
+    int offset = 0*NUM_VOXEL_DIRECTIONS;
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tDirectionalVoxels[offset + 1], pos, mipLevel) : 
         textureLod(tDirectionalVoxels[offset + 0], pos, mipLevel);
@@ -244,17 +250,48 @@ vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
 }
 
+// pos = worldPos
 int getCascade(vec3 pos) {
-    if ( all(lessThan(pos, uVoxelRegionWorld[0].xyz+uVoxelRegionWorld[0].w/2.0)) && 
-        all(greaterThan(pos, uVoxelRegionWorld[0].xyz-uVoxelRegionWorld[0].w/2.0)) )
+    if ( allLessThan(pos, uVoxelRegionWorld[0].xyz+uVoxelRegionWorld[0].w/2.0) && 
+        allMoreThan(pos, uVoxelRegionWorld[0].xyz-uVoxelRegionWorld[0].w/2.0) )
         return 0;
-    else if ( all(lessThan(pos, uVoxelRegionWorld[1].xyz+uVoxelRegionWorld[1].w/2.0)) && 
-        all(greaterThan(pos, uVoxelRegionWorld[1].xyz-uVoxelRegionWorld[1].w/2.0)) )
+    else if ( allLessThan(pos, uVoxelRegionWorld[1].xyz+uVoxelRegionWorld[1].w/2.0) && 
+        allMoreThan(pos, uVoxelRegionWorld[1].xyz-uVoxelRegionWorld[1].w/2.0) )
         return 1;
     else
         return 2;
 }
 
+vec3 worldToTexelPos(vec3 pos, int cascade) {
+    return (pos - (uVoxelRegionWorld[cascade].xyz-uVoxelRegionWorld[cascade].w/2.0))/(uVoxelRegionWorld[cascade].w);
+}
+
+vec4 sampleCascadedAnisotropic(vec3 worldPos, vec3 dir, float mipLevel, int cascade) {
+
+    vec3 pos = worldToTexelPos(worldPos, cascade);
+
+    int offset = cascade*NUM_VOXEL_DIRECTIONS;
+    vec4 xtexel = dir.x > 0.0 ? 
+        textureLod(tDirectionalVoxels[offset + 1], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[offset + 0], pos, mipLevel);
+
+    vec4 ytexel = dir.y > 0.0 ? 
+        textureLod(tDirectionalVoxels[offset + 3], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[offset + 2], pos, mipLevel);
+
+    vec4 ztexel = dir.z > 0.0 ? 
+        textureLod(tDirectionalVoxels[offset + 5], pos, mipLevel) : 
+        textureLod(tDirectionalVoxels[offset + 4], pos, mipLevel);
+    
+    // get scaling factors for each axis
+    dir = abs(dir);
+    //dir = dir/( dir.x + dir.y + dir.z);
+    
+    // TODO: correctly weight averaged output color
+    return (dir.x*xtexel + dir.y*ytexel + dir.z*ztexel);
+}
+
+// in world pos coords
 vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     vec3 pos = ro;
     float dist = 0.0;
@@ -263,16 +300,18 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
     vec3 col = vec3(0.0);   // accumulated color
     float tm = 1.0;         // accumulated transmittance
 
-    while(tm > TRANSMIT_MIN &&
-        pos.x < 1.0 && pos.x > 0.0 &&
-        pos.y < 1.0 && pos.y > 0.0 &&
-        pos.z < 1.0 && pos.z > 0.0) {
+    while( tm > TRANSMIT_MIN && allLessThan(pos, gTexbMax) && allMoreThan(pos, gTexbMin) ) {
+    //while( tm > TRANSMIT_MIN && steps < 256 ) {
+            
+        int cascade = getCascade(pos);
+
+        float texelSizeWorld = gTexelSize * uVoxelRegionWorld[cascade].w;
 
         // calc mip size, clamp min to texelsize
-        float pixSize = max(dist*pixSizeAtDist, gTexelSize);
-        float mipLevel = max(log2(pixSize/gTexelSize), 0.0);
+        float pixSize = max(dist*pixSizeAtDist, texelSizeWorld);
+        float mipLevel = max(log2(pixSize/texelSizeWorld), 0.0);
 
-        vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
+        vec4 vocc = sampleCascadedAnisotropic(pos, rd, mipLevel, cascade);
         //if(vocc > 0.0) {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
@@ -339,28 +378,27 @@ void main()
     gNormal = getNormal(material, normalize(vertexData.normal));
     gDiffuse = getDiffuseColor(material).rgb;
     gSpecular = getSpecularColor(material);
-    
-    //gCurrentCascade = int(mod(int(uTime), 3));
-    gCurrentCascade = getCascade(worldPos);
         
-    vec3 voxelBMin = uVoxelRegionWorld[gCurrentCascade].xyz - uVoxelRegionWorld[gCurrentCascade].w/2.0; 
-    vec3 pos = (worldPos-voxelBMin)/(uVoxelRegionWorld[gCurrentCascade].w);    // in tex coords
+    vec3 texPos = worldToTexelPos(worldPos, 0);
+    gTexbMin = uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].xyz - uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].w/2.0;
+    gTexbMax = uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].xyz + uVoxelRegionWorld[MAX_VOXEL_CASCADES-1].w/2.0;
     
-    //float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
-    //float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
-    //float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
-    //float fade = min(fadeX, min(fadeY, fadeZ));
-    //fade = min(fade * 5.0, 1.0);
-
-    vec3 cout = vec3(0.0);
+    //fragColor = vec4(
+    //    allLessThan(worldPos, gTexbMax) && allMoreThan(worldPos, gTexbMin) ?
+    //    vec3(getCascade(worldPos)/3.0) :
+    //    vec3(1.0, 0.0, 0.0)
+    //, 1.0);
+    //return;
 
     // calc globals
-    gRandVal = 0.0;//rand(pos.xy);
+    gRandVal = 0.0;//rand(texPos.xy);
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;
+    
+    vec3 cout = vec3(0.0);
 
     #define PASS_DIFFUSE
-    #define PASS_INDIR
+    //#define PASS_INDIR
     #define PASS_SPEC
 
     #ifdef PASS_INDIR
@@ -375,7 +413,7 @@ void main()
         for (float i=0.0; i<NUM_DIRS; i++) {
             vec3 rotatedAxis = rotate(axis, ANGLE_ROTATE*(i+EPS), gNormal);
             vec3 rd = rotate(gNormal, NORMAL_ROTATE, rotatedAxis);
-            indir += conetraceIndir(pos+rd*voxelOffset, rd, FOV);
+            indir += conetraceIndir(texPos+rd*voxelOffset, rd, FOV);
         }
 
         indir /= NUM_DIRS;
@@ -391,7 +429,7 @@ void main()
         const float FOV = radians(uSpecularFOV);
         vec3 rd = normalize(worldPos-uCamPos);
         rd = reflect(rd, gNormal);
-        spec = conetraceSpec(pos+rd*voxelOffset, rd, FOV);
+        spec = conetraceSpec(worldPos+rd*voxelOffset*uVoxelRegionWorld[0].w, rd, FOV);
     }
     #endif
 

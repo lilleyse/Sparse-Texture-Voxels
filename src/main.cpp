@@ -27,7 +27,7 @@ namespace
     // Texture settings
     std::string sceneFile = SCENE_DIRECTORY + "sponza.xml";
     uint voxelGridLength = 128;
-    float voxelRegionWorldSize = 50.0f;
+    float voxelRegionWorldSize = 25.0f;
     uint shadowMapResolution = 1024;
     uint numMipMapLevels = 6; // If 0, then calculate the number based on the grid length
     uint currentMipMapLevel = 0;
@@ -215,7 +215,7 @@ void GLFWCALL resize(int w, int h)
 void setCascades()
 {
     // lock step size, as multiple of 1 voxel size in world coords
-    const float lockedIncrement = 1.0f;
+    const float lockedIncrement = 4.0f;
 
     int multiplier = 1;
 
