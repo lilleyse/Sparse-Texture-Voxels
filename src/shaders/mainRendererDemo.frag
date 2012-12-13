@@ -151,15 +151,16 @@ float getVisibility()
 #define EQUALSZERO(A) ( ((A)<EPS) && ((A)>-EPS) )
 
 #define STEPSIZE_WRT_TEXEL 0.3333  // Cyril uses 1/3
+#define STEPSIZE_EMPTY_WRT_TEXEL 0.75 // when alpha = 0.0
 #define TRANSMIT_MIN 0.05
 #define TRANSMIT_K  8.0
 #define INDIR_DIST_K 4.0
 #define INDIR_K 1.5
 #define AO_DIST_K 0.3
-#define JITTER_K 0.025
+#define JITTER_K 0.1
 
 vec3 gNormal, gDiffuse, gSpecular;
-float gTexelSize, gRandVal;
+float gTexelSize, gRandVal, gNumMipMaps;
 
 
 //---------------------------------------------------------
@@ -228,6 +229,35 @@ vec3 findPerpendicular(vec3 v) {
 // PROGRAM
 //---------------------------------------------------------
 
+// assumption, current pos is empty (alpha = 0.0)
+float getNonEmptyMipLevel(vec3 pos, float mipLevel) {
+    float level = ceil(mipLevel);
+    float alpha = 0.0;
+
+    while(level < gNumMipMaps && alpha == 0.0) {
+        alpha = textureLod(tVoxColorPosX, pos, ++level).a;
+    }
+
+    return level;
+}
+
+// params: origin and ray within texture space
+// intersect outside bound of the enclosing texel of given mip level
+float texelIntersect(vec3 ro, vec3 rd, float mipLevel) {
+    float texelSize = pow(2, mipLevel) / uVoxelRes;
+
+    vec3 texelIdx = ro/texelSize;
+
+    vec3 bMin = floor(texelIdx)*texelSize;
+    vec3 bMax = ceil(texelIdx)*texelSize;
+
+    // calc for tFar, outgoing of box
+    vec3 tMin = (bMin-ro) / rd;
+    vec3 tMax = (bMax-ro) / rd;
+    vec3 t2 = max(tMin, tMax);
+    return min(min(t2.x, t2.y), t2.z);    
+}
+
 vec4 sampleAnisotropic(vec3 pos, vec3 dir, float mipLevel) {
     vec4 xtexel = dir.x > 0.0 ? 
         textureLod(tVoxColorNegX, pos, mipLevel) : 
@@ -268,14 +298,22 @@ vec3 conetraceSpec(vec3 ro, vec3 rd, float fov) {
 
         //float vocc = textureLod(tVoxColorPosX, pos, mipLevel).a;
         vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
-        //if(vocc > 0.0) {
+        
+        float stepSize;
+        if (vocc.a <= 0.0) {
+            //float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
+            //stepSize = texelIntersect(pos, rd, lvl) + EPS;
+            stepSize = pixSize * STEPSIZE_EMPTY_WRT_TEXEL;
+        }
+        else {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
             col += (1.0-dtm) * vocc.rgb * tm * 10.0;
-        //}
+
+            stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        }
           
-        // increment
-        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        // increment        
         stepSize += gRandVal*pixSize*JITTER_K;
         dist += stepSize;
         pos += stepSize*rd;
@@ -303,7 +341,14 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
 
         //vec4 vocc = textureLod(tVoxColorPosX, pos, mipLevel);
         vec4 vocc = sampleAnisotropic(pos, rd, mipLevel);
-        //if(vocc.a > 0.0) {
+
+        float stepSize;
+        if (vocc.a <= 0.0) {
+            //float lvl = getNonEmptyMipLevel(pos, mipLevel) - 1.0;
+            //stepSize = texelIntersect(pos, rd, lvl) + EPS;
+            stepSize = pixSize * STEPSIZE_EMPTY_WRT_TEXEL;
+        }
+        else {
             float dtm = exp( -TRANSMIT_K * STEPSIZE_WRT_TEXEL * vocc.a );
             tm *= dtm;
 
@@ -311,10 +356,11 @@ vec4 conetraceIndir(vec3 ro, vec3 rd, float fov) {
             vec3 lightCol = vocc.rgb * (1.0-dtm) * tm;
             //lightCol *= (INDIR_DIST_K*dist)*(INDIR_DIST_K*dist);
             col.rgb += lightCol;
-        //}
+
+            stepSize = pixSize * STEPSIZE_WRT_TEXEL;
+        }
 
         // increment
-        float stepSize = pixSize * STEPSIZE_WRT_TEXEL;
         stepSize += gRandVal*pixSize*JITTER_K;
         dist += stepSize;
         pos += stepSize*rd;
@@ -331,7 +377,13 @@ void main()
 {
     // current vertex info
     vec3 worldPos = vertexData.position;
+    MeshMaterial material = getMeshMaterial();
+    gNormal = getNormal(material, normalize(vertexData.normal));
+    gDiffuse = getDiffuseColor(material).rgb;
+    gSpecular = getSpecularColor(material);
+
     vec3 pos = (worldPos-uVoxelRegionWorld.xyz)/uVoxelRegionWorld.w;    // in tex coords
+
     float fadeX = min(max(pos.x - 0.0,0.0),max(1.0 - pos.x,0.0));
     float fadeY = min(max(pos.y - 0.0,0.0),max(1.0 - pos.y,0.0));
     float fadeZ = min(max(pos.z - 0.0,0.0),max(1.0 - pos.z,0.0));
@@ -340,13 +392,9 @@ void main()
 
     vec3 cout = vec3(0.0);
 
-    MeshMaterial material = getMeshMaterial();
-    gNormal = getNormal(material, normalize(vertexData.normal));
-    gDiffuse = getDiffuseColor(material).rgb;
-    gSpecular = getSpecularColor(material);
-
     // calc globals
-    gRandVal = 0.0;//rand(pos.xy);
+    gRandVal = 0;//rand(pos.xy+pos.z);
+    gNumMipMaps = log2(uVoxelRes)+1.0;
     gTexelSize = 1.0/uVoxelRes; // size of one texel in normalized texture coords
     float voxelOffset = gTexelSize*2.5;
 

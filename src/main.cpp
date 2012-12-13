@@ -236,6 +236,7 @@ void setUBO()
     perFrame->uSpecularAmount = specularAmount;
     perFrame->uCurrentMipLevel = currentMipMapLevel;
 
+
     glBindBuffer(GL_UNIFORM_BUFFER, perFrameUBO);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(PerFrameUBO), perFrame);
     glBindBuffer(GL_UNIFORM_BUFFER, 0);
